@@ -1,0 +1,19 @@
+{
+  "name": "ru_collegeplanner",
+  "version": "1.0.0",
+  "description": "MAPS - my academic planning system",
+  "main": "index.js",
+  "scripts": {
+    "test": "test",
+    "start": "node src/index"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MSchmidtRU/RU_CollegePlanner.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "firebase": "^10.8.1"
+  }
+}
