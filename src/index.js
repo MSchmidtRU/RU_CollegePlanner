@@ -24,7 +24,7 @@ module.exports = {app, firestore, auth}; //Hannah added
 
 var admin = require("firebase-admin");
 
-var serviceAccount = require('/Users/chanabialik/Desktop/Comp Eng/RU_CollegePlanner/serviceAccountKey.json'); //having trouble not using absolute path
+var serviceAccount = require('../serviceAccountKey.json'); 
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
