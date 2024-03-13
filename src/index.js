@@ -1,5 +1,6 @@
+//THE STUFF COMMENTED OUT BELOW IS THE DEFAULT CODE THAT THEY GAVE US FOR INDEX.JS. I COMMENTED IT OUT BECAUSE I THINK WE NEED TO USE FIREBASE ADMIN
 // Import the functions you need from the SDKs you need
-
+/*
 const { auth } = require('firebase/auth');
 const { firestore } = require('firebase/firestore');
 const { initializeApp } = require("firebase/app");
@@ -17,3 +18,19 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+module.exports = {app, firestore, auth}; //Hannah added
+*/
+
+var admin = require("firebase-admin");
+
+var serviceAccount = require('/Users/chanabialik/Desktop/Comp Eng/RU_CollegePlanner/serviceAccountKey.json'); //having trouble not using absolute path
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+const firestore = admin.firestore();
+const auth = admin.auth();
+
+module.exports = { firestore };
