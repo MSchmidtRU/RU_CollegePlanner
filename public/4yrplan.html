@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4-Year Planner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        header {
+            background-color: #a41e34;
+            /* Scarlet */
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .year-plan {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .year {
+            background-color: #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .semester {
+            margin-bottom: 10px;
+        }
+
+        .semester h3 {
+            margin-top: 0;
+        }
+
+        .class {
+            margin-bottom: 5px;
+        }
+
+        .button-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        button {
+            background-color: #a41e34;
+            /* Scarlet */
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #8c1628;
+            /* Darker Scarlet */
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>4-Year Planner</h1>
+    </header>
+
+    <div class="container">
+        <div class="student-info">
+            <h2>Student Information</h2>
+            <p><strong>Name:</strong> John Doe</p>
+            <p><strong>Major:</strong> Computer Science</p>
+        </div>
+
+        <h2>4-Year Plan</h2>
+        <div class="year-plan">
+            <div class="year">
+                <div class="semester winter">
+                    <h3>Winter</h3>
+                    <div class="class">CSC101 - Introduction to Computer Science</div>
+                    <div class="class">MAT101 - Calculus I</div>
+                </div>
+                <div class="semester spring">
+                    <h3>Spring</h3>
+                    <div class="class">CSC102 - Data Structures</div>
+                    <div class="class">MAT102 - Calculus II</div>
+                </div>
+            </div>
+            <div class="year">
+                <div class="semester fall">
+                    <h3>Fall</h3>
+                    <div class="class">CSC201 - Algorithms</div>
+                    <div class="class">PHY101 - Physics I</div>
+                </div>
+                <div class="semester summer">
+                    <h3>Summer</h3>
+                    <div class="class">CSC202 - Database Systems</div>
+                </div>
+            </div>
+            <div class="year">
+                <div class="semester winter">
+                    <h3>Winter</h3>
+                    <div class="class">CSC301 - Software Engineering</div>
+                </div>
+                <div class="semester spring">
+                    <h3>Spring</h3>
+                    <div class="class">CSC302 - Operating Systems</div>
+                </div>
+            </div>
+            <div class="year">
+                <div class="semester fall">
+                    <h3>Fall</h3>
+                    <div class="class">CSC401 - Artificial Intelligence</div>
+                </div>
+                <div class="semester summer">
+                    <h3>Summer</h3>
+                    <div class="class">CSC402 - Web Development</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="button-container">
+            <button onclick="validatePlan()">Validate Plan</button>
+            <button onclick="optimizePlan()">Optimize Plan</button>
+        </div>
+    </div>
+
+    <script>
+        function validatePlan() {
+            const type = prompt("Choose a validation type (e.g., credits, prerequisites):");
+            if (type) {
+                alert(`Validating plan with ${type}...`);
+                // Additional validation logic can be added here
+            }
+        }
+
+        function optimizePlan() {
+            const type1 = prompt("Choose first optimization type:");
+            const type2 = prompt("Choose second optimization type:");
+            if (type1 && type2) {
+                alert(`Optimizing plan with ${type1} and ${type2}`)
+
+                // Additional optimization logic can be added here
+            }
+        }
+    </script>
+
+</body>
+
+</html>
