@@ -11,7 +11,44 @@ class Course {
         this.sections = Helper.createReference("sections", sections)
     }
 }
+async function getCourse(courseID)
+{
+    try {
+        // Reference to the document in the "student" collection
+        const courseInfo = firestore.collection("courses").doc(courseID);
 
+        // Retrieve the document data
+        const doc = await courseInfo.get();
+
+        if (doc.exists) {
+            // Document exists, access its data
+            const courseData = doc.data();
+
+            // Fetch basic student info
+            const credit = courseData.credit;
+            const description = courseData.description;
+            const name = courseData.name;
+
+            const coreqsArray = courseData.coreqs || [];
+            const coreqs = await Helper.getAssociatedIDs(coreqsArray);
+
+            const prereqsArray = courseData.prereqs || [];
+            const prereqs = await Helper.getAssociatedIDs(prereqsArray);
+
+            const sectionsArray = courseData.sections || [];
+            const sections = await Helper.getAssociatedIDs(sectionsArray);
+            
+            return new Course(name, description, credit, prereqs, coreqs, sections);
+        } else {
+            // Document does not exist
+            console.log('No such document!');
+            return null;
+        }
+    } catch (error) {
+        console.error('Error getting document:', error);
+        throw error;
+    }
+}
 async function insertCourse(courseID, course) {
     try {
         if (!(course instanceof Course)) {
@@ -37,6 +74,6 @@ async function insertCourse(courseID, course) {
 async function testing() {
     let course = new Course("Software Engineering", "Intro to the cocepts of software engeinering", 4, ["14:332:128"], ["14:332:221"], ["14:332:124:01"]);
     await insertCourse("14:332:400", course);
-    // console.log(await getStudent('hrb123'));
+    console.log(await getCourse('14:332:128'));
 }
 testing();
