@@ -82,7 +82,7 @@ async function getStudent(netID) {//should i add a parameter to return only depe
     }
 }
 
-//firstName, lastName, email, phone, gradYear, gpa, concentrations, completedCourses, enrolledCourses, futureCourses, semesterCourses
+
 //studentInfo needs to be a Student object
 async function insertStudent(netID, studentInfo) {
     try {

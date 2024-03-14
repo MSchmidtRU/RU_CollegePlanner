@@ -15,7 +15,7 @@ class Course {
 async function insertCourse(courseID, course) {
     try {
         if (!(course instanceof Course)) {
-            throw "course is not an instance of Course"
+            throw "course is not an instance of Course";
         }
 
         const courseData = {
