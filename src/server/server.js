@@ -29,7 +29,7 @@ class Server {
 
 
     router() {
-        let reqContentType = this.req.headers['content-type'];
+        let contentType = this.req.headers['content-type'];
         let method = this.req.method;
         let url = this.req.url.split("?")[0];
         let params = this.req.url.split("?")[1];
@@ -42,17 +42,17 @@ class Server {
                 const regex = new RegExp('^' + endpoint.replace(/:\w+/g, '\\w+') + '$');
 
                 if (regex.test(url)) {
-                    const params = {};
+                    const embeddedParams = {};
                     const urlParts = url.split('/');
                     const endpointParts = endpoint.split('/');
 
                     for (let i = 0; i < urlParts.length; i++) {
                         if (endpointParts[i].startsWith(':')) {
-                            params[endpointParts[i].substring(1)] = urlParts[i];
+                            embeddedParams[endpointParts[i].substring(1)] = urlParts[i];
                         }
                     }
 
-                    this.req.params = params;
+                    this.req.params = { ...embeddedParams, ...this.parseParams(params) };
                     return this.sendResponse(...handler(this.req));
                 }
             }
@@ -60,6 +60,17 @@ class Server {
         }
         return this.sendResponse("unknown method", 400);
 
+    }
+
+    parseParams(params) {
+        const paramsArray = params.split('&');
+        const result = {};
+        paramsArray.forEach(param => {
+            const [name, value] = param.split('=');
+            result[name] = value;
+        });
+
+        return result;
     }
 
     checkContentType(expected, received) {

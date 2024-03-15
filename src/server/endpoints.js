@@ -29,6 +29,4 @@ const methods = {
     "PUT": putEndpoints
 }
 
-
-
 module.exports = { methods, getEndpoints, postEndpoints, deleteEndpoints, putEndpoints };
