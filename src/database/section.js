@@ -35,10 +35,29 @@ async function getSection(sectionID)
             throw error;
         }
 }
+
+async function insertSection(secionID, section) {
+    try {
+        if (!(section instanceof Section)) {
+            throw "course is not an instance of Course";
+        }
+
+        const sectionData = {
+            available: section.available,
+            timing: section.timing,
+        }
+        const res = await firestore.collection('sections').doc(secionID).set(sectionData);
+
+    } catch (error) {
+        console.error('Error saving to Course document:', e);
+        throw e;
+    }
+}
+
 async function testing() {
-    //let course = new Course("Software Engineering", "Intro to the cocepts of software engeinering", 4, ["14:332:128"], ["14:332:221"], ["14:332:124:01"]);
-    //await insertCourse("14:332:400", course);
-    console.log(await getSection('14:332:124:01'));
+    let section = new Section(true, {friday: {start: "8:30", end: "9:50", location: {campus:"busch", room: "ARC-164"}}, tuesday: {start: "8:30", end: "9:50", location: {campus:"busch", room: "ARC-164"}}});
+    console.log(await insertSection('14:332:124:02',section));
+        //console.log(await getSection('14:332:124:01'));
 }
 testing();
 
