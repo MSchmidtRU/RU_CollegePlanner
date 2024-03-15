@@ -1,7 +1,10 @@
 const { firestore } = require('../index.js');
+const { FieldValue } = require('firebase-admin/firestore');
+
 const Helper = require("./helperFunction.js")
 const { Section } = require("./section.js");
 const { FutureCourse } = require("./futureCourse.js");
+const { getCourse } = require("./course.js");
 
 
 class Student {
@@ -18,6 +21,7 @@ class Student {
         this.futureCourses = Helper.isInstance(futureCourses, FutureCourse) ? futureCourses : [];
         this.semesterCourses = Helper.isInstance(semesterCourses, Section) ? studentInfo.semesterCourses : [];
     }
+
 }
 
 // Function to get student data
@@ -59,11 +63,11 @@ async function getStudent(netID) {//should i add a parameter to return only depe
                 const courseRef = courseObj.course;
                 const courseDoc = await courseRef.get();
                 if (courseDoc.exists) {
-                    return {
-                        id: courseDoc.id,
-                        semester: courseObj.semester,
-                        year: courseObj.year
-                    };
+                    return new FutureCourse(
+                        courseDoc.id,
+                        courseObj.semester,
+                        courseObj.year);
+
                 } else {
                     console.log(`Course document ${courseRef.id} does not exist.`);
                     return null;
@@ -112,9 +116,47 @@ async function insertStudent(netID, studentInfo) {
 }
 
 
+async function addFutureCourse(netID, futureCourse) {
+    try {
+        if (!(futureCourse instanceof FutureCourse)) {
+            throw new Error("future is not an instance of FutureCourse");
+        }
+
+        var studentInfo = getStudent(netID);
+        var course = getCourse(futureCourse.course);
+
+        if (studentInfo && course) {
+
+            if (futureCourse.year < new Date().getFullYear) {
+                throw new Error("invalid year for future semeseter - year is in the past")
+            }
+
+            const data = {
+                course: Helper.createReference("courses", futureCourse.course),
+                semseter: futureCourse.semester,
+                year: futureCourse.year
+            }
+            const res = await firestore.collection('student').doc(netID).update({ future_courses: FieldValue.arrayUnion(data) });
+
+        } else {
+            throw new Error("netID or course is not defined ");
+        }
+    } catch (e) {
+        console.error('Error updating Student document:', e);
+        throw e;
+    }
+
+}
+
 async function testing() {
-    let student = new Student("hannah", "bialik", "test@gmail.com", "9087457645", 2024, 3.9, ["14:332"], ["14:332:128"], ["14:332:128"], [new FutureCourse("14:332:128", "Winter", 2025)], []);
-    await insertStudent("hrb123", student);
-    console.log(await getStudent('hrb123'));
+    // let student = new Student("hannah", "bialik", "test@gmail.com", "9087457645", 2024, 3.9, ["14:332"], ["14:332:128"], ["14:332:128"], [new FutureCourse("14:332:128", "Winter", 2025)], []);
+    // await insertStudent("hrb123", student);
+    // console.log(await getStudent('hrb123'));
+
+    let course = new FutureCourse("14:332:128", "Summer", 2025);
+    await addFutureCourse("nss170", course);
+    console.log(await getStudent("nss170"));
 }
 testing();
+
+module.exports = { Student, getStudent, addFutureCourse };

@@ -14,19 +14,31 @@ async function getAssociatedIDs(courseArray) {
 
 function createReference(doc, arr) {
     let references = [];
-    arr.forEach(element => {
-        references.push(firestore.doc(`/${doc}/${element}`));
-    });
+    if (!Array.isArray(arr)) {
+        return firestore.doc(`/${doc}/${arr}`);
+    } else {
+        arr.forEach(element => {
+            references.push(firestore.doc(`/${doc}/${element}`));
+        });
+    }
+
 
     return references;
 }
 
 function isInstance(arr, instance) {
-    arr.forEach(element => {
-        if (!(element instanceof instance)) {
+    if (!Array.isArray(arr)) {
+        if (!(arr instanceof instance)) {
             return false;
         }
-    });
+    } else {
+        arr.forEach(element => {
+            if (!(element instanceof instance)) {
+                return false;
+            }
+        });
+    }
+
 }
 
 

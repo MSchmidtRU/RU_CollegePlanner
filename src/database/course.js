@@ -6,13 +6,12 @@ class Course {
         this.name = name;
         this.description = description;
         this.credit = credit;
-        this.prereqs = Helper.createReference("courses", prereqs);
-        this.coreqs = Helper.createReference("courses", coreqs);
-        this.sections = Helper.createReference("sections", sections)
+        this.prereqs = prereqs;
+        this.coreqs = coreqs;
+        this.sections = sections;
     }
 }
-async function getCourse(courseID)
-{
+async function getCourse(courseID) {
     try {
         // Reference to the document in the "student" collection
         const courseInfo = firestore.collection("courses").doc(courseID);
@@ -37,7 +36,7 @@ async function getCourse(courseID)
 
             const sectionsArray = courseData.sections || [];
             const sections = await Helper.getAssociatedIDs(sectionsArray);
-            
+
             return new Course(name, description, credit, prereqs, coreqs, sections);
         } else {
             // Document does not exist
@@ -59,9 +58,9 @@ async function insertCourse(courseID, course) {
             name: course.name,
             description: course.description,
             credit: course.credit,
-            prereqs: course.prereqs,
-            coreqs: course.coreqs,
-            sections: course.sections
+            prereqs: Helper.createReference("courses", course.prereqs),
+            coreqs: Helper.createReference("courses", course.coreqs),
+            sections: Helper.createReference("sections", course.sections)
         }
 
         const res = await firestore.collection('courses').doc(courseID).set(courseData);
@@ -76,4 +75,6 @@ async function testing() {
     await insertCourse("14:332:400", course);
     console.log(await getCourse('14:332:128'));
 }
-testing();
+// testing();
+
+module.exports = { Course, getCourse }
