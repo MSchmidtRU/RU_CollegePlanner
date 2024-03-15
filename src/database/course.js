@@ -1,14 +1,15 @@
 const { firestore } = require('../index.js');
 const Helper = require("./helperFunction.js")
+const { Section } = require('./section.js');
 
 class Course {
     constructor(name, description, credit, prereqs, coreqs, sections) {
         this.name = name;
         this.description = description;
         this.credit = credit;
-        this.prereqs = prereqs;
-        this.coreqs = coreqs;
-        this.sections = sections;
+        this.prereqs = prereqs
+        this.coreqs = coreqs
+        this.sections = Helper.isInstance(sections, Section) ? sample_schedule : [];
     }
 }
 async function getCourse(courseID) {
@@ -68,6 +69,11 @@ async function insertCourse(courseID, course) {
         console.error('Error saving to Course document:', e);
         throw e;
     }
+}
+
+async function validateCourse(netID) 
+{
+    //for each course in the list of reuired courses for the concentration, if gets all equivelent coruses,  checks if that course is in the student's completed, enrolled, or future courses. If not it checks if
 }
 
 async function testing() {

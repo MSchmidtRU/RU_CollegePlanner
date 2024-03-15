@@ -6,7 +6,6 @@ const { Section } = require("./section.js");
 const { FutureCourse } = require("./futureCourse.js");
 const { getCourse } = require("./course.js");
 
-
 class Student {
     constructor(firstName, lastName, email, phone, gradYear, gpa, concentrations, completedCourses, enrolledCourses, futureCourses, semesterCourses) {
         this.firstName = firstName;
