@@ -20,7 +20,6 @@ class Student {
         this.futureCourses = Helper.isInstance(futureCourses, FutureCourse) ? futureCourses : [];
         this.semesterCourses = Helper.isInstance(semesterCourses, Section) ? semesterCourses : [];
     }
-
 }
 
 // Function to get student data
@@ -154,9 +153,9 @@ async function addFutureCourse(netID, futureCourse) {
 
 
 async function testing() {
-    let student = new Student("esther", "hamalka", "saviour@gmail.com", "9087457645", 2024, 3.9, ["14:332"], ["14:332:128"], ["14:332:128"], [new FutureCourse("14:332:128", "Winter", 2025)], []);
-    await insertStudent("ehm70", student);
-    console.log(await getStudent('ehm70'));
+    let student = new Student("melech", "achashveirosh", "king@gmail.com", "9087457645", 2024, 3.9, ["14:332"], ["14:332:128"], ["14:332:128"], [new FutureCourse("14:332:128", "Winter", 2025)], []);
+    await insertStudent("ach127", student);
+    console.log(await getStudent('ach127'));
 
     //let course = new FutureCourse("14:332:128", "Summer", 2025);
     //await addFutureCourse("ri456", course);

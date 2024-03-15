@@ -50,10 +50,6 @@ async function getCourse(courseID) {
     }
 }
 
-async function getSection(sectionID)
-{
-    //ddddddddd
-}
 async function insertCourse(courseID, course) {
     try {
         if (!(course instanceof Course)) {
