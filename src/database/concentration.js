@@ -11,7 +11,7 @@ class Concentration {
     }
 }
 
-async function instertConcentration(concentrationID, concentration) {
+async function insertConcentration(concentrationID, concentration) {
     try {
         if (!(concentration instanceof Concentration)) {
             throw "course is not an instance of Course";
@@ -33,7 +33,7 @@ async function instertConcentration(concentrationID, concentration) {
 
 async function testing() {
     let concentraion = new Concentration("Software Engineering Finally", ["14:332:128", "14:332:221"], 51, ["14:332:128", "14:332:221"], [new FutureCourse("14:332:128", "Winter", 2025)]);
-    await instertConcentration("111:222", concentraion);
+    await insertConcentration("111:222", concentraion);
    // console.log(await getCourse('14:332:128'));
 }
 

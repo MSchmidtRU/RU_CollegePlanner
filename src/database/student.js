@@ -147,6 +147,7 @@ async function addFutureCourse(netID, futureCourse) {
 
 }
 
+
 async function testing() {
     // let student = new Student("hannah", "bialik", "test@gmail.com", "9087457645", 2024, 3.9, ["14:332"], ["14:332:128"], ["14:332:128"], [new FutureCourse("14:332:128", "Winter", 2025)], []);
     // await insertStudent("hrb123", student);
