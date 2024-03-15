@@ -11,6 +11,6 @@ const auth = admin.auth();
 
 const server = new Server();
 
-server.startServer();
+//server.startServer();
 
 module.exports = { firestore };

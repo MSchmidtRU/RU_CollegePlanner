@@ -49,6 +49,11 @@ async function getCourse(courseID) {
         throw error;
     }
 }
+
+async function getSection(sectionID)
+{
+    //ddddddddd
+}
 async function insertCourse(courseID, course) {
     try {
         if (!(course instanceof Course)) {
