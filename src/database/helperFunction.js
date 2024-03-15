@@ -38,6 +38,7 @@ function isInstance(arr, instance) {
             }
         });
     }
+    return true;
 
 }
 

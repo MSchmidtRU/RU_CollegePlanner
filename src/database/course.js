@@ -9,7 +9,7 @@ class Course {
         this.credit = credit;
         this.prereqs = prereqs
         this.coreqs = coreqs
-        this.sections = Helper.isInstance(sections, Section) ? sample_schedule : [];
+        this.sections = Helper.isInstance(sections, Section) ? sections : [];
     }
 }
 async function getCourse(courseID) {

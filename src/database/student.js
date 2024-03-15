@@ -18,7 +18,7 @@ class Student {
         this.completedCourses = completedCourses;
         this.enrolledCourses = enrolledCourses;
         this.futureCourses = Helper.isInstance(futureCourses, FutureCourse) ? futureCourses : [];
-        this.semesterCourses = Helper.isInstance(semesterCourses, Section) ? studentInfo.semesterCourses : [];
+        this.semesterCourses = Helper.isInstance(semesterCourses, Section) ? semesterCourses : [];
     }
 
 }
@@ -132,7 +132,7 @@ async function addFutureCourse(netID, futureCourse) {
 
             const data = {
                 course: Helper.createReference("courses", futureCourse.course),
-                semseter: futureCourse.semester,
+                semester: futureCourse.semester,
                 year: futureCourse.year
             }
             const res = await firestore.collection('student').doc(netID).update({ future_courses: FieldValue.arrayUnion(data) });
@@ -154,7 +154,8 @@ async function testing() {
 
     let course = new FutureCourse("14:332:128", "Summer", 2025);
     await addFutureCourse("nss170", course);
-    console.log(await getStudent("nss170"));
+    let student = await getStudent("nss170");
+    console.log(student);
 }
 testing();
 
