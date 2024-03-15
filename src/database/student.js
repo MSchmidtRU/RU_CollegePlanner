@@ -102,11 +102,16 @@ async function insertStudent(netID, studentInfo) {
             concentrations: Helper.createReference("concentrations", studentInfo.concentrations),
             completed_courses: Helper.createReference("courses", studentInfo.completedCourses),
             enrolled_courses: Helper.createReference("courses", studentInfo.enrolledCourses),
-            future_courses: Helper.createReference("courses", studentInfo.futureCourses),
+            future_courses: [],
+            //future_courses: Helper.createReference("courses", studentInfo.futureCourses),
             semester_courses: Helper.createReference("section", studentInfo.semesterCourses),
-
         };
         const res = await firestore.collection('student').doc(netID).set(studentData);
+
+        studentInfo.futureCourses.forEach(async (futureCourse) => {
+            await addFutureCourse(netID, futureCourse)
+          });
+
 
     } catch (e) {
         console.error('Error saving to Student document:', e);
@@ -149,14 +154,14 @@ async function addFutureCourse(netID, futureCourse) {
 
 
 async function testing() {
-    // let student = new Student("hannah", "bialik", "test@gmail.com", "9087457645", 2024, 3.9, ["14:332"], ["14:332:128"], ["14:332:128"], [new FutureCourse("14:332:128", "Winter", 2025)], []);
-    // await insertStudent("hrb123", student);
-    // console.log(await getStudent('hrb123'));
+    let student = new Student("esther", "hamalka", "saviour@gmail.com", "9087457645", 2024, 3.9, ["14:332"], ["14:332:128"], ["14:332:128"], [new FutureCourse("14:332:128", "Winter", 2025)], []);
+    await insertStudent("ehm70", student);
+    console.log(await getStudent('ehm70'));
 
-    let course = new FutureCourse("14:332:128", "Summer", 2025);
-    await addFutureCourse("nss170", course);
-    let student = await getStudent("nss170");
-    console.log(student);
+    //let course = new FutureCourse("14:332:128", "Summer", 2025);
+    //await addFutureCourse("ri456", course);
+   // let student = await getStudent("ri456");
+   // console.log(student);
 }
 testing();
 

@@ -1,6 +1,7 @@
 const { firestore } = require('../index.js');
 const { FutureCourse } = require('./futureCourse.js');
 const Helper = require("./helperFunction.js")
+const { FieldValue } = require('firebase-admin/firestore');
 
 class Concentration {
     constructor(name, courses, residency, sample_schedule) {
@@ -65,10 +66,18 @@ async function insertConcentration(concentrationID, concentration) {
             name: concentration.name,
             courses: Helper.createReference("courses", concentration.courses),
             residency: concentration.residency,
-            sample_schedule: Helper.createReference("courses", concentration.sample_schedule)
+            sample_schedule: [] //I have it so it makes a place in the concentration and then inserts the courses. maybe we should generalize addFutureCourse in the studen file and use it for this too?
         }
-
         const res = await firestore.collection('concentration').doc(concentrationID).set(concentrationData);
+        concentration.sample_schedule.forEach(async (object) => {
+            const sampleScheduleData = {
+                course: Helper.createReference("courses", object.course),
+                semester: object.semester,
+                year: object.year
+            }
+            await firestore.collection('concentration').doc(concentrationID).update({ sample_schedule: FieldValue.arrayUnion(sampleScheduleData) });
+          });
+
     } catch (error) {
         console.error('Error saving to Course document:', e);
         throw e;
@@ -78,9 +87,9 @@ async function insertConcentration(concentrationID, concentration) {
 
 
 async function testing() {
-    let concentraion = new Concentration("Software Engineering Finally", ["14:332:128", "14:332:221"], 51, ["14:332:128", "14:332:221"], [new FutureCourse("14:332:128", "Winter", 2025)]);
-    await insertConcentration("111:222", concentraion);
-   // console.log(await getCourse('14:332:128'));
+    let concentration = new Concentration("Underwater Basket Weaving", ["14:332:128", "14:332:221"], 51, [new FutureCourse("14:332:128", "Winter", 2025)]);
+    await insertConcentration("33:555", concentration);
+    console.log(await getConcentration('33:555'));
 }
 
 testing();
