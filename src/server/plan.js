@@ -1,6 +1,6 @@
 
 function viewPlan(req) {
-    return [`view plan endpoint - param: ${req.params}`, 200]
+    return [`view plan endpoint - param: ${req.params.netID}`, 200]
 }
 
 function viewStatus(req) {
@@ -8,11 +8,11 @@ function viewStatus(req) {
 }
 
 function addCourse(req) {
-    return [`add course endpoint - param: ${req.params}`, 200]
+    return [`add course endpoint - param: ${req.params.course}`, 200]
 }
 
 function removeCourse(req) {
-    return [`remove course endpoint - param: ${req.params}`, 200]
+    return [`remove course endpoint - param: ${req.params.course}`, 200]
 }
 
 function viewSample(req) {

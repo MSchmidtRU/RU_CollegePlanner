@@ -1,5 +1,5 @@
 const http = require('node:http');
-const { endpoints } = require("./endpoints");
+const { methods, getEndpoints, postEndpoints, deleteEndpoints, putEndpoints } = require("./endpoints");
 
 
 const hostname = '127.0.0.1';
@@ -26,55 +26,40 @@ class Server {
 
     }
 
-    async processBody() {
+
+
+    router() {
         let reqContentType = this.req.headers['content-type'];
         let method = this.req.method;
         let url = this.req.url.split("?")[0];
         let params = this.req.url.split("?")[1];
 
-        const handler = endpoints[url];
-        if (handler) {
-            handler();
-        } else {
-            this.sendResponse("No accepted endpoint", 421);
-        }
+        let endpoints = methods[method];
+        if (endpoints) {
 
-        // switch (true) {
-        //     case endpoints.plan.get4yrplan.test(url): {
-        //         this.sendResponse("4 year plan", 200);
-        //     }
-        //     case endpoints.plan.getStatus.test(url): {
-        //         this.sendResponse(`parameter: ${url.match(endpoints.plan.getStatus)[1]}`, 200);
-        //     }
-        //     default:
-        //         this.sendResponse("Not accepted endpoint", 421);
-        // }
+            for (const [endpoint, handler] of Object.entries(endpoints)) {
 
+                const regex = new RegExp('^' + endpoint.replace(/:\w+/g, '\\w+') + '$');
 
-        return;
-    }
-    router() {
-        let url = this.req.url.split("?")[0];
-        for (const [endpoint, handler] of Object.entries(endpoints)) {
-            const regex = new RegExp('^' + endpoint.replace(/:\w+/g, '\\w+') + '$');
-            if (regex.test(url)) {
-                const params = {};
+                if (regex.test(url)) {
+                    const params = {};
+                    const urlParts = url.split('/');
+                    const endpointParts = endpoint.split('/');
 
-                const urlParts = url.split('/');
-                const endpointParts = endpoint.split('/');
-
-                for (let i = 0; i < urlParts.length; i++) {
-                    if (endpointParts[i].startsWith(':')) {
-                        params[endpointParts[i].substring(1)] = urlParts[i];
+                    for (let i = 0; i < urlParts.length; i++) {
+                        if (endpointParts[i].startsWith(':')) {
+                            params[endpointParts[i].substring(1)] = urlParts[i];
+                        }
                     }
+
+                    this.req.params = params;
+                    return this.sendResponse(...handler(this.req));
                 }
-
-                this.req.params = params;
-                return this.sendResponse(...handler(this.req));
             }
+            return this.sendResponse("endpoint not found", 421);
         }
+        return this.sendResponse("unknown method", 400);
 
-        return this.sendResponse("endpoint not found", 421);
     }
 
     checkContentType(expected, received) {
