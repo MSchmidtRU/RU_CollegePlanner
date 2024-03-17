@@ -121,12 +121,13 @@ async function getStudent(netID) {//should i add a parameter to return only depe
             //I had to do this one differently since there's no array of references the same way as the others
             const future_courses = await Promise.all(futureCoursesArray.map(async courseObj => {
                 const courseRef = courseObj.course;
-                const courseDoc = await courseRef.get();
-                if (courseDoc.exists) {
-                    return new FutureCourse(
-                        courseDoc.id,
-                        courseObj.semester,
-                        courseObj.year);
+
+                    const courseDoc = await courseRef.get();
+                    if (courseDoc.exists) {
+                        return new FutureCourse(
+                            courseDoc.id,
+                            courseObj.semester,
+                            courseObj.year);
 
                 } else {
                     console.log(`Course document ${courseRef.id} does not exist.`);
@@ -255,6 +256,6 @@ async function testing() {
     // let student = await getStudent("ri456");
     // console.log(student);
 }
-// testing();
+//testing();
 
 module.exports = { Student, getStudent, addFutureCourse, removeFutureCourse, FutureCourse };
