@@ -57,6 +57,21 @@ class FutureCourse {
 
 }
 
+async function checkStudentExists(netID) {
+    try {
+        const studentRef = firestore.collection('students').doc(netID);
+
+        const studentDoc = await studentRef.get();
+
+        if (!studentDoc.exists) {
+            throw new Error('Student document not found');
+        };
+    } catch (e) {
+        throw new Error(e);
+    }
+
+}
+
 // Function to get student data
 async function getStudent(netID) {//should i add a parameter to return only depending on what is wanted - like if they ask for GPA give them that, etc?
     try {
@@ -169,21 +184,56 @@ async function addFutureCourse(netID, futureCourse) {
                 throw new Error("invalid year for future semeseter - year is in the past")
             }
 
+            studentInfo.futureCourses.forEach(course => {
+                if (course.course == futureCourse.course) {
+                    throw new Error("can not add course that is already in plan");
+                }
+            })
+
             const data = {
                 course: Helper.createReference("courses", futureCourse.course),
                 semester: futureCourse.semester,
                 year: futureCourse.year
             }
+
             const res = await firestore.collection('student').doc(netID).update({ future_courses: FieldValue.arrayUnion(data) });
-            return true; //TODO change to 4 year plan
+            const updatedStudentInfo = await getStudent(netID);
+            return { "data": updatedStudentInfo.futureCourses }; //TODO change to 4 year plan
         } else {
             throw new Error("netID or course is not defined ");
         }
     } catch (e) {
-        console.error('Error updating Student document:', e);
-        throw e;
+        throw new Error(e);
     }
 
+}
+
+async function removeFutureCourse(netID, courseID) {
+    try {
+        const studentInfo = await getStudent(netID);
+        const course = await getCourse(courseID);
+
+        if (studentInfo && course) {
+
+            const indexToRemove = studentInfo.futureCourses.findIndex(course => course.course === courseID);
+
+            if (indexToRemove == -1) {
+                throw new Error([`course with ID: ${courseID} is not listed in future course of studentwith netID: ${netID}`, 400, "plain/text"]); //TODO include error code
+            } else {
+                studentInfo.futureCourses.splice(indexToRemove, 1);
+
+                await firestore.collection('student').doc(netID).update({ future_courses: Helper.createReference("course", studentInfo.futureCourses) });
+                // Update the student document with the modified future_courses array
+                return { "data": studentInfo.futureCourses };
+            }
+
+        } else {
+            throw new Error(["netID or course is not defined", 404, "plain/text"]); //TODO correct error code
+        }
+
+    } catch (e) {
+        throw new Error(e);
+    }
 }
 
 
@@ -199,4 +249,4 @@ async function testing() {
 }
 // testing();
 
-module.exports = { Student, getStudent, addFutureCourse, FutureCourse };
+module.exports = { Student, getStudent, addFutureCourse, removeFutureCourse, FutureCourse };
