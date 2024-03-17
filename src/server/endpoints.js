@@ -1,25 +1,24 @@
 
 const plan = require("./plan");
-//4 year plan endpoints\
 
 const getEndpoints = {
-    "/4yrplan/:netID": plan.viewPlan,
-    "/4yrplan/:netID/status": plan.viewStatus,
-    "/4yrplan/:course/sample": plan.viewSample,
-    "/4yrplan/:netID/validate": plan.validatePlan,
-    "/4yrplan/:netID/optimize": plan.optimizePlan,
+    "/4yrplan/~netID": plan.viewPlan,
+    "/4yrplan/~netID/status": plan.viewStatus,
+    "/4yrplan/~course/sample": plan.viewSample,
+    "/4yrplan/~netID/validate": plan.validatePlan,
+    "/4yrplan/~netID/optimize": plan.optimizePlan,
 }
 
 const postEndpoints = {
-    "/4yrplan/:course": plan.addCourse,
+    "/4yrplan/~netID/course": plan.addCourse,
 }
 
 const deleteEndpoints = {
-    "/4yrplan/:course": plan.removeCourse,
+    "/4yrplan/~netID/course": plan.removeCourse,
 }
 
 const putEndpoints = {
-    "/4yrplan/:netID/save": plan.savePlan
+    "/4yrplan/~netID/save": plan.savePlan
 }
 
 const methods = {
