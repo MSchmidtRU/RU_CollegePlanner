@@ -1,6 +1,7 @@
 
 const Student = require('../database/student.js');
 const Concentration = require("../database/concentration.js");
+const { firestore } = require("../database/firebase.js");
 
 async function viewPlan(req) {
     let netID = req.params.netID;
@@ -13,7 +14,6 @@ async function viewPlan(req) {
             year: course.year
         };
     });
-    console.log(jsonFutureCourses);
     return [JSON.stringify(jsonFutureCourses), 200];
 }
 
@@ -56,10 +56,15 @@ function optimizePlan(req) {
     return [`optimize plan endpoint - param: ${req.params}`, 200]
 }
 
-function savePlan(req) {
+async function savePlan(req) {
     //return [`save plan endpoint - param: ${req.params}`, 200]
-    //let netID = req.params.netID;
-    //let coursesToSave = req.params.body;
+   let netID = req.params.netID;
+   let coursesToSave = req.body;
+   const res = await firestore.collection('student').doc(netID).update({ future_courses: []});
+   coursesToSave.forEach((course) => {
+    Student.addFutureCourse(netID, new Student.FutureCourse(course.courseID, course.semester, course.year));
+   });
+   return ['Success!', 200, "plain/text"];
 }
 
 async function testing() {
