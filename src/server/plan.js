@@ -1,24 +1,20 @@
-const { firestore } = require('../index.js');
-const  {addFutureCourse, FutureCourse, getStudent }  = require('../database/student.js');
+
+const Student = require('../database/student.js');
+const Concentration = require("../database/concentration.js");
 
 async function viewPlan(req) {
     let netID = req.params.netID;
-    let student = await getStudent(netID)
+    let student = await Student.getStudent(netID)
     let future_courses = student.futureCourses;
-    if(!future_courses)
-    {
-        return ['No plan', 'text.plain'];
-    }
     let jsonFutureCourses = future_courses.map(course => {
         return {
             course: course.course,
             semester: course.semester,
             year: course.year
         };
-      });
-      console.log(jsonFutureCourses);
-      return jsonFutureCourses;
-    //return [`view plan endpoint - param: ${req.params.netID}`, 200]
+    });
+    console.log(jsonFutureCourses);
+    return [JSON.stringify(jsonFutureCourses), 200];
 }
 
 function viewStatus(req) {
@@ -60,20 +56,13 @@ function optimizePlan(req) {
     return [`optimize plan endpoint - param: ${req.params}`, 200]
 }
 
-async function savePlan(req) {
+function savePlan(req) {
     //return [`save plan endpoint - param: ${req.params}`, 200]
-    let netID = req.params.netID;
-    let coursesToSave = req.body;
-    const res = await firestore.collection('student').doc(netID).update({ future_courses: [] });
-    coursesToSave.forEach(async (course) => {
-        const futureCourse = new FutureCourse(course.courseID, course.semester, course.year);
-        addFutureCourse(netID, futureCourse);
-    });
-    return ['Success!', 200, "plain/text"];
+    //let netID = req.params.netID;
+    //let coursesToSave = req.params.body;
 }
 
-async function testing()
-{
+async function testing() {
     console.log(await viewPlan('nss170'));
 }
 //testing();
