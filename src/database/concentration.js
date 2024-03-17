@@ -1,14 +1,14 @@
 const { firestore } = require('./firebase.js');
-const { FutureCourse } = require('./futureCourse.js');
 const Helper = require("./helperFunction.js")
 const { FieldValue } = require('firebase-admin/firestore');
+const { FutureCourse } = require('./student.js');
 
 class Concentration {
     constructor(name, courses, residency, sample_schedule) {
         this.name = name;
         this.courses = courses;
         this.residency = residency;
-        this.sample_schedule = Helper.isInstance(sample_schedule, FutureCourse) ? sample_schedule : [];
+        this.sampleSchedule = Helper.isInstance(sample_schedule, FutureCourse) ? sample_schedule : [];
     }
 }
 
@@ -28,18 +28,20 @@ async function getConcentration(concentrationID) {
             const residency = concentrationData.residency;
 
             const coursesArray = concentrationData.courses || [];
-            const courses = await Helper.getAssociatedIDs(coursesArray);
+            // const courses = await Helper.getAssociatedIDs(coursesArray);
+
+            const courses = {};
+            await Promise.all(Object.entries(coursesArray).map(async ([course, references]) => {
+                const modifiedReferences = await Helper.getAssociatedIDs(references);
+                courses[course] = modifiedReferences;
+            }));
 
             const sampleScheudleArray = concentrationData.sample_schedule || [];
             const sample_schedule = await Promise.all(sampleScheudleArray.map(async courseObj => {
                 const courseRef = courseObj.course;
                 const courseDoc = await courseRef.get();
                 if (courseDoc.exists) {
-                    return {
-                        id: courseDoc.id,
-                        semester: courseObj.semester,
-                        year: courseObj.year
-                    };
+                    return new FutureCourse(courseDoc.id, courseObj.semester, courseObj.year);
                 } else {
                     console.log(`Course document ${courseRef.id} does not exist.`);
                     return null;
@@ -68,7 +70,7 @@ async function insertConcentration(concentrationID, concentration) {
             sample_schedule: [] //I have it so it makes a place in the concentration and then inserts the courses. maybe we should generalize addFutureCourse in the studen file and use it for this too?
         }
         const res = await firestore.collection('concentration').doc(concentrationID).set(concentrationData);
-        concentration.sample_schedule.forEach(async (object) => {
+        concentration.sampleSchedule.forEach(async (object) => {
             const sampleScheduleData = {
                 course: Helper.createReference("courses", object.course),
                 semester: object.semester,
@@ -83,6 +85,15 @@ async function insertConcentration(concentrationID, concentration) {
     }
 }
 
+async function getSample(concentrationID) {
+    try {
+        const concentrationInfo = await getConcentration(concentrationID);
+
+        return concentrationInfo.sampleSchedule;
+    } catch (e) {
+        throw new Error(e);
+    }
+}
 
 
 async function testing() {
@@ -92,3 +103,5 @@ async function testing() {
 }
 
 // testing();
+
+module.exports = { getSample };

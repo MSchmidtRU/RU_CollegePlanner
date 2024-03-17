@@ -4,7 +4,7 @@ const plan = require("./plan");
 const getEndpoints = {
     "/4yrplan/~netID": plan.viewPlan,
     "/4yrplan/~netID/status": plan.viewStatus,
-    "/4yrplan/~course/sample": plan.viewSample,
+    "/4yrplan/~concentrationID/sample": plan.viewSample,
     "/4yrplan/~netID/validate": plan.validatePlan,
     "/4yrplan/~netID/optimize": plan.optimizePlan,
 }

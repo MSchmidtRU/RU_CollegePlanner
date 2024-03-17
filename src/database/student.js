@@ -24,7 +24,7 @@ class FutureCourse {
     constructor(course, semester, year) {
         this.course = this.setCourse(course)
         this.semester = this.setSemester(semester);
-        this.year = year
+        this.year = this.setYear(year);
     }
 
     setCourse(course) {
@@ -51,6 +51,18 @@ class FutureCourse {
             return semester;
         } else {
             throw new Error("Invalid semester value - must be winter, spring, fall, summer, or unknown");
+        }
+    }
+
+    setYear(year) {
+        if (typeof year !== 'string') {
+            throw new Error("Year must be a string.");
+        }
+
+        if (year.match(/(freshman|sophomore|junior|senior)/i)) {
+            return year;
+        } else {
+            throw new Error("Invalid year value - must be freshman, sophomore, junior, senior");
         }
     }
 
@@ -179,10 +191,6 @@ async function addFutureCourse(netID, futureCourse) {
         var course = await getCourse(futureCourse.course);
 
         if (studentInfo && course) {
-
-            if (futureCourse.year < new Date().getFullYear) {
-                throw new Error("invalid year for future semeseter - year is in the past")
-            }
 
             studentInfo.futureCourses.forEach(course => {
                 if (course.course == futureCourse.course) {

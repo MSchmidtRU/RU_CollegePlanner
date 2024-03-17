@@ -1,5 +1,6 @@
 
 const Student = require('../database/student.js');
+const Concentration = require("../database/concentration.js");
 
 async function viewPlan(req) {
     let netID = req.params.netID;
@@ -42,8 +43,9 @@ async function removeCourse(req) {
 }
 
 
-function viewSample(req) {
-    return [`view sample endpoint - param: ${req.params}`, 200]
+async function viewSample(req) {
+    const sampleScheudule = await Concentration.getSample(req.params.concentrationID);
+    return [JSON.stringify(sampleScheudule), 200];
 }
 
 function validatePlan(req) {
