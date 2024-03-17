@@ -1,9 +1,7 @@
-const { firestore } = require('../index.js');
+const { firestore } = require('./firebase.js');
 const { FieldValue } = require('firebase-admin/firestore');
-
-const Helper = require("./helperFunction.js")
+const Helper = require("./helperFunction.js");
 const { Section } = require("./section.js");
-const { FutureCourse } = require("./futureCourse.js");
 const { getCourse } = require("./course.js");
 
 class Student {
@@ -20,6 +18,43 @@ class Student {
         this.futureCourses = Helper.isInstance(futureCourses, FutureCourse) ? futureCourses : [];
         this.semesterCourses = Helper.isInstance(semesterCourses, Section) ? semesterCourses : [];
     }
+}
+
+class FutureCourse {
+    constructor(course, semester, year) {
+        this.course = this.setCourse(course)
+        this.semester = this.setSemester(semester);
+        this.year = year
+    }
+
+    setCourse(course) {
+
+        if (typeof course !== 'string') {
+            throw new Error("course  must be a string.");
+        }
+        if (course.match(/^\d{2}\:\d{3}\:\d{3}$/)) {
+            return course;
+        } else {
+            throw new Error("Invlaid course format - shoudl be xx.xxx.xxx format")
+        }
+
+
+        return course
+    }
+
+    setSemester(semester) {
+        if (typeof semester !== 'string') {
+            throw new Error("Semester must be a string.");
+        }
+
+        if (semester.match(/(winter|spring|summer|fall|unknown)/i)) {
+            return semester;
+        } else {
+            throw new Error("Invalid semester value - must be winter, spring, fall, summer, or unknown");
+        }
+    }
+
+
 }
 
 // Function to get student data
@@ -102,14 +137,14 @@ async function insertStudent(netID, studentInfo) {
             completed_courses: Helper.createReference("courses", studentInfo.completedCourses),
             enrolled_courses: Helper.createReference("courses", studentInfo.enrolledCourses),
             future_courses: [],
-            //future_courses: Helper.createReference("courses", studentInfo.futureCourses),
+            //future_courses: Helper.createReference("courses", studentInfo.futureCourses), //FIXME please
             semester_courses: Helper.createReference("section", studentInfo.semesterCourses),
         };
         const res = await firestore.collection('student').doc(netID).set(studentData);
 
         studentInfo.futureCourses.forEach(async (futureCourse) => {
             await addFutureCourse(netID, futureCourse)
-          });
+        });
 
 
     } catch (e) {
@@ -125,8 +160,8 @@ async function addFutureCourse(netID, futureCourse) {
             throw new Error("future is not an instance of FutureCourse");
         }
 
-        var studentInfo = getStudent(netID);
-        var course = getCourse(futureCourse.course);
+        var studentInfo = await getStudent(netID);
+        var course = await getCourse(futureCourse.course);
 
         if (studentInfo && course) {
 
@@ -140,7 +175,7 @@ async function addFutureCourse(netID, futureCourse) {
                 year: futureCourse.year
             }
             const res = await firestore.collection('student').doc(netID).update({ future_courses: FieldValue.arrayUnion(data) });
-
+            return true; //TODO change to 4 year plan
         } else {
             throw new Error("netID or course is not defined ");
         }
@@ -159,9 +194,9 @@ async function testing() {
 
     //let course = new FutureCourse("14:332:128", "Summer", 2025);
     //await addFutureCourse("ri456", course);
-   // let student = await getStudent("ri456");
-   // console.log(student);
+    // let student = await getStudent("ri456");
+    // console.log(student);
 }
-testing();
+// testing();
 
-module.exports = { Student, getStudent, addFutureCourse };
+module.exports = { Student, getStudent, addFutureCourse, FutureCourse };

@@ -23,7 +23,7 @@ class Server {
         });
     }
 
-    router() {
+    async router() {
         try {
             let contentType = this.req.headers['content-type'];
             let method = this.req.method;
@@ -50,7 +50,7 @@ class Server {
 
                         this.req.params = { ...embeddedParams, ...this.parseParams(params) };
                         this.req.body = this.parseJson(this.body);
-                        return this.sendResponse(...handler(this.req));
+                        return this.sendResponse(...await handler(this.req));
                     }
                 }
                 return this.sendResponse("endpoint not found", 421);

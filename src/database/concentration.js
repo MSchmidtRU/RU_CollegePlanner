@@ -1,4 +1,4 @@
-const { firestore } = require('../index.js');
+const { firestore } = require('./firebase.js');
 const { FutureCourse } = require('./futureCourse.js');
 const Helper = require("./helperFunction.js")
 const { FieldValue } = require('firebase-admin/firestore');
@@ -12,10 +12,9 @@ class Concentration {
     }
 }
 
-async function getConcentration(concentrationID)
-{
+async function getConcentration(concentrationID) {
     try {
-    const concentrationInfo = firestore.collection("concentration").doc(concentrationID);
+        const concentrationInfo = firestore.collection("concentration").doc(concentrationID);
 
         // Retrieve the document data
         const doc = await concentrationInfo.get();
@@ -76,7 +75,7 @@ async function insertConcentration(concentrationID, concentration) {
                 year: object.year
             }
             await firestore.collection('concentration').doc(concentrationID).update({ sample_schedule: FieldValue.arrayUnion(sampleScheduleData) });
-          });
+        });
 
     } catch (error) {
         console.error('Error saving to Course document:', e);
@@ -92,4 +91,4 @@ async function testing() {
     console.log(await getConcentration('33:555'));
 }
 
-testing();
+// testing();

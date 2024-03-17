@@ -1,4 +1,4 @@
-const { firestore } = require('../index.js');
+const { firestore } =require('./firebase.js');
 
 async function getAssociatedIDs(courseArray) {
     const retrievedIDs = await Promise.all(courseArray.map(async courseObj => {

@@ -1,4 +1,7 @@
 
+const { addFutureCourse, FutureCourse } = require("../database/student");
+
+
 function viewPlan(req) {
     return [`view plan endpoint - param: ${req.params.netID}`, 200]
 }
@@ -7,8 +10,16 @@ function viewStatus(req) {
     return [`view status endpoint - param: ${req.params.netID}`, 200]
 }
 
-function addCourse(req) {
-    return [`add course endpoint - param: ${req.params.course}`, 200]
+async function addCourse(req) {
+    try {
+        const body = req.body;
+        const futureCourse = new FutureCourse(body.courseID, body.semester, body.year);
+        let updatedPlan = await addFutureCourse(req.params.netID, futureCourse);
+        return [updatedPlan, 200, "plain/text"];
+    } catch (e) {
+
+    }
+    // return [`add course endpoint - param: ${req.params.course}`, 200]
 }
 
 function removeCourse(req) {

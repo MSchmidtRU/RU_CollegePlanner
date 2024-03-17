@@ -1,4 +1,4 @@
-const { firestore } = require('../index.js');
+// const { firestore } = require('../index.js');
 
   //This function gets the IDs of objects refereced in an array
   // async function getAssociatedIDs(courseArray)

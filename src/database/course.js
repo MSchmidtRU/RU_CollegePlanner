@@ -1,4 +1,4 @@
-const { firestore } = require('../index.js');
+const { firestore } = require('./firebase.js');
 const Helper = require("./helperFunction.js")
 const { Section } = require('./section.js');
 
