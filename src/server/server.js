@@ -1,12 +1,11 @@
 const http = require('node:http');
-const { methods, getEndpoints, postEndpoints, deleteEndpoints, putEndpoints } = require("./endpoints");
+const { methods } = require("./endpoints");
 
 
 const hostname = '127.0.0.1';
 const port = 3000;
 
 class Server {
-
     constructor() {
         this.server = http.createServer((req, res) => {
             let body = [];
@@ -25,48 +24,56 @@ class Server {
     }
 
     router() {
-        let contentType = this.req.headers['content-type'];
-        let method = this.req.method;
-        let url = this.req.url.split("?")[0];
-        let params = this.req.url.split("?")[1];
+        try {
+            let contentType = this.req.headers['content-type'];
+            let method = this.req.method;
+            let url = this.req.url.split("?")[0];
+            let params = this.req.url.split("?")[1];
 
-        let endpoints = methods[method];
-        if (endpoints) {
+            let endpoints = methods[method];
+            if (endpoints) {
 
-            for (const [endpoint, handler] of Object.entries(endpoints)) {
+                for (const [endpoint, handler] of Object.entries(endpoints)) {
 
-                const regex = new RegExp('^' + endpoint.replace(/:\w+/g, '\\w+') + '$');
+                    const regex = new RegExp('^' + endpoint.replace(/~\w+/g, '[^/]+') + '$');
 
-                if (regex.test(url)) {
-                    const embeddedParams = {};
-                    const urlParts = url.split('/');
-                    const endpointParts = endpoint.split('/');
+                    if (regex.test(url)) {
+                        const embeddedParams = {};
+                        const urlParts = url.split('/');
+                        const endpointParts = endpoint.split('/');
 
-                    for (let i = 0; i < urlParts.length; i++) {
-                        if (endpointParts[i].startsWith(':')) {
-                            embeddedParams[endpointParts[i].substring(1)] = urlParts[i];
+                        for (let i = 0; i < urlParts.length; i++) {
+                            if (endpointParts[i].startsWith('~')) {
+                                embeddedParams[endpointParts[i].substring(1)] = urlParts[i].replace(/\//g, '');
+                            }
                         }
-                    }
 
-                    this.req.params = { ...embeddedParams, ...this.parseParams(params) };
-                    return this.sendResponse(...handler(this.req));
+                        this.req.params = { ...embeddedParams, ...this.parseParams(params) };
+                        this.req.body = this.parseJson(this.body);
+                        return this.sendResponse(...handler(this.req));
+                    }
                 }
+                return this.sendResponse("endpoint not found", 421);
             }
-            return this.sendResponse("endpoint not found", 421);
+            return this.sendResponse("unknown method", 400);
+        } catch (e) {
+            this.sendError(e);
         }
-        return this.sendResponse("unknown method", 400);
 
     }
 
     parseParams(params) {
-        const paramsArray = params.split('&');
-        const result = {};
-        paramsArray.forEach(param => {
-            const [name, value] = param.split('=');
-            result[name] = value;
-        });
+        if (params) {
+            const paramsArray = params.split('&');
+            const result = {};
+            paramsArray.forEach(param => {
+                const [name, value] = param.split('=');
+                result[name] = value;
+            });
 
-        return result;
+            return result;
+        }
+        return [];
     }
 
     checkContentType(expected, received) {
@@ -112,9 +119,9 @@ class Server {
         });
     }
 
-    sendResponse(response, code) {
+    sendResponse(response, code, contentType = "application/json") {
         this.res.statusCode = code;
-        this.res.setHeader("Content-Type", "text/plain");
+        this.res.setHeader("Content-Type", contentType);
         this.res.end(response);
     }
 
