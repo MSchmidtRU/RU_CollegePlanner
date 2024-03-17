@@ -54,11 +54,11 @@ async function insertSection(secionID, section) {
     }
 }
 
-// async function testing() {
-//     let section = new Section(true, {friday: {start: "8:30", end: "9:50", location: {campus:"busch", room: "ARC-164"}}, tuesday: {start: "8:30", end: "9:50", location: {campus:"busch", room: "ARC-164"}}});
-//     console.log(await insertSection('14:332:124:02',section));
-//         //console.log(await getSection('14:332:124:01'));
-// }
-// testing();
+async function testing() {
+    //let section = new Section(true, {friday: {start: "8:30", end: "9:50", location: {campus:"busch", room: "ARC-164"}}, tuesday: {start: "8:30", end: "9:50", location: {campus:"busch", room: "ARC-164"}}});
+    //console.log(await insertSection('14:332:124:02',section));
+        console.log(await getSection('14:332:124:01'));
+}
+//testing();
 
 module.exports = { Section };

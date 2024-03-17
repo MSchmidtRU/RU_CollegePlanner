@@ -1,9 +1,22 @@
+const { firestore } = require('../index.js');
+const  {addFutureCourse, FutureCourse, getStudent }  = require('../database/student.js');
 
 const Student = require("../database/student");
 
-
-function viewPlan(req) {
-    return [`view plan endpoint - param: ${req.params.netID}`, 200]
+async function viewPlan(req) {
+    let netID = req.params.netID;
+    let student = await Student.getStudent(netID)
+    let future_courses = student.futureCourses;
+    let jsonFutureCourses = future_courses.map(course => {
+        return {
+          course: course.course,
+          semester: course.semester,
+          year: course.year
+        };
+      });
+      console.log(jsonFutureCourses);
+      return jsonFutureCourses;
+    //return [`view plan endpoint - param: ${req.params.netID}`, 200]
 }
 
 function viewStatus(req) {
@@ -45,8 +58,15 @@ function optimizePlan(req) {
 }
 
 function savePlan(req) {
-    return [`save plan endpoint - param: ${req.params}`, 200]
+    //return [`save plan endpoint - param: ${req.params}`, 200]
+    //let netID = req.params.netID;
+    //let coursesToSave = req.params.body;
 }
 
+async function testing()
+{
+    console.log(await viewPlan('nss170'));
+}
+//testing();
 
 module.exports = { viewPlan, viewStatus, addCourse, removeCourse, viewSample, validatePlan, optimizePlan, savePlan }
