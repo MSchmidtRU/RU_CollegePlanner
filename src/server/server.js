@@ -49,7 +49,7 @@ class Server {
                         }
 
                         this.req.params = { ...embeddedParams, ...this.parseParams(params) };
-                        this.req.body = this.parseJson(this.body);
+                        this.req.body = contentType == "application/json" ? this.parseJson(this.body) : "";
                         return this.sendResponse(...await handler(this.req));
                     }
                 }
