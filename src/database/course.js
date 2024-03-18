@@ -68,6 +68,29 @@ async function insertCourse(courseID, course) {
     }
 }
 
+async function getPrereqs(courseID)
+{
+    try{
+        let course = await getCourse(courseID);
+        let preReqs = course.prereqs;
+        return preReqs;
+    }catch(e){
+        throw e;
+    }
+    
+}
+
+async function getCoreqs(courseID)
+{
+    try{
+        let course = await getCourse(courseID);
+        let coReqs = course.coreqs;
+        return coReqs;
+    }catch(e){
+        throw e;
+    }
+}
+
 async function validateCourse(netID) 
 {
     //for each course in the list of reuired courses for the concentration, if gets all equivelent coruses,  checks if that course is in the student's completed, enrolled, or future courses. If not it checks if
