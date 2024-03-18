@@ -71,7 +71,7 @@ class FutureCourse {
 
 async function checkStudentExists(netID) {
     try {
-        const studentRef = firestore.collection('students').doc(netID);
+        const studentRef = firestore.collection('student').doc(netID);
 
         const studentDoc = await studentRef.get();
 
@@ -85,15 +85,16 @@ async function checkStudentExists(netID) {
 }
 
 // Function to get student data
-async function getStudent(netID) {//should i add a parameter to return only depending on what is wanted - like if they ask for GPA give them that, etc?
+async function getStudent(netID) {
     try {
         // Reference to the document in the "student" collection
         const studentInfo = firestore.collection("student").doc(netID);
 
         // Retrieve the document data
         const doc = await studentInfo.get();
-
-        if (doc.exists) {
+        if (!doc.exists) {
+            throw new Error('Student document not found');
+        };
             // Document exists, access its data
             const studentData = doc.data();
 
@@ -128,21 +129,15 @@ async function getStudent(netID) {//should i add a parameter to return only depe
                             courseDoc.id,
                             courseObj.semester,
                             courseObj.year);
-
                 } else {
-                    console.log(`Course document ${courseRef.id} does not exist.`);
-                    return null;
+                    //console.log(`Course document ${courseRef.id} does not exist.`);
+                    //return null;
+                    throw new Error('Student document not found');
                 }
             }));
 
             return new Student(first_name, last_name, email, phone, grad_year, GPA, concentrations, completed_courses, enrolled_courses, future_courses, semester_courses);
-        } else {
-            // Document does not exist
-            console.log('No such document!');
-            return null;
-        }
     } catch (error) {
-        console.error('Error getting document:', error);
         throw error;
     }
 }
@@ -209,10 +204,11 @@ async function addFutureCourse(netID, futureCourse) {
             const updatedStudentInfo = await getStudent(netID);
             return { "data": updatedStudentInfo.futureCourses }; //TODO change to 4 year plan
         } else {
-            throw new Error("netID or course is not defined ");
+            throw new Error("netID or course is not defined");//TODO good?
         }
     } catch (e) {
         throw new Error(e);
+
     }
 
 }
@@ -247,8 +243,8 @@ async function removeFutureCourse(netID, courseID) {
 
 
 async function testing() {
-    let student = new Student("melech", "achashveirosh", "king@gmail.com", "9087457645", 2024, 3.9, ["14:332"], ["14:332:128"], ["14:332:128"], [new FutureCourse("14:332:128", "Winter", 2025)], []);
-    await insertStudent("ach127", student);
+    //let student = new Student("melech", "achashveirosh", "king@gmail.com", "9087457645", 2024, 3.9, ["14:332"], ["14:332:128"], ["14:332:128"], [new FutureCourse("14:332:128", "Winter", 2025)], []);
+    //await insertStudent("ach127", student);
     console.log(await getStudent('ach127'));
 
     //let course = new FutureCourse("14:332:128", "Summer", 2025);
@@ -258,4 +254,4 @@ async function testing() {
 }
 //testing();
 
-module.exports = { Student, getStudent, addFutureCourse, removeFutureCourse, FutureCourse };
+module.exports = { Student, getStudent, addFutureCourse, removeFutureCourse, FutureCourse, checkStudentExists };

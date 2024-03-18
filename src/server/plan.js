@@ -4,17 +4,22 @@ const Concentration = require("../database/concentration.js");
 const { firestore } = require("../database/firebase.js");
 
 async function viewPlan(req) {
-    let netID = req.params.netID;
-    let student = await Student.getStudent(netID)
-    let future_courses = student.futureCourses;
-    let jsonFutureCourses = future_courses.map(course => {
-        return {
-            course: course.course,
-            semester: course.semester,
-            year: course.year
-        };
-    });
-    return [JSON.stringify(jsonFutureCourses), 200];
+    try{
+        let netID = req.params.netID;
+        await Student.checkStudentExists(netID);
+        let student = await Student.getStudent(netID)
+        let future_courses = student.futureCourses;
+        let jsonFutureCourses = future_courses.map(course => {
+            return {
+                course: course.course,
+                semester: course.semester,
+                year: course.year
+            };
+        });
+        return [JSON.stringify(jsonFutureCourses), 200];
+    }catch (e) {
+        throw new Error(e);
+    }
 }
 
 function viewStatus(req) {
@@ -56,15 +61,22 @@ function optimizePlan(req) {
     return [`optimize plan endpoint - param: ${req.params}`, 200]
 }
 
+
 async function savePlan(req) {
-    //return [`save plan endpoint - param: ${req.params}`, 200]
-   let netID = req.params.netID;
-   let coursesToSave = req.body;
-   const res = await firestore.collection('student').doc(netID).update({ future_courses: []});
-   coursesToSave.forEach((course) => {
-    Student.addFutureCourse(netID, new Student.FutureCourse(course.courseID, course.semester, course.year));
-   });
-   return ['Success!', 200, "plain/text"];
+    try {
+        let netID = req.params.netID;
+        let coursesToSave = req.body;
+        const res = await firestore.collection('student').doc(netID).update({ future_courses: []});
+
+        for (const course of coursesToSave) {
+
+                let courseSaving = new Student.FutureCourse(course.courseID, course.semester, course.year);
+                await Student.addFutureCourse(netID, courseSaving);
+        }
+        return ['Success saving new plan!', 200, "plain/text"];
+    } catch (e) {
+        throw new Error(e);
+    }
 }
 
 async function testing() {
