@@ -2,13 +2,21 @@ const { firestore } = require('./firebase.js');
 const Helper = require("./helperFunction.js")
 const { FieldValue } = require('firebase-admin/firestore');
 const { FutureCourse } = require('./student.js');
+const { Course } = require('./course.js');
 
 class Concentration {
     constructor(name, courses, residency, sample_schedule) {
         this.name = name;
-        this.courses = courses;
+        this.courses = Helper.isInstance(courses, ConcentrationCourses) ? courses : [];
         this.residency = residency;
         this.sampleSchedule = Helper.isInstance(sample_schedule, FutureCourse) ? sample_schedule : [];
+    }
+}
+
+class ConcentrationCourses{
+    constructor(course, equivelent_courses) {
+        this.course = course;
+        this.equivelent_courses = Helper.isInstance(equivelent_courses, Course) ? equivelent_courses : [];
     }
 }
 
@@ -65,7 +73,7 @@ async function insertConcentration(concentrationID, concentration) {
 
         const concentrationData = {
             name: concentration.name,
-            courses: Helper.createReference("courses", concentration.courses),
+            courses: [],//Helper.createReference("courses", concentration.courses),
             residency: concentration.residency,
             sample_schedule: [] //I have it so it makes a place in the concentration and then inserts the courses. maybe we should generalize addFutureCourse in the studen file and use it for this too?
         }
@@ -95,13 +103,18 @@ async function getSample(concentrationID) {
     }
 }
 
+async function getEquivelentCourses(concentrationID, courseID)
+{
 
-async function testing() {
-    let concentration = new Concentration("Underwater Basket Weaving", ["14:332:128", "14:332:221"], 51, [new FutureCourse("14:332:128", "Winter", 2025)]);
-    await insertConcentration("33:555", concentration);
-    console.log(await getConcentration('33:555'));
 }
 
-// testing();
+
+async function testing() {
+    //let concentration = new Concentration("Underwater Basket Weaving", ["14:332:128", "14:332:221"], 51, [new FutureCourse("14:332:128", "Winter", 2025)]);
+    //await insertConcentration("33:555", concentration);
+    //console.log(await getConcentration('33:555'));
+}
+
+testing();
 
 module.exports = { getSample };
