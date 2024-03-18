@@ -57,9 +57,22 @@ async function viewSample(req) {
     return [JSON.stringify(sampleScheudule), 200];
 }
 
-function validatePlan(req) {
+async function validatePlan(req) {
+    try {
+        let netID = req.params.netID;
+        if (netID != undefined) {
+            let futureCourses = await Student.getFutureCourses(req.params.netID);
+            
+        
 
-    return [`validate plan endpoint - param: ${req.params}`, 200]
+
+            return [`validate plan endpoint - param: ${req.params}`, 200]
+        } else {
+            throw new Error("netID is not defined");
+        }
+    } catch (e) {
+        throw new Error(e);
+    }
 }
 
 function optimizePlan(req) {
@@ -71,12 +84,12 @@ async function savePlan(req) {
     try {
         let netID = req.params.netID;
         let coursesToSave = req.body;
-        const res = await firestore.collection('student').doc(netID).update({ future_courses: []});
+        const res = await firestore.collection('student').doc(netID).update({ future_courses: [] });
 
         for (const course of coursesToSave) {
 
-                let courseSaving = new Student.FutureCourse(course.courseID, course.semester, course.year);
-                await Student.addFutureCourse(netID, courseSaving);
+            let courseSaving = new Student.FutureCourse(course.courseID, course.semester, course.year);
+            await Student.addFutureCourse(netID, courseSaving);
         }
         return ['Success saving new plan!', 200, "plain/text"];
     } catch (e) {
