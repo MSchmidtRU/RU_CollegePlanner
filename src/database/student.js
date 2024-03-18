@@ -122,12 +122,12 @@ async function getStudent(netID) {//should i add a parameter to return only depe
             const future_courses = await Promise.all(futureCoursesArray.map(async courseObj => {
                 const courseRef = courseObj.course;
 
-                    const courseDoc = await courseRef.get();
-                    if (courseDoc.exists) {
-                        return new FutureCourse(
-                            courseDoc.id,
-                            courseObj.semester,
-                            courseObj.year);
+                const courseDoc = await courseRef.get();
+                if (courseDoc.exists) {
+                    return new FutureCourse(
+                        courseDoc.id,
+                        courseObj.semester,
+                        courseObj.year);
 
                 } else {
                     console.log(`Course document ${courseRef.id} does not exist.`);
@@ -245,6 +245,20 @@ async function removeFutureCourse(netID, courseID) {
     }
 }
 
+async function getFutureCourses(netID) {
+    try {
+        let student = await getStudent(netID);
+        if (student) {
+            let future_courses = student.futureCourses;
+            return future_courses;
+        } else {
+            throw new Error("not valid student");
+        }
+    } catch (e) {
+        throw new Error(e);
+    }
+}
+
 
 async function testing() {
     let student = new Student("melech", "achashveirosh", "king@gmail.com", "9087457645", 2024, 3.9, ["14:332"], ["14:332:128"], ["14:332:128"], [new FutureCourse("14:332:128", "Winter", 2025)], []);
@@ -258,4 +272,4 @@ async function testing() {
 }
 //testing();
 
-module.exports = { Student, getStudent, addFutureCourse, removeFutureCourse, FutureCourse };
+module.exports = { Student, getStudent, getFutureCourses, addFutureCourse, removeFutureCourse, FutureCourse };

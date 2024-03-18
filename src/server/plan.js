@@ -3,18 +3,26 @@ const Student = require('../database/student.js');
 const Concentration = require("../database/concentration.js");
 
 async function viewPlan(req) {
-    let netID = req.params.netID;
-    let student = await Student.getStudent(netID)
-    let future_courses = student.futureCourses;
-    let jsonFutureCourses = future_courses.map(course => {
-        return {
-            course: course.course,
-            semester: course.semester,
-            year: course.year
-        };
-    });
-    console.log(jsonFutureCourses);
-    return [JSON.stringify(jsonFutureCourses), 200];
+    try {
+        let netID = req.params.netID;
+        let jsonFutureCourses;
+        if (netID != undefined) {
+            let future_courses = await Student.getFutureCourses(netID);
+            jsonFutureCourses = future_courses.map(course => {
+                return {
+                    course: course.course,
+                    semester: course.semester,
+                    year: course.year
+                };
+            });
+            return [JSON.stringify(jsonFutureCourses), 200];
+        } else {
+            throw new Error("net id is not defined");
+        }
+
+    } catch (e) {
+        throw new Error(e);
+    }
 }
 
 function viewStatus(req) {
@@ -49,6 +57,7 @@ async function viewSample(req) {
 }
 
 function validatePlan(req) {
+
     return [`validate plan endpoint - param: ${req.params}`, 200]
 }
 
