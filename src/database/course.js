@@ -16,30 +16,30 @@ async function getCourse(courseID) {
     try {
         // Reference to the document in the "student" collection
         const courseInfo = firestore.collection("courses").doc(courseID);
-        
+
         // Retrieve the document data
         const doc = await courseInfo.get();
         if (!doc.exists) {
             throw new Error('Course document not found');
         };
-            // Document exists, access its data
-            const courseData = doc.data();
+        // Document exists, access its data
+        const courseData = doc.data();
 
-            // Fetch basic student info
-            const credit = courseData.credit;
-            const description = courseData.description;
-            const name = courseData.name;
+        // Fetch basic student info
+        const credit = courseData.credit;
+        const description = courseData.description;
+        const name = courseData.name;
 
-            const coreqsArray = courseData.coreqs || [];
-            const coreqs = await Helper.getAssociatedIDs(coreqsArray);
+        const coreqsArray = courseData.coreqs || [];
+        const coreqs = await Helper.getAssociatedIDs(coreqsArray);
 
-            const prereqsArray = courseData.prereqs || [];
-            const prereqs = await Helper.getAssociatedIDs(prereqsArray);
+        const prereqsArray = courseData.prereqs || [];
+        const prereqs = await Helper.getAssociatedIDs(prereqsArray);
 
-            const sectionsArray = courseData.sections || [];
-            const sections = await Helper.getAssociatedIDs(sectionsArray);
+        const sectionsArray = courseData.sections || [];
+        const sections = await Helper.getAssociatedIDs(sectionsArray);
 
-            return new Course(name, description, credit, prereqs, coreqs, sections);
+        return new Course(name, description, credit, prereqs, coreqs, sections);
 
     } catch (error) {
         throw error;
@@ -68,31 +68,28 @@ async function insertCourse(courseID, course) {
     }
 }
 
-async function getPrereqs(courseID)
-{
-    try{
+async function getPrereqs(courseID) {
+    try {
         let course = await getCourse(courseID);
         let preReqs = course.prereqs;
         return preReqs;
-    }catch(e){
+    } catch (e) {
         throw e;
     }
-    
+
 }
 
-async function getCoreqs(courseID)
-{
-    try{
+async function getCoreqs(courseID) {
+    try {
         let course = await getCourse(courseID);
         let coReqs = course.coreqs;
         return coReqs;
-    }catch(e){
+    } catch (e) {
         throw e;
     }
 }
 
-async function validateCourse(netID) 
-{
+async function validateCourse(netID) {
     //for each course in the list of reuired courses for the concentration, if gets all equivelent coruses,  checks if that course is in the student's completed, enrolled, or future courses. If not it checks if
 }
 
@@ -103,4 +100,4 @@ async function testing() {
 }
 //testing();
 
-module.exports = { Course, getCourse }
+module.exports = { Course, getCourse, getPrereqs, getCoreqs }

@@ -1,7 +1,24 @@
 
 const Student = require('../database/student.js');
 const Concentration = require("../database/concentration.js");
+const Course = require("../database/course.js");
 const { firestore } = require("../database/firebase.js");
+
+
+const semesterMap = {
+    'fall': 0,
+    'winter': 1,
+    'spring': 2,
+    'summer': 3
+};
+
+const yearMap = {
+    'freshman': 0,
+    'sophomore': 1,
+    'junior': 2,
+    'senior': 3
+};
+
 
 async function viewPlan(req) {
     try {
@@ -60,21 +77,71 @@ async function viewSample(req) {
 async function validatePlan(req) {
     try {
         let netID = req.params.netID;
-        if (netID != undefined) {
+        let concentrationID = req.params.concentrationID;
+        if (netID != undefined && concentrationID != undefined) {
             let futureCourses = await Student.getFutureCourses(req.params.netID);
-            
-        
-
+            let courses = await Promise.all(futureCourses.map(async futureCourse => {
+                return {
+                    course: futureCourse,
+                    prereqs: await Course.getPrereqs(futureCourse.course),
+                    coreqs: await Course.getCoreqs(futureCourse.course),
+                }
+            }))
+            // let concentrationCourses = await Concentration.getCourses(concentrationID);
+            let valid = validatePreCoReqs(courses);
+            //validate concentration reqs with equi classes
 
             return [`validate plan endpoint - param: ${req.params}`, 200]
         } else {
-            throw new Error("netID is not defined");
+            throw new Error("netID or concentration ID is not defined");
         }
     } catch (e) {
         throw new Error(e);
     }
 }
+function validatePreCoReqs(courseObjs) {
+    courseObjs.forEach(courseObj => {
+        const { course, prereqs, coreqs } = courseObj;
 
+        // Convert semester and year strings to numerical values
+        const { semester, year } = course;
+        const semesterNumber = semesterMap[semester];
+        const yearNumber = yearMap[year];
+
+        prereqs.forEach(prereqID => {
+            const prereqCourse = courseObjs.find(obj => obj.course.course === prereqID);
+            if (!prereqCourse) {
+                console.log(`Error: Course ${courseObj.course} has invalid prereq ${prereqID}`);
+                return;
+            }
+
+            const { semester: prereqSemester, year: prereqYear } = prereqCourse.course;
+            const prereqSemesterNumber = semesterMap[prereqSemester];
+            const prereqYearNumber = yearMap[prereqYear];
+
+            if (!(yearNumber > prereqYearNumber || (yearNumber === prereqYearNumber && semesterNumber >= prereqSemesterNumber))) {
+                console.log(`Error: Course ${course.course} has invalid prereq ${prereqID}`);
+            }
+        });
+
+        coreqs.forEach(coreqID => {
+            const coreqCourse = courseObjs.find(obj => obj.course.course === coreqID);
+            if (!coreqCourse) {
+                console.log(`Error: Course ${course.course} has invalid coreq ${coreqID}`);
+                return;
+            }
+
+            const { year: coreqYear } = coreqCourse.course;
+            const coreqYearNumber = yearMap[coreqYear];
+
+            if (!(yearNumber > coreqYearNumber || (yearNumber === coreqYearNumber && semesterNumber >= 3))) {
+                console.log(`Error: Course ${coucourseObjrse.course} has invalid coreq ${coreqID}`);
+            }
+        });
+
+    });
+
+}
 function optimizePlan(req) {
     return [`optimize plan endpoint - param: ${req.params}`, 200]
 }
@@ -98,8 +165,12 @@ async function savePlan(req) {
 }
 
 async function testing() {
-    console.log(await viewPlan('nss170'));
+    courseObjs = [
+        { course: { course: 'CSC101', semester: 'spring', year: 'freshman' }, prereqs: ['CSC100'], coreqs: [] },
+        { course: { course: 'CSC100', semester: 'fall', year: 'sophomore' }, prereqs: [], coreqs: [] }
+    ];
+    validatePreCoReqs(courseObjs);
 }
-//testing();
+testing();
 
 module.exports = { viewPlan, viewStatus, addCourse, removeCourse, viewSample, validatePlan, optimizePlan, savePlan }
