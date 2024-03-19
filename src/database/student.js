@@ -166,9 +166,9 @@ async function insertStudent(netID, studentInfo) {
         };
         const res = await firestore.collection('student').doc(netID).set(studentData);
 
-        studentInfo.futureCourses.forEach(async (futureCourse) => {
-            await addFutureCourse(netID, futureCourse)
-        });
+        for (const futureCourse of studentInfo.futureCourses) {
+            await addFutureCourse(netID, futureCourse);
+        }
 
 
     } catch (e) {
@@ -242,26 +242,12 @@ async function removeFutureCourse(netID, courseID) {
     }
 }
 
-async function getFutureCourses(netID) {
-    try {
-        let student = await getStudent(netID);
-        if (student) {
-            let future_courses = student.futureCourses;
-            return future_courses;
-        } else {
-            throw new Error("not valid student");
-        }
-    } catch (e) {
-        throw new Error(e);
-    }
-}
-
 
 async function testing() {
-    //let student = new Student("melech", "achashveirosh", "king@gmail.com", "9087457645", 2024, 3.9, ["14:332"], ["14:332:128"], ["14:332:128"], [new FutureCourse("14:332:128", "Winter", 2025)], []);
+    //let student = new Student("melech", "achashveirosh", "king@gmail.com", "9087457645", 2024, 3.9, ["14:332"], ["14:332:128"], ["14:332:128"], [new FutureCourse("14:332:128", "Winter", 2025)], ["14:332:128"]);
     //await insertStudent("ach127", student);
-    console.log(await getStudent('ach127'));
-
+    //console.log(await getStudent('ach127'));
+    //console.log(await getFutureCourses('ach127'));
     //let course = new FutureCourse("14:332:128", "Summer", 2025);
     //await addFutureCourse("ri456", course);
     // let student = await getStudent("ri456");
@@ -269,4 +255,4 @@ async function testing() {
 }
 //testing();
 
-module.exports = { Student, getStudent, getFutureCourses, addFutureCourse, removeFutureCourse, FutureCourse };
+module.exports = { Student, getStudent, addFutureCourse, removeFutureCourse, FutureCourse};
