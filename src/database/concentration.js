@@ -43,13 +43,7 @@ async function getConcentration(concentrationID) {
                             courseObj.course,
                             await Helper.getAssociatedIDs(courseObj.equivelent_courses));
             }));
-            /*
-            const courses = {};
-            await Promise.all(Object.entries(coursesArray).map(async ([course, references]) => {
-                const modifiedReferences = await Helper.getAssociatedIDs(references);
-                courses[course] = modifiedReferences;
-            }));*/
-
+            
             const sampleScheudleArray = concentrationData.sample_schedule || [];
             const sample_schedule = await Promise.all(sampleScheudleArray.map(async courseObj => {
                 const courseRef = courseObj.course;
@@ -83,21 +77,23 @@ async function insertConcentration(concentrationID, concentration) {
             sample_schedule: [] //I have it so it makes a place in the concentration and then inserts the courses. maybe we should generalize addFutureCourse in the studen file and use it for this too?
         }
         const res = await firestore.collection('concentration').doc(concentrationID).set(concentrationData);
-        concentration.sampleSchedule.forEach(async (object) => {
+
+        for (const object of concentration.sampleSchedule) {
             const sampleScheduleData = {
                 course: Helper.createReference("courses", object.course),
                 semester: object.semester,
                 year: object.year
-            }
+            };
             await firestore.collection('concentration').doc(concentrationID).update({ sample_schedule: FieldValue.arrayUnion(sampleScheduleData) });
-        });
-        concentration.courses.forEach(async (object) => {
+        }
+        
+        for (const object of concentration.courses) {
             const courseData = {
                 course: object.course,
                 equivelent_courses: Helper.createReference("courses", object.equivelent_courses),
-            }
+            };
             await firestore.collection('concentration').doc(concentrationID).update({ courses: FieldValue.arrayUnion(courseData) });
-        });
+        }
         return;
     } catch (error) {
         console.error('Error saving to Course document:', e);
@@ -133,14 +129,14 @@ async function getEquivelentCourses(concentrationID, courseID)
 }
 
 
-async function testing() {//FIXME there's a bit of a timing issue when I insert a course and then get it right after
-    //let concentration = new Concentration("Testing", [new ConcentrationCourse('14:332:128', ['14:332:400', '14:332:221']), new ConcentrationCourse('14:332:400', ['14:332:128', '14:332:221'])], 51, [new FutureCourse("14:332:128", "Winter", 'junior')]);
-    //let test = await insertConcentration("12:189", concentration);
-    //let concentrationGotten = await getConcentration('12:189');
-    //console.log(concentrationGotten);
-    console.log(await getEquivelentCourses('12:189', "14:332:128"));
+async function testing() {
+    let concentration = new Concentration("Testing", [new ConcentrationCourse('14:332:128', ['14:332:400', '14:332:221']), new ConcentrationCourse('14:332:400', ['14:332:128', '14:332:221'])], 51, [new FutureCourse("14:332:128", "Winter", 'junior')]);
+    let test = await insertConcentration("12:189", concentration);
+    let concentrationGotten = await getConcentration('12:189');
+    console.log(concentrationGotten);
+    //console.log(await getEquivelentCourses('12:189', "14:332:128"));
 }
 
-testing();
+//testing();
 
 module.exports = { getSample };

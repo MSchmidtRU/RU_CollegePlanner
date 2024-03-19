@@ -25,7 +25,7 @@ async function viewPlan(req) {
         let netID = req.params.netID;
         let jsonFutureCourses;
         if (netID != undefined) {
-            let future_courses = await Student.getFutureCourses(netID);
+            let future_courses = (await Student.getStudent(netID)).futureCourses;//getFutureCourses(netID);
             jsonFutureCourses = future_courses.map(course => {
                 return {
                     course: course.course,
@@ -142,6 +142,50 @@ function validatePreCoReqs(courseObjs) {
     });
 
 }
+
+async function validateResidency(resReq, netID, concentration) //(51, 'ach127','14:332')
+{// FIXME this fucntion is slow
+    try{
+        const concentrationInfo = firestore.collection("concentration").doc(concentration);
+
+        const doc = await concentrationInfo.get();
+        if (!doc.exists) {
+            throw new Error('Concentration document not found');
+        };
+        let student = await Student.getStudent(netID);
+        let currently_enrolled = student.enrolledCourses;
+        let completed_courses = student.completedCourses;
+        let futurecoursesObject = student.futureCourses;
+        let future_courses = [];
+        futurecoursesObject.forEach(course => {
+            future_courses.push(course.course);
+        });
+        let totalCourses = currently_enrolled.concat(completed_courses, future_courses);
+
+        let residencyCredits = 0;
+        if (totalCourses) {
+            for (const course of totalCourses) {
+                let school = course.substring(0, course.lastIndexOf(':'));
+                if (school == concentration) {
+                    let courseObj = await Course.getCourse(course);
+                    residencyCredits += courseObj.credit;
+                    console.log(residencyCredits);
+                }
+            }
+        
+            if (residencyCredits < resReq) {
+                return false;
+            }
+            return true;
+        }
+        
+        return false;
+
+    }catch(e){
+        throw e;
+    }
+}
+
 function optimizePlan(req) {
     return [`optimize plan endpoint - param: ${req.params}`, 200]
 }
@@ -165,12 +209,16 @@ async function savePlan(req) {
 }
 
 async function testing() {
+    /*
     courseObjs = [
         { course: { course: 'CSC101', semester: 'spring', year: 'freshman' }, prereqs: ['CSC100'], coreqs: [] },
         { course: { course: 'CSC100', semester: 'fall', year: 'sophomore' }, prereqs: [], coreqs: [] }
     ];
-    validatePreCoReqs(courseObjs);
+    validatePreCoReqs(courseObjs);*/
+   // let student = await Student.getStudent('ach127');
+    //console.log(await validateResidency(31, 'nss170', '14:332'));
+    console.log(await viewPlan('nss170'));
 }
-testing();
+//testing();
 
 module.exports = { viewPlan, viewStatus, addCourse, removeCourse, viewSample, validatePlan, optimizePlan, savePlan }
