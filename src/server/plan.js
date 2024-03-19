@@ -81,20 +81,36 @@ async function validatePlan(req) {
     if (netID != undefined && concentrationID != undefined) {
         let futureCourses = await Student.getFutureCourses(req.params.netID);
 
-        let courses = await Promise.all(futureCourses.map(async futureCourse => {
-            return {
-                course: futureCourse,
-                prereqs: await Course.getPrereqs(futureCourse.course),
-                coreqs: await Course.getCoreqs(futureCourse.course),
+        let { isValidOrder, invalidPrereq, invalidCoreqs } = await validatePreCoReqs(futureCourses);
+
+        let {
+            isFulfilledConcentationCourses,
+            assignedCourses,
+            unassignedCourses,
+            unusedIds,
+        } = await validateConcentrationCourses(concentrationID, futureCourses);
+
+        let { isValidResReq, numMissing } = await validateResidency(concentrationID, futureCourses)
+
+        let data = {
+            validatePreCoReqs: {
+                isValidOrder,
+                invalidPrereq,
+                invalidCoreqs
+            },
+            validateConcentrationCourses: {
+                isFulfilledConcentationCourses,
+                assignedCourses,
+                unassignedCourses,
+                unusedIds,
+            },
+            validateResidency: {
+                isValidResReq,
+                numMissing
             }
-        }))
-        let validPreCoReq = validatePreCoReqs(courses);
-        let validConcentrationCourses = validateConcentrationCourses(concentrationID, futureCourses);
-        // let concentrationCourses = await Concentration.getCourses(concentrationID);
+        }
 
-        //validate concentration reqs with equi classes
-
-        return [`validate plan endpoint - param: ${req.params}`, 200]
+        return [JSON.stringify(data), 200];
     } else {
         throw new Error("netID or concentration ID is not defined");
     }
@@ -124,9 +140,18 @@ async function savePlan(req) {
 }
 
 
+async function validatePreCoReqs(futureCourses) {
+    let invalidPrereqs = {}
+    let invalidCoreqs = {}
 
+    let courseObjs = await Promise.all(futureCourses.map(async futureCourse => {
+        return {
+            course: futureCourse,
+            prereqs: await Course.getPrereqs(futureCourse.course),
+            coreqs: await Course.getCoreqs(futureCourse.course),
+        }
+    }))
 
-function validatePreCoReqs(courseObjs) {
     courseObjs.forEach(courseObj => {
         const { course, prereqs, coreqs } = courseObj;
 
@@ -137,7 +162,7 @@ function validatePreCoReqs(courseObjs) {
         prereqs.forEach(prereqID => {
             const prereqCourse = courseObjs.find(obj => obj.course.course === prereqID);
             if (!prereqCourse) {
-                console.log(`Error: Course ${course.course} has invalid prereq ${prereqID}`);
+                invalidPrereqs = addToInvalidReq(invalidPrereqs, course.course, prereqID);
                 return;
             }
 
@@ -146,14 +171,14 @@ function validatePreCoReqs(courseObjs) {
             const prereqYearNumber = yearMap[prereqYear];
 
             if (!(yearNumber > prereqYearNumber || (yearNumber === prereqYearNumber && semesterNumber >= prereqSemesterNumber))) {
-                console.log(`Error: Course ${course.course} has invalid prereq ${prereqID}`);
+                invalidPrereqs = addToInvalidReq(invalidPrereqs, course.course, prereqID);
             }
         });
 
         coreqs.forEach(coreqID => {
             const coreqCourse = courseObjs.find(obj => obj.course.course === coreqID);
             if (!coreqCourse) {
-                console.log(`Error: Course ${course.course} has invalid coreq ${coreqID}`);
+                invalidCoreqs = addToInvalidReq(invalidCoreqs, course.course, coreqID);
                 return;
             }
 
@@ -162,22 +187,35 @@ function validatePreCoReqs(courseObjs) {
             const coreqSemseterNumber = semesterMap[coreqSemester]
 
             if (!(yearNumber > coreqYearNumber || (yearNumber === coreqYearNumber && semesterNumber >= coreqSemseterNumber))) {
-                console.log(`Error: Course ${course.course} has invalid coreq ${coreqID}`);
+                invalidCoreqs = addToInvalidReq(invalidCoreqs, course.course, coreqID);
             }
         });
 
     });
 
+    return { isValidOrder: (invalidCoreqs.length == 0 && invalidPrereqs.length == 0), invalidPrereqs: invalidPrereqs, invalidCoreqs: invalidCoreqs }
+
 }
 
+function addToInvalidReq(obj, course, invalidPrereq) {
+    if (!obj[course]) {
+        // If it doesn't exist, create a new array with the courseName
+        obj[course] = [invalidPrereq];
+    } else {
+        // If it exists, push the courseName to the existing array
+        obj[course].push(invalidPrereq);
+    }
+
+    return obj;
+
+}
 async function validateConcentrationCourses(concentrationID, studentCourses) {
-    const concentration = await Concentration.getConcentration(concentrationID);
-    const concentrationCourses = concentration.courses;
+    const concentrationCourses = await Concentration.getCourses(concentrationID);
 
     let fulfilledCourses = {}
 
     concentrationCourses.forEach(async concentrationCourse => {
-        let equivelentCourses = Concentration.getEquivelentCourses(concentration, concentrationCourse.course);
+        let equivelentCourses = await Concentration.getEquivelentCourses(concentrationID, concentrationCourse.course);
         let courses = [concentrationCourse.course, ...equivelentCourses];
 
         fulfilledCourses[concentrationCourse.course] = studentCourses.filter(course => courses.includes(course));
@@ -220,52 +258,35 @@ function assignCourses(courseObject) {
         }
     }
 
-    const unassignedCourses = Object.keys(courseObject).filter(course => refinedMap[course] === undefined);
+    const assignedCourses = Object.keys(courseObject).filter(course => refinedMap[course] === undefined);
 
-    return { fulfilled: unassignedCourses.length == 0, refinedMap, unassignedCourses, unusedIds: Array.from(unusedIds) };
+    return { isFulfilledConcentationCourses: assignedCourses.length == 0, refinedMap, assignedCourses, unusedIds: Array.from(unusedIds) };
 }
 
-async function validateResidency(resReq, netID, concentration) //(51, 'ach127','14:332')
-{// FIXME this fucntion is slow
-    try {
-        const concentrationInfo = firestore.collection("concentration").doc(concentration);
+async function validateResidency(concentrationID, futureCourses) {
 
-        const doc = await concentrationInfo.get();
-        if (!doc.exists) {
-            throw new Error('Concentration document not found');
-        };
-        let student = await Student.getStudent(netID);
-        let currently_enrolled = student.enrolledCourses;
-        let completed_courses = student.completedCourses;
-        let futurecoursesObject = student.futureCourses;
-        let future_courses = [];
-        futurecoursesObject.forEach(course => {
-            future_courses.push(course.course);
-        });
-        let totalCourses = currently_enrolled.concat(completed_courses, future_courses);
+    const residencyReq = await Concentration.getConcentrationResidency(concentrationID);
 
-        let residencyCredits = 0;
-        if (totalCourses) {
-            for (const course of totalCourses) {
-                let school = course.substring(0, course.lastIndexOf(':'));
-                if (school == concentration) {
-                    let courseObj = await Course.getCourse(course);
-                    residencyCredits += courseObj.credit;
-                    console.log(residencyCredits);
-                }
-            }
+    // let student = await Student.getStudent(netID);
+    // let currently_enrolled = student.enrolledCourses;
+    // let completed_courses = student.completedCourses;
+    // let futurecoursesObject = student.futureCourses;
+    // let future_courses = [];
+    // futurecoursesObject.forEach(course => {
+    //     future_courses.push(course.course);
+    // });
+    // let totalCourses = currently_enrolled.concat(completed_courses, future_courses);
 
-            if (residencyCredits < resReq) {
-                return false;
-            }
-            return true;
+    let residencyCredits = 0;
+    for (const course of futureCourses) {
+        let school = course.course.substring(0, course.course.lastIndexOf(':'));
+        if (school == concentrationID) {
+            let courseObj = await Course.getCourse(course.course);
+            residencyCredits += courseObj.credit;
         }
-
-        return false;
-
-    } catch (e) {
-        throw e;
     }
+
+    return { isValidResReq: !(residencyCredits < residencyReq), numMissing: residencyReq - residencyCredits }
 }
 
 
@@ -296,6 +317,6 @@ async function testing() {
     const result = assignCourses(courseObject);
     console.log(result);
 }
-testing();
+// testing();
 
 module.exports = { viewPlan, viewStatus, addCourse, removeCourse, viewSample, validatePlan, optimizePlan, savePlan }

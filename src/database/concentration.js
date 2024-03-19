@@ -38,10 +38,10 @@ async function getConcentration(concentrationID) {
         const residency = concentrationData.residency;
 
         const coursesArray = concentrationData.courses || [];
-        const courses = await Promise.all(coursesArray.map(async courseObj => {
+        const courses = await Promise.all(Object.entries(coursesArray).map(async ([course, equivelent_courses]) => {
             return new ConcentrationCourse(
-                courseObj.course,
-                await Helper.getAssociatedIDs(courseObj.equivelent_courses));
+                course,
+                await Helper.getAssociatedIDs(equivelent_courses));
         }));
 
         const sampleScheudleArray = concentrationData.sample_schedule || [];
@@ -59,7 +59,7 @@ async function getConcentration(concentrationID) {
 
     }
     catch (error) {
-        //console.error('Error getting document:', error);
+        console.error('Error getting document:', error);
         throw error;
     }
 }
@@ -101,6 +101,11 @@ async function insertConcentration(concentrationID, concentration) {
     }
 }
 
+async function getCourses(concentrationID) {
+    const concentration = await getConcentration(concentrationID);
+    return concentration.courses;
+}
+
 async function getSample(concentrationID) {
     try {
         const concentrationInfo = await getConcentration(concentrationID);
@@ -112,12 +117,12 @@ async function getSample(concentrationID) {
 }
 
 //concentration should be Concentraion class
-async function getEquivelentCourses(concentration, courseID) {
+async function getEquivelentCourses(concentrationID, courseID) {
     try {
-        // const concentration = await getConcentration(concentrationID);
+        const concentration = await getConcentration(concentrationID);
         if (!Helper.isInstance(concentration, Concentration)) {
             throw new Error("concentration is not an instance of Concentration");
-        } 
+        }
 
         const courses = concentration.courses;
         const course = courses.find(obj => obj.course === courseID);
@@ -131,15 +136,23 @@ async function getEquivelentCourses(concentration, courseID) {
 
 }
 
+async function getConcentrationResidency(concentrationID) {
+    const concentrationInfo = firestore.collection("concentration").doc(concentrationID);
 
-async function testing() {//FIXME there's a bit of a timing issue when I insert a course and then get it right after
-    //let concentration = new Concentration("Testing", [new ConcentrationCourse('14:332:128', ['14:332:400', '14:332:221']), new ConcentrationCourse('14:332:400', ['14:332:128', '14:332:221'])], 51, [new FutureCourse("14:332:128", "Winter", 'junior')]);
-    //let test = await insertConcentration("12:189", concentration);
-    //let concentrationGotten = await getConcentration('12:189');
-    //console.log(concentrationGotten);
-    // console.log(await getEquivelentCourses('12:189', "14:332:128"));
+    const doc = await concentrationInfo.get();
+    if (!doc.exists) {
+        throw new Error('Concentration document not found');
+    };
+
+    return doc.data().residency;
+
 }
 
-//testing();
+async function testing() {
+    let test = await getConcentrationResidency('12:189');
+    console.log(test);
+}
 
-module.exports = { getSample, getConcentration, getEquivelentCourses };
+// testing();
+
+module.exports = { getSample, getConcentration, getCourses, getEquivelentCourses, getConcentrationResidency };
