@@ -75,36 +75,61 @@ async function viewSample(req) {
 }
 
 async function validatePlan(req) {
+
+    let netID = req.params.netID;
+    let concentrationID = req.params.concentrationID;
+    if (netID != undefined && concentrationID != undefined) {
+        let futureCourses = await Student.getFutureCourses(req.params.netID);
+
+        let courses = await Promise.all(futureCourses.map(async futureCourse => {
+            return {
+                course: futureCourse,
+                prereqs: await Course.getPrereqs(futureCourse.course),
+                coreqs: await Course.getCoreqs(futureCourse.course),
+            }
+        }))
+        let validPreCoReq = validatePreCoReqs(courses);
+        let validConcentrationCourses = validateConcentrationCourses(concentrationID, futureCourses);
+        // let concentrationCourses = await Concentration.getCourses(concentrationID);
+
+        //validate concentration reqs with equi classes
+
+        return [`validate plan endpoint - param: ${req.params}`, 200]
+    } else {
+        throw new Error("netID or concentration ID is not defined");
+    }
+
+}
+
+function optimizePlan(req) {
+    return [`optimize plan endpoint - param: ${req.params}`, 200]
+}
+
+
+async function savePlan(req) {
     try {
         let netID = req.params.netID;
-        let concentrationID = req.params.concentrationID;
-        if (netID != undefined && concentrationID != undefined) {
-            let futureCourses = await Student.getFutureCourses(req.params.netID);
-            let courses = await Promise.all(futureCourses.map(async futureCourse => {
-                return {
-                    course: futureCourse,
-                    prereqs: await Course.getPrereqs(futureCourse.course),
-                    coreqs: await Course.getCoreqs(futureCourse.course),
-                }
-            }))
-            let valid = validatePreCoReqs(courses);
-            // let concentrationCourses = await Concentration.getCourses(concentrationID);
+        let coursesToSave = req.body;
+        const res = await firestore.collection('student').doc(netID).update({ future_courses: [] });
 
-            //validate concentration reqs with equi classes
+        for (const course of coursesToSave) {
 
-            return [`validate plan endpoint - param: ${req.params}`, 200]
-        } else {
-            throw new Error("netID or concentration ID is not defined");
+            let courseSaving = new Student.FutureCourse(course.courseID, course.semester, course.year);
+            await Student.addFutureCourse(netID, courseSaving);
         }
+        return ['Success saving new plan!', 200, "plain/text"];
     } catch (e) {
         throw new Error(e);
     }
 }
+
+
+
+
 function validatePreCoReqs(courseObjs) {
     courseObjs.forEach(courseObj => {
         const { course, prereqs, coreqs } = courseObj;
 
-        // Convert semester and year strings to numerical values
         const { semester, year } = course;
         const semesterNumber = semesterMap[semester];
         const yearNumber = yearMap[year];
@@ -145,9 +170,64 @@ function validatePreCoReqs(courseObjs) {
 
 }
 
+async function validateConcentrationCourses(concentrationID, studentCourses) {
+    const concentration = await Concentration.getConcentration(concentrationID);
+    const concentrationCourses = concentration.courses;
+
+    let fulfilledCourses = {}
+
+    concentrationCourses.forEach(async concentrationCourse => {
+        let equivelentCourses = Concentration.getEquivelentCourses(concentration, concentrationCourse.course);
+        let courses = [concentrationCourse.course, ...equivelentCourses];
+
+        fulfilledCourses[concentrationCourse.course] = studentCourses.filter(course => courses.includes(course));
+
+    });
+
+    const assingedCourses = assignCourses(fulfilledCourses);
+
+    return assingedCourses;
+
+}
+
+function assignCourses(courseObject) {
+    const refinedMap = {};
+    const unusedIds = new Set(Object.values(courseObject).flat());
+    const usedIds = new Set();
+
+    // Assign IDs to courses based on uniqueness and shared usage
+    for (const course of Object.keys(courseObject)) {
+        const ids = courseObject[course];
+        let selectedId = null;
+        let minShared = Infinity;
+
+        for (const id of ids) {
+            if (!usedIds.has(id)) {
+                const sharedCount = Object.values(courseObject).filter(courses => courses.includes(id)).length;
+                if (sharedCount < minShared) {
+                    selectedId = id;
+                    minShared = sharedCount;
+                }
+            }
+        }
+
+        if (selectedId !== null) {
+            refinedMap[course] = selectedId;
+            usedIds.add(selectedId);
+            unusedIds.delete(selectedId);
+        } else {
+            refinedMap[course] = undefined;
+        }
+    }
+
+    const unassignedCourses = Object.keys(courseObject).filter(course => refinedMap[course] === undefined);
+
+    return { fulfilled: unassignedCourses.length == 0, refinedMap, unassignedCourses, unusedIds: Array.from(unusedIds) };
+}
+
 async function validateResidency(resReq, netID, concentration) //(51, 'ach127','14:332')
 {// FIXME this fucntion is slow
-    try{
+    try {
         const concentrationInfo = firestore.collection("concentration").doc(concentration);
 
         const doc = await concentrationInfo.get();
@@ -174,58 +254,48 @@ async function validateResidency(resReq, netID, concentration) //(51, 'ach127','
                     console.log(residencyCredits);
                 }
             }
-        
+
             if (residencyCredits < resReq) {
                 return false;
             }
             return true;
         }
-        
+
         return false;
 
-    }catch(e){
+    } catch (e) {
         throw e;
     }
 }
 
-function optimizePlan(req) {
-    return [`optimize plan endpoint - param: ${req.params}`, 200]
-}
 
-
-async function savePlan(req) {
-    try {
-        let netID = req.params.netID;
-        let coursesToSave = req.body;
-        const res = await firestore.collection('student').doc(netID).update({ future_courses: [] });
-
-        for (const course of coursesToSave) {
-
-            let courseSaving = new Student.FutureCourse(course.courseID, course.semester, course.year);
-            await Student.addFutureCourse(netID, courseSaving);
-        }
-        return ['Success saving new plan!', 200, "plain/text"];
-    } catch (e) {
-        throw new Error(e);
-    }
-}
 
 async function testing() {
-    courseObjs = [{ course: { course: 'CSC101', semester: 'spring', year: 'freshman' }, prereqs: ['CSC100'], coreqs: [] },
-    { course: { course: 'CSC100', semester: 'fall', year: 'freshman' }, prereqs: [], coreqs: [] },
-    { course: { course: "CSC200", semester: "spring", year: "sophomore" }, prereqs: ["CSC100"], coreqs: ["MAT150"] },
-    { course: { course: "MAT150", semester: "fall", year: "sophomore" }, prereqs: ["MAT100"], coreqs: [] },
-    { course: { course: "MAT100", semester: "spring", year: "freshman" }, prereqs: [], coreqs: [] },
-    { course: { course: "PHY200", semester: "fall", year: "junior" }, prereqs: ["PHY100", "MAT150"], coreqs: [] },
-    { course: { course: "ENG200", semester: "spring", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
-    { course: { course: "ENG100", semester: "fall", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
-    { course: { course: "PHY100", semester: "spring", year: "sophomore" }, prereqs: [], coreqs: [] }
-    ];
-    validatePreCoReqs(courseObjs);*/
-   // let student = await Student.getStudent('ach127');
-    //console.log(await validateResidency(31, 'nss170', '14:332'));
-    console.log(await viewPlan('nss170'));
+    // courseObjs = [{ course: { course: 'CSC101', semester: 'spring', year: 'freshman' }, prereqs: ['CSC100'], coreqs: [] },
+    // { course: { course: 'CSC100', semester: 'fall', year: 'freshman' }, prereqs: [], coreqs: [] },
+    // { course: { course: "CSC200", semester: "spring", year: "sophomore" }, prereqs: ["CSC100"], coreqs: ["MAT150"] },
+    // { course: { course: "MAT150", semester: "fall", year: "sophomore" }, prereqs: ["MAT100"], coreqs: [] },
+    // { course: { course: "MAT100", semester: "spring", year: "freshman" }, prereqs: [], coreqs: [] },
+    // { course: { course: "PHY200", semester: "fall", year: "junior" }, prereqs: ["PHY100", "MAT150"], coreqs: [] },
+    // { course: { course: "ENG200", semester: "spring", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
+    // { course: { course: "ENG100", semester: "fall", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
+    // { course: { course: "PHY100", semester: "spring", year: "sophomore" }, prereqs: [], coreqs: [] }
+    // ];
+    // validatePreCoReqs(courseObjs);
+    // // let student = await Student.getStudent('ach127');
+    // //console.log(await validateResidency(31, 'nss170', '14:332'));
+    // console.log(await viewPlan('nss170'));
+
+    const courseObject = {
+        'course1': ['ID4', 'ID3', 'ID9'],
+        'course2': ['ID5', 'ID4', 'ID7'],
+        'course3': ['ID5', 'ID7'],
+        'course4': ['ID5']
+    };
+
+    const result = assignCourses(courseObject);
+    console.log(result);
 }
-//testing();
+testing();
 
 module.exports = { viewPlan, viewStatus, addCourse, removeCourse, viewSample, validatePlan, optimizePlan, savePlan }

@@ -242,6 +242,21 @@ async function removeFutureCourse(netID, courseID) {
     }
 }
 
+async function getFutureCourses(netID) {
+    try {
+        let student = await getStudent(netID);
+        if (student) {
+            let future_courses = student.futureCourses;
+            return future_courses;
+        } else {
+            throw new Error("not valid student");
+        }
+    } catch (e) {
+        throw new Error(e);
+    }
+}
+
+
 
 async function testing() {
     //let student = new Student("melech", "achashveirosh", "king@gmail.com", "9087457645", 2024, 3.9, ["14:332"], ["14:332:128"], ["14:332:128"], [new FutureCourse("14:332:128", "Winter", 2025)], ["14:332:128"]);
@@ -255,4 +270,4 @@ async function testing() {
 }
 //testing();
 
-module.exports = { Student, getStudent, addFutureCourse, removeFutureCourse, FutureCourse};
+module.exports = { Student, getStudent, getFutureCourses, addFutureCourse, removeFutureCourse, FutureCourse};

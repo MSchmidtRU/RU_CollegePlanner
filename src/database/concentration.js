@@ -2,7 +2,7 @@ const { firestore } = require('./firebase.js');
 const Helper = require("./helperFunction.js")
 const { FieldValue } = require('firebase-admin/firestore');
 const { FutureCourse } = require('./student.js');
-const  {Course, getCourse}  = require('./course.js');
+const { Course, getCourse } = require('./course.js');
 
 class Concentration {
     constructor(name, courses, residency, sample_schedule) {
@@ -13,7 +13,7 @@ class Concentration {
     }
 }
 
-class ConcentrationCourse{
+class ConcentrationCourse {
     constructor(course, equivelent_courses) {
         this.course = course;
         this.equivelent_courses = equivelent_courses;//Helper.isInstance(equivelent_courses, Course) ? equivelent_courses : []; //TODO ideally should check that the course is not also in the equivelent_courses
@@ -30,32 +30,32 @@ async function getConcentration(concentrationID) {
             throw new Error('Concentration document not found');
         };
 
-            // Document exists, access its data
-            const concentrationData = doc.data();
+        // Document exists, access its data
+        const concentrationData = doc.data();
 
-            // Fetch basic student info
-            const name = concentrationData.name;
-            const residency = concentrationData.residency;
+        // Fetch basic student info
+        const name = concentrationData.name;
+        const residency = concentrationData.residency;
 
-            const coursesArray = concentrationData.courses || [];
-            const courses = await Promise.all(coursesArray.map(async courseObj => {
-                        return new ConcentrationCourse(
-                            courseObj.course,
-                            await Helper.getAssociatedIDs(courseObj.equivelent_courses));
-            }));
-            
-            const sampleScheudleArray = concentrationData.sample_schedule || [];
-            const sample_schedule = await Promise.all(sampleScheudleArray.map(async courseObj => {
-                const courseRef = courseObj.course;
-                const courseDoc = await courseRef.get();
-                if (courseDoc.exists) {
-                    return new FutureCourse(courseDoc.id, courseObj.semester, courseObj.year);
-                } else {
-                    console.log(`Course document ${courseRef.id} does not exist.`);
-                    return null;
-                }
-            }));
-            return new Concentration(name, courses, residency, sample_schedule);
+        const coursesArray = concentrationData.courses || [];
+        const courses = await Promise.all(coursesArray.map(async courseObj => {
+            return new ConcentrationCourse(
+                courseObj.course,
+                await Helper.getAssociatedIDs(courseObj.equivelent_courses));
+        }));
+
+        const sampleScheudleArray = concentrationData.sample_schedule || [];
+        const sample_schedule = await Promise.all(sampleScheudleArray.map(async courseObj => {
+            const courseRef = courseObj.course;
+            const courseDoc = await courseRef.get();
+            if (courseDoc.exists) {
+                return new FutureCourse(courseDoc.id, courseObj.semester, courseObj.year);
+            } else {
+                console.log(`Course document ${courseRef.id} does not exist.`);
+                return null;
+            }
+        }));
+        return new Concentration(name, courses, residency, sample_schedule);
 
     }
     catch (error) {
@@ -86,7 +86,7 @@ async function insertConcentration(concentrationID, concentration) {
             };
             await firestore.collection('concentration').doc(concentrationID).update({ sample_schedule: FieldValue.arrayUnion(sampleScheduleData) });
         }
-        
+
         for (const object of concentration.courses) {
             const courseData = {
                 course: object.course,
@@ -111,21 +111,24 @@ async function getSample(concentrationID) {
     }
 }
 
-async function getEquivelentCourses(concentrationID, courseID)
-{
-    try{
-        const concentration = await getConcentration(concentrationID);
+//concentration should be Concentraion class
+async function getEquivelentCourses(concentration, courseID) {
+    try {
+        // const concentration = await getConcentration(concentrationID);
+        if (!Helper.isInstance(concentration, Concentration)) {
+            throw new Error("concentration is not an instance of Concentration");
+        } 
+
         const courses = concentration.courses;
         const course = courses.find(obj => obj.course === courseID);
-        if(!course)
-        {
+        if (!course) {
             throw new Error('No such course requirement for given concentration.');
         }
         return course.equivelent_courses;
-    }catch(e){
+    } catch (e) {
         throw e;
     }
-   
+
 }
 
 
@@ -139,4 +142,4 @@ async function testing() {//FIXME there's a bit of a timing issue when I insert 
 
 //testing();
 
-module.exports = { getSample };
+module.exports = { getSample, getConcentration, getEquivelentCourses };
