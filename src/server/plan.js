@@ -87,8 +87,9 @@ async function validatePlan(req) {
                     coreqs: await Course.getCoreqs(futureCourse.course),
                 }
             }))
-            // let concentrationCourses = await Concentration.getCourses(concentrationID);
             let valid = validatePreCoReqs(courses);
+            // let concentrationCourses = await Concentration.getCourses(concentrationID);
+
             //validate concentration reqs with equi classes
 
             return [`validate plan endpoint - param: ${req.params}`, 200]
@@ -111,7 +112,7 @@ function validatePreCoReqs(courseObjs) {
         prereqs.forEach(prereqID => {
             const prereqCourse = courseObjs.find(obj => obj.course.course === prereqID);
             if (!prereqCourse) {
-                console.log(`Error: Course ${courseObj.course} has invalid prereq ${prereqID}`);
+                console.log(`Error: Course ${course.course} has invalid prereq ${prereqID}`);
                 return;
             }
 
@@ -131,11 +132,12 @@ function validatePreCoReqs(courseObjs) {
                 return;
             }
 
-            const { year: coreqYear } = coreqCourse.course;
+            const { semester: coreqSemester, year: coreqYear } = coreqCourse.course;
             const coreqYearNumber = yearMap[coreqYear];
+            const coreqSemseterNumber = semesterMap[coreqSemester]
 
-            if (!(yearNumber > coreqYearNumber || (yearNumber === coreqYearNumber && semesterNumber >= 3))) {
-                console.log(`Error: Course ${coucourseObjrse.course} has invalid coreq ${coreqID}`);
+            if (!(yearNumber > coreqYearNumber || (yearNumber === coreqYearNumber && semesterNumber >= coreqSemseterNumber))) {
+                console.log(`Error: Course ${course.course} has invalid coreq ${coreqID}`);
             }
         });
 
@@ -165,9 +167,15 @@ async function savePlan(req) {
 }
 
 async function testing() {
-    courseObjs = [
-        { course: { course: 'CSC101', semester: 'spring', year: 'freshman' }, prereqs: ['CSC100'], coreqs: [] },
-        { course: { course: 'CSC100', semester: 'fall', year: 'sophomore' }, prereqs: [], coreqs: [] }
+    courseObjs = [{ course: { course: 'CSC101', semester: 'spring', year: 'freshman' }, prereqs: ['CSC100'], coreqs: [] },
+    { course: { course: 'CSC100', semester: 'fall', year: 'freshman' }, prereqs: [], coreqs: [] },
+    { course: { course: "CSC200", semester: "spring", year: "sophomore" }, prereqs: ["CSC100"], coreqs: ["MAT150"] },
+    { course: { course: "MAT150", semester: "fall", year: "sophomore" }, prereqs: ["MAT100"], coreqs: [] },
+    { course: { course: "MAT100", semester: "spring", year: "freshman" }, prereqs: [], coreqs: [] },
+    { course: { course: "PHY200", semester: "fall", year: "junior" }, prereqs: ["PHY100", "MAT150"], coreqs: [] },
+    { course: { course: "ENG200", semester: "spring", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
+    { course: { course: "ENG100", semester: "fall", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
+    { course: { course: "PHY100", semester: "spring", year: "sophomore" }, prereqs: [], coreqs: [] }
     ];
     validatePreCoReqs(courseObjs);
 }

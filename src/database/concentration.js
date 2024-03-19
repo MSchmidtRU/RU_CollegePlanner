@@ -138,7 +138,7 @@ async function testing() {//FIXME there's a bit of a timing issue when I insert 
     //let test = await insertConcentration("12:189", concentration);
     //let concentrationGotten = await getConcentration('12:189');
     //console.log(concentrationGotten);
-    console.log(await getEquivelentCourses('12:189', "14:332:128"));
+    // console.log(await getEquivelentCourses('12:189', "14:332:128"));
 }
 
 testing();
