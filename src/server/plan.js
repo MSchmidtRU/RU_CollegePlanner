@@ -117,8 +117,85 @@ async function validatePlan(req) {
 
 }
 
-function optimizePlan(req) {
-    return [`optimize plan endpoint - param: ${req.params}`, 200]
+async function optimizePlan(req) {
+    try{
+        let netID = req.params.netID;
+    let concentrationID = req.params.concentrationID;
+    let content = req.params.content; //Options: optimize order of courses given valid plan, optimize order of courses, given list of future courses with no attached semester (or some can have an attached semester but ignore that during optimization) put them in an optimal order
+    let method = req.params.method; //options: fastest to graduation, most balanced
+    if((netID == undefined) || (concentrationID == undefined) || (content == undefined) || (method == undefined))
+    {
+        throw new Error("Undifined parameter.");
+    }
+
+    let student = await Student.getStudent(netID);
+    let currently_enrolled = student.enrolledCourses;
+    let completed_courses = student.completedCourses;
+    let futurecoursesObjects = student.futureCourses;
+
+    if(content == 'validPlan') //given a valid plan, optimize order of all courses in it
+    {
+        let isValid = await validatePlan(req);
+        if(!isValid)
+        {
+            throw new Error("Invalid plan. As such this method of optimization cannot be used.");
+        }
+        if(method == 'quickest')
+        {
+            //optimizeQuickestGrad()
+        }
+        if(method == 'balanced')
+        {
+            //optimizeBalancedGrad()
+        }
+        else
+        {
+            throw new Error("Invalid method of optimization.");
+        }
+        
+    }
+    if(content == 'unsureSemesters') //given a plan where courses exist to fulfill all requirements but not all semesters are specified, don't touch courses with semester provided, just optimize courses with unspecified semester
+    {
+        let isValid = await validatePlan(req);
+        if(!isValid)
+        {
+            throw new Error("Invalid plan. As such this method of optimization cannot be used.");
+        }
+        if(method == 'quickest')
+        {
+            //optimizeQuickestGrad()
+        }
+        if(method == 'balanced')
+        {
+            //optimizeBalancedGrad()
+        }
+        else
+        {
+            throw new Error("Invalid method of optimization.");
+        }
+        
+    }
+    else
+    {
+        throw new Error("Invalid optimizaion content.");
+    }
+
+    }catch(e){
+        throw e;
+    }
+    
+
+    //return [`optimize plan endpoint - param: ${req.params}`, 200]
+}
+
+function optimizeQuickestGrad(currentPlan, takingAndTaken, optimizationContent)
+{
+
+}
+
+function  optimizeBalancedGrad(currentPlan, takingAndTaken, optimizationContent)
+{
+
 }
 
 
@@ -194,7 +271,23 @@ async function validatePreCoReqs(futureCourses) {
     });
 
     return { isValidOrder: (invalidCoreqs.length == 0 && invalidPrereqs.length == 0), invalidPrereqs: invalidPrereqs, invalidCoreqs: invalidCoreqs }
+}
 
+async function testing() {
+    courseObjs = [{ course: { course: 'CSC101', semester: 'spring', year: 'freshman' }, prereqs: ['CSC100'], coreqs: [] },
+    { course: { course: 'CSC100', semester: 'fall', year: 'freshman' }, prereqs: [], coreqs: [] },
+    { course: { course: "CSC200", semester: "spring", year: "sophomore" }, prereqs: ["CSC100"], coreqs: ["MAT150"] },
+    { course: { course: "MAT150", semester: "fall", year: "sophomore" }, prereqs: ["MAT100"], coreqs: [] },
+    { course: { course: "MAT100", semester: "spring", year: "freshman" }, prereqs: [], coreqs: [] },
+    { course: { course: "PHY200", semester: "fall", year: "junior" }, prereqs: ["PHY100", "MAT150"], coreqs: [] },
+    { course: { course: "ENG200", semester: "spring", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
+    { course: { course: "ENG100", semester: "fall", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
+    { course: { course: "PHY100", semester: "spring", year: "sophomore" }, prereqs: [], coreqs: [] }
+    ];
+    validatePreCoReqs(courseObjs);
+   // let student = await Student.getStudent('ach127');
+    //console.log(await validateResidency(31, 'nss170', '14:332'));
+    console.log(await viewPlan('nss170'));
 }
 
 function addToInvalidReq(obj, course, invalidPrereq) {
