@@ -47,10 +47,10 @@ class FutureCourse {
             throw new Error("Semester must be a string.");
         }
 
-        if (semester.match(/(winter|spring|summer|fall|unknown)/i)) {
+        if (semester.match(/(spring|fall|unknown)/i)) {
             return semester;
         } else {
-            throw new Error("Invalid semester value - must be winter, spring, fall, summer, or unknown");
+            throw new Error("Invalid semester value - must be spring, fall, or unknown");
         }
     }
 

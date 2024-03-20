@@ -135,42 +135,21 @@ async function optimizePlan(req) {
     try {
         let netID = req.params.netID;
         let concentrationID = req.params.concentrationID;
-        let content = req.params.content; 
         let method = req.params.method;
+        let futureCourses = req.body.futureCourses;
+
         if ((netID == undefined) || (concentrationID == undefined) || (content == undefined) || (method == undefined)) {
-            throw new Error("Undifined parameter.");
+            throw new Error("Undefined parameter");
         }
 
-        let futureCourses = await Student.getFutureCourses(netID);
-
-        if (content == 'validPlan') //given a valid plan, optimize order of all courses in it
-        {
-            if (method == 'quickest') {
-                let result = await validPlanQuickestOptimize(futureCourses);
-            }
-            if (method == 'balanced') {
-                let result = await validPlanBalancedOptimize(futureCourses);
-            }
-            else {
-                throw new Error("Invalid method of optimization.");
-            }
-
+        if (method == 'quickest') {
+            let result = await fillInSemesterQuickestOptimize(futureCourses);
         }
-        if (content == 'fillInSemester') 
-        {
-            if (method == 'quickest') {
-                let result = await fillInSemesterQuickestOptimize(futureCourses); 
-            }
-            if (method == 'balanced') {
-                let result = await fillInSemesterBalancedOptimize(futureCourses);
-            }
-            else {
-                throw new Error("Invalid method of optimization.");
-            }
-
+        if (method == 'balanced') {
+            let result = await fillInSemesterBalancedOptimize(futureCourses);
         }
         else {
-            throw new Error("Invalid optimizaion content.");
+            throw new Error("Invalid method of optimization.");
         }
 
     } catch (e) {
@@ -199,23 +178,11 @@ async function savePlan(req) {
 }
 
 
-async function validPlanQuickestOptimize(futureCourses)
-{
+async function fillInSemesterQuickestOptimize(futureCourses) {
 
 }
 
-async function validPlanBalancedOptimize(futureCourses)
-{
-
-}
-
-async function fillInSemesterQuickestOptimize(futureCourses)
-{
-    
-}
-
-async function fillInSemesterBalancedOptimize(futureCourses)
-{
+async function fillInSemesterBalancedOptimize(futureCourses) {
 
 }
 
@@ -291,22 +258,6 @@ async function validatePreCoReqs(futureCourses) {
     return { isValidOrder: (invalidCoreqs.length == 0 && invalidPrereqs.length == 0), invalidPrereqs: invalidPrereqs, invalidCoreqs: invalidCoreqs }
 }
 
-async function testing() {
-    courseObjs = [{ course: { course: 'CSC101', semester: 'spring', year: 'freshman' }, prereqs: ['CSC100'], coreqs: [] },
-    { course: { course: 'CSC100', semester: 'fall', year: 'freshman' }, prereqs: [], coreqs: [] },
-    { course: { course: "CSC200", semester: "spring", year: "sophomore" }, prereqs: ["CSC100"], coreqs: ["MAT150"] },
-    { course: { course: "MAT150", semester: "fall", year: "sophomore" }, prereqs: ["MAT100"], coreqs: [] },
-    { course: { course: "MAT100", semester: "spring", year: "freshman" }, prereqs: [], coreqs: [] },
-    { course: { course: "PHY200", semester: "fall", year: "junior" }, prereqs: ["PHY100", "MAT150"], coreqs: [] },
-    { course: { course: "ENG200", semester: "spring", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
-    { course: { course: "ENG100", semester: "fall", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
-    { course: { course: "PHY100", semester: "spring", year: "sophomore" }, prereqs: [], coreqs: [] }
-    ];
-    validatePreCoReqs(courseObjs);
-    // let student = await Student.getStudent('ach127');
-    //console.log(await validateResidency(31, 'nss170', '14:332'));
-    console.log(await viewPlan('nss170'));
-}
 
 function addToInvalidReq(obj, course, invalidPrereq) {
     if (!obj[course]) {
@@ -375,18 +326,7 @@ function assignCourses(courseObject) {
 }
 
 async function validateResidency(concentrationID, futureCourses) {
-
     const residencyReq = await Concentration.getConcentrationResidency(concentrationID);
-
-    // let student = await Student.getStudent(netID);
-    // let currently_enrolled = student.enrolledCourses;
-    // let completed_courses = student.completedCourses;
-    // let futurecoursesObject = student.futureCourses;
-    // let future_courses = [];
-    // futurecoursesObject.forEach(course => {
-    //     future_courses.push(course.course);
-    // });
-    // let totalCourses = currently_enrolled.concat(completed_courses, future_courses);
 
     let residencyCredits = 0;
     for (const course of futureCourses) {
@@ -399,7 +339,6 @@ async function validateResidency(concentrationID, futureCourses) {
 
     return { isValidResReq: !(residencyCredits < residencyReq), numMissing: residencyReq - residencyCredits }
 }
-
 
 
 async function testing() {
