@@ -9,14 +9,16 @@ const semesterMap = {
     'fall': 0,
     'winter': 1,
     'spring': 2,
-    'summer': 3
+    'summer': 3,
+    'unknown': -1
 };
 
 const yearMap = {
     'freshman': 0,
     'sophomore': 1,
     'junior': 2,
-    'senior': 3
+    'senior': 3,
+    'unknown': -1
 };
 
 
@@ -235,6 +237,8 @@ async function validatePreCoReqs(futureCourses) {
         const semesterNumber = semesterMap[semester];
         const yearNumber = yearMap[year];
 
+        if (semesterNumber == -1 || yearNumber == -1) { return }
+
         prereqs.forEach(prereqID => {
             const prereqCourse = courseObjs.find(obj => obj.course.course === prereqID);
             if (!prereqCourse) {
@@ -245,6 +249,11 @@ async function validatePreCoReqs(futureCourses) {
             const { semester: prereqSemester, year: prereqYear } = prereqCourse.course;
             const prereqSemesterNumber = semesterMap[prereqSemester];
             const prereqYearNumber = yearMap[prereqYear];
+
+            if (prereqSemesterNumber == -1 || prereqYearNumber - 1) {
+                invalidPrereqs = addToInvalidReq(invalidPrereqs, course.course, prereqID);
+                return;
+            }
 
             if (!(yearNumber > prereqYearNumber || (yearNumber === prereqYearNumber && semesterNumber >= prereqSemesterNumber))) {
                 invalidPrereqs = addToInvalidReq(invalidPrereqs, course.course, prereqID);
@@ -260,7 +269,13 @@ async function validatePreCoReqs(futureCourses) {
 
             const { semester: coreqSemester, year: coreqYear } = coreqCourse.course;
             const coreqYearNumber = yearMap[coreqYear];
-            const coreqSemseterNumber = semesterMap[coreqSemester]
+            const coreqSemseterNumber = semesterMap[coreqSemester];
+
+            if (coreqSemseterNumber == -1 || coreqYearNumber - 1) {
+                invalidCoreqs = addToInvalidReq(invalidCoreqs, course.course, coreqID);
+                return;
+            }
+
 
             if (!(yearNumber > coreqYearNumber || (yearNumber === coreqYearNumber && semesterNumber >= coreqSemseterNumber))) {
                 invalidCoreqs = addToInvalidReq(invalidCoreqs, course.course, coreqID);

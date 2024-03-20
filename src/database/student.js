@@ -59,7 +59,7 @@ class FutureCourse {
             throw new Error("Year must be a string.");
         }
 
-        if (year.match(/(freshman|sophomore|junior|senior)/i)) {
+        if (year.match(/(freshman|sophomore|junior|senior|unknown)/i)) {
             return year;
         } else {
             throw new Error("Invalid year value - must be freshman, sophomore, junior, senior");
