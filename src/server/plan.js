@@ -175,80 +175,65 @@ async function savePlan(req) {
     }
 }
 
+async function fillInSemesterQuickestOptimize(futureCourses) {
+    try {
 
-async function validPlanQuickestOptimize(futureCourses)
-{
-
-}
-
-async function validPlanBalancedOptimize(futureCourses)
-{
-
-}
-
-async function fillInSemesterQuickestOptimize(futureCourses)
-{
-    try{
-
-          let futureCoursesData = []; //array of objects: {courseID, prereq, coreq}
-          for (const course of futureCourses) {
+        let futureCoursesData = []; //array of objects: {courseID, prereq, coreq}
+        for (const course of futureCourses) {
             const prereqs = await Course.getPrereqs(course.courseID);
             const coreqs = await Course.getCoreqs(course.courseID);
             const credit = course.credit;
-            futureCoursesData.push({courseID:course.courseID, prereqs:prereqs, coreqs:coreqs, credit:credit});
-          }
+            futureCoursesData.push({ courseID: course.courseID, prereqs: prereqs, coreqs: coreqs, credit: credit });
+        }
 
-          let futureCoursesIDs = futureCoursesData.forEach(course => {
+        let futureCoursesIDs = futureCoursesData.forEach(course => {
             course.courseID;
-          })
+        })
 
-          //checking that all pre and coreqs exist in the future courses
-          let errorsInExistanceOfCourses = '';
-          for (const course of futureCoursesData) {
+        //checking that all pre and coreqs exist in the future courses
+        let errorsInExistanceOfCourses = '';
+        for (const course of futureCoursesData) {
             const requiredInList = course.prereqs.concat(course.coreqs);
             for (const courseReqID of requiredInList) {
-                if(!(futureCoursesIDs.includes(courseReqID)))
-                {
+                if (!(futureCoursesIDs.includes(courseReqID))) {
                     errorsInExistanceOfCourses += `${course.courseID} has ${courseReqID} listed as a pre or coreq, but it is not listed in your plan.`;
                 }
             }
-          }
-          if(errorsInExistanceOfCourses != '')
-          {
+        }
+        if (errorsInExistanceOfCourses != '') {
             throw new Error(errorsInExistanceOfCourses);
-          }
+        }
 
-          let coursesThusFar = [];
-          let semesterTracker = 1;
-          let yearTracker = -1;
-          for(let i = 0;i<8;i++) //there are 8 semesters total in this college
-          {
+        let coursesThusFar = [];
+        let semesterTracker = 1;
+        let yearTracker = -1;
+        for (let i = 0; i < 8; i++) //there are 8 semesters total in this college
+        {
             if (i % 2 === 0) {//whenever it's the start of a new year, set semester to 0 which is fall and add 1 to the year
                 yearTracker++;
                 semesterTracker--;
             }
-            else{ //wherever it's spring, set semester to 1
+            else { //wherever it's spring, set semester to 1
                 semesterTracker++;
             }
             let coursesToConsider = [] //courses with undefined semesters
             let elligableCourses = []; //courses for which the pre and coreqs have been fulfilled
 
             for (const course of futureCourses) {
-                if((semesterMap[course.semester] == -1) || (yearMap[course.year] == -1)) //courses with unassigned semesters go here
+                if ((semesterMap[course.semester] == -1) || (yearMap[course.year] == -1)) //courses with unassigned semesters go here
                 {
                     coursesToConsider.push(futureCoursesData.find(obj => obj.courseID === course.course)); //push the data object of this course into an array
                 }
-                else if((yearMap[course.year] < yearTracker) || ((yearMap[course.year] == yearTracker) && (semesterMap[course.semester] < semesterTracker))) //if this course was taken in a previous semester
+                else if ((yearMap[course.year] < yearTracker) || ((yearMap[course.year] == yearTracker) && (semesterMap[course.semester] < semesterTracker))) //if this course was taken in a previous semester
                 {
                     coursesThusFar.push(course.course);
                 }
             }
             //find all courses with unassigned semesters for which I am currently elligable
-            for (const courseID of coursesToConsider) { 
+            for (const courseID of coursesToConsider) {
                 const prereqs = await Course.getPrereqs(courseID);
                 for (const courseReqID of prereqs) {
-                    if(coursesThusFar.includes(courseReqID))
-                    {
+                    if (coursesThusFar.includes(courseReqID)) {
                         elligableCourses.push(courseID);
                     }
                 }
@@ -256,38 +241,89 @@ async function fillInSemesterQuickestOptimize(futureCourses)
 
             let copyOfElligableCourses = [...elligableCourses]; //done so that when i delete stuff from this list later it doesn't delete from the real list
             let elligableCourseGroupsData = [];
-            for (const course of copyOfElligableCourses) { 
+            for (const course of copyOfElligableCourses) {
                 let totalCredits = course.credit;
                 let coreqs = course.coreqs; //courseIDs of coreqs
                 let allCourses = course.courseID.concat(coreqs);
                 let preReqFor = [];
 
-                for (const courseID of coreqs) { 
+                for (const courseID of coreqs) {
                     let thisCoreq = copyOfElligableCourses.find(obj => obj === courseID); //find the object of this coreq
                     totalCredits += thisCoreq.credit; //add its credit to the count of this object
                     copyOfElligableCourses.filter(obj => obj !== courseID); //delete the coreq from the array of elligable courses
                 }
 
-                if(totalCredits < (19))
-                {
-                    
+                if (totalCredits < (19)) {
+
                 }
 
             }
 
-          }
-    }catch(e){
+        }
+    } catch (e) {
         throw e;
     }
-    
+
 
 }
 
 async function fillInSemesterBalancedOptimize(futureCourses) {
+    let unassignedCourses = [];
+    let assignedCourses = [];
+
+    //seperate assigned and unassigned courses
+    for (const course of futureCourses) {
+        if (course.semester && course.year) {
+            assignedCourses.push(course);
+        } else {
+            unassignedCourses.push(course);
+        }
+    }
+
+    let isValidPreCoReq = validatePreCoReqs(assignedCourses, false);
+
+
+    if (!isValidPreCoReq) {
+        throw new Error("Locked courses are not in a valid order"); //TODO fix that the validate function doesnt send error if not exist - only checks if there is direct conflict
+    }
+
+    const creditLoads = {
+        winter: { freshman: 0, sophomore: 0, junior: 0, senior: 0 },
+        spring: { freshman: 0, sophomore: 0, junior: 0, senior: 0 }
+    };
+
+
+    unassignedCourses.sort((a, b) => {
+        const courseA = parseInt(a.course.split(':').pop());
+        const courseB = parseInt(b.course.split(':').pop());
+        return courseA - courseB;
+    });
+
+    for (const course of unassignedCourses) {
+        const minSemester = Object.keys(creditLoads).reduce((a, b) => creditLoads[a][course.year] < creditLoads[b][course.year] ? a : b);
+        const minYear = Object.keys(creditLoads[minSemester]).reduce((a, b) => creditLoads[minSemester][a] < creditLoads[minSemester][b] ? a : b);
+
+        const preReqs = await Course.getPrereqs(course.course);
+        const coReqs = await Course.getCoreqs(course.course);
+
+        // Check prerequisites
+        const prerequisitesSatisfied = course.prerequisites.every(prerequisite => assignedCourses.some(assignedCourse => assignedCourse.id === prerequisite));
+        if (prerequisitesSatisfied && creditLoads[minSemester][minYear] + course.credits <= 19) {
+            creditLoads[minSemester][minYear] += course.credits;
+            assignedCourses.push({ ...course, semester: minSemester, year: minYear });
+        } else {
+            // If prerequisites are not satisfied or credits exceed the limit, move the course to the end of the unassigned list
+            unassignedCourses.push(course);
+        }
+    }
+
+
+
 
 }
 
-async function validatePreCoReqs(futureCourses) {
+
+async function validatePreCoReqs(futureCourses, fullPlan = true) {
     let invalidPrereqs = {}
     let invalidCoreqs = {}
 
@@ -310,6 +346,7 @@ async function validatePreCoReqs(futureCourses) {
 
         prereqs.forEach(prereqID => {
             const prereqCourse = courseObjs.find(obj => obj.course.course === prereqID);
+
             if (!prereqCourse) {
                 invalidPrereqs = addToInvalidReq(invalidPrereqs, course.course, prereqID);
                 return;
@@ -320,7 +357,7 @@ async function validatePreCoReqs(futureCourses) {
             const prereqYearNumber = yearMap[prereqYear];
 
             if (prereqSemesterNumber == -1 || prereqYearNumber - 1) {
-                invalidPrereqs = addToInvalidReq(invalidPrereqs, course.course, prereqID);
+                if (fullPlan) { invalidPrereqs = addToInvalidReq(invalidPrereqs, course.course, prereqID) }
                 return;
             }
 
@@ -341,7 +378,7 @@ async function validatePreCoReqs(futureCourses) {
             const coreqSemseterNumber = semesterMap[coreqSemester];
 
             if (coreqSemseterNumber == -1 || coreqYearNumber - 1) {
-                invalidCoreqs = addToInvalidReq(invalidCoreqs, course.course, coreqID);
+                if (fullPlan) { invalidCoreqs = addToInvalidReq(invalidCoreqs, course.course, coreqID); }
                 return;
             }
 
@@ -481,8 +518,7 @@ async function testing2() {
     console.log(result);
 }
 
-async function testing3()
-{
+async function testing3() {
     const req = {
         params: {
             netID: 'ach127',
