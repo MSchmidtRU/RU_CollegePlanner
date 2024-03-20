@@ -27,7 +27,7 @@ async function viewPlan(req) {
         let netID = req.params.netID;
         let jsonFutureCourses;
         if (netID != undefined) {
-            let future_courses = (await Student.getStudent(netID)).futureCourses;//getFutureCourses(netID);
+            let future_courses = await Student.getFutureCourses(netID);
             jsonFutureCourses = future_courses.map(course => {
                 return {
                     course: course.course,
@@ -135,42 +135,34 @@ async function optimizePlan(req) {
     try {
         let netID = req.params.netID;
         let concentrationID = req.params.concentrationID;
-        let content = req.params.content; //Options: optimize order of courses given valid plan, optimize order of courses, given list of future courses with no attached semester (or some can have an attached semester but ignore that during optimization) put them in an optimal order
-        let method = req.params.method; //options: fastest to graduation, most balanced
+        let content = req.params.content; 
+        let method = req.params.method;
         if ((netID == undefined) || (concentrationID == undefined) || (content == undefined) || (method == undefined)) {
             throw new Error("Undifined parameter.");
         }
 
-        let futurecoursesObjects = Student.getFutureCourses(netID);
+        let futureCourses = await Student.getFutureCourses(netID);
 
         if (content == 'validPlan') //given a valid plan, optimize order of all courses in it
         {
-            let isValid = await validatePlan(req);
-            if (!isValid) {
-                throw new Error("Invalid plan. As such this method of optimization cannot be used.");
-            }
             if (method == 'quickest') {
-                //optimizeQuickestGrad()
+                let result = await validPlanQuickestOptimize(futureCourses);
             }
             if (method == 'balanced') {
-                //optimizeBalancedGrad()
+                let result = await validPlanBalancedOptimize(futureCourses);
             }
             else {
                 throw new Error("Invalid method of optimization.");
             }
 
         }
-        if (content == 'unsureSemesters') //given a plan where courses exist to fulfill all requirements but not all semesters are specified, don't touch courses with semester provided, just optimize courses with unspecified semester
+        if (content == 'fillInSemester') 
         {
-            let isValid = await validatePlan(req);
-            if (!isValid) {
-                throw new Error("Invalid plan. As such this method of optimization cannot be used.");
-            }
             if (method == 'quickest') {
-                //optimizeQuickestGrad()
+                let result = await fillInSemesterQuickestOptimize(futureCourses); 
             }
             if (method == 'balanced') {
-                //optimizeBalancedGrad()
+                let result = await fillInSemesterBalancedOptimize(futureCourses);
             }
             else {
                 throw new Error("Invalid method of optimization.");
@@ -207,11 +199,23 @@ async function savePlan(req) {
 }
 
 
-function optimizeQuickestGrad(currentPlan, takingAndTaken, optimizationContent) {
+async function validPlanQuickestOptimize(futureCourses)
+{
 
 }
 
-function optimizeBalancedGrad(currentPlan, takingAndTaken, optimizationContent) {
+async function validPlanBalancedOptimize(futureCourses)
+{
+
+}
+
+async function fillInSemesterQuickestOptimize(futureCourses)
+{
+    
+}
+
+async function fillInSemesterBalancedOptimize(futureCourses)
+{
 
 }
 
