@@ -132,11 +132,10 @@ async function isValidPlan(netID, concentrationID) {
 async function optimizePlan(req) {
     try {
         let netID = req.params.netID;
-        let concentrationID = req.params.concentrationID;
         let method = req.params.method;
         let futureCourses = req.body.futureCourses;
 
-        if ((netID == undefined) || (concentrationID == undefined) || (content == undefined) || (method == undefined)) {
+        if ((netID == undefined) || (method == undefined)) {
             throw new Error("Undefined parameter");
         }
 
@@ -268,52 +267,61 @@ async function fillInSemesterQuickestOptimize(futureCourses) {
 }
 
 async function fillInSemesterBalancedOptimize(futureCourses) {
+
+    for (let futureCourse of futureCourses) {
+        futureCourse.courseDetails = await Course.getCourse(futureCourse.course);
+        futureCourse.load = futureCourse.courseDetails.credit + parseInt(futureCourse.course[7]);
+    }
+
     let unassignedCourses = [];
     let assignedCourses = [];
+    let totalLoad;
+
+    let creditLoads = [{ load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }]
+
 
     //seperate assigned and unassigned courses
     for (const course of futureCourses) {
-        if (course.semester && course.year) {
+        if (course.semester >= 0) {
             assignedCourses.push(course);
+            creditLoads[course.semester].load += course.load;
+            creditLoads[course.semester].credits += course.credit;
         } else {
             unassignedCourses.push(course);
         }
+
+        totalLoad += course.load;
     }
 
-    let isValidPreCoReq = validatePreCoReqs(assignedCourses, false);
+    let { isValidOrder } = await validatePreCoReqs(assignedCourses, false);
 
-
-    if (!isValidPreCoReq) {
+    if (!isValidOrder) {
         throw new Error("Locked courses are not in a valid order"); //TODO fix that the validate function doesnt send error if not exist - only checks if there is direct conflict
     }
 
-    const creditLoads = {
-        winter: { freshman: 0, sophomore: 0, junior: 0, senior: 0 },
-        spring: { freshman: 0, sophomore: 0, junior: 0, senior: 0 }
-    };
+    //assign prereqs an coreqs to 
+    [assignedCourses, creditLoads] = await assignPreCoreqs(assignedCourses, assignedCourses, creditLoads);
 
+    sortUnassignedCourses(unassignedCourses);
 
-    unassignedCourses.sort((a, b) => {
-        const courseA = parseInt(a.course.split(':').pop());
-        const courseB = parseInt(b.course.split(':').pop());
-        return courseA - courseB;
-    });
+    for (const unassignedCourse of unassignedCourses) {
+        for (const semester of creditLoads) {
+            let averageLoad = totalLoad / (creditLoads.filter(creditLoad => !creditLoad.full)).length;
+            if (semester.full) {
+                return;
+            }
 
-    for (const course of unassignedCourses) {
-        const minSemester = Object.keys(creditLoads).reduce((a, b) => creditLoads[a][course.year] < creditLoads[b][course.year] ? a : b);
-        const minYear = Object.keys(creditLoads[minSemester]).reduce((a, b) => creditLoads[minSemester][a] < creditLoads[minSemester][b] ? a : b);
+            if (semester.credits >= 19 || semester.load > averageLoad || semester.load + unassignedCourse.load > averageLoad || semester.credits + unassignedCourse.courseDetails.credits > 19) {
+                semester.full = true;
+                return;
+            }
 
-        const preReqs = await Course.getPrereqs(course.course);
-        const coReqs = await Course.getCoreqs(course.course);
+            semester.load += unassignedCourse.load;
 
-        // Check prerequisites
-        const prerequisitesSatisfied = course.prerequisites.every(prerequisite => assignedCourses.some(assignedCourse => assignedCourse.id === prerequisite));
-        if (prerequisitesSatisfied && creditLoads[minSemester][minYear] + course.credits <= 19) {
-            creditLoads[minSemester][minYear] += course.credits;
-            assignedCourses.push({ ...course, semester: minSemester, year: minYear });
-        } else {
-            // If prerequisites are not satisfied or credits exceed the limit, move the course to the end of the unassigned list
-            unassignedCourses.push(course);
+            semester.credits += unassignedCourse.courseDetails.credit;
+            assignCourses.push(unassignedCourse);
+            [assignedCourses, creditLoads] = await assignPreCoreqs([unassignedCourse], assignCourses, creditLoads);
+
         }
     }
 
@@ -321,6 +329,119 @@ async function fillInSemesterBalancedOptimize(futureCourses) {
 
 
 }
+
+function countDependentCourses(course, futureCourses) {
+    let numDependent = 0;
+    for (let futureCourse of futureCourses) {
+        if (futureCourse.courseDetails.prereqs.includes(course)) {
+            numDependent++;
+        }
+    }
+}
+
+async function assignPreCoreqs(coursesToAssign, assignedCourses, creditLoads) {
+    for (const courseToAssign of coursesToAssign) {
+        let prereqs = courseToAssign.courseDetails.prereqs.filter(course => !assignedCourses.includes(course));
+        let coreqs = courseToAssign.courseDetails.coreqs.filter(course => !assignedCourses.includes(course));
+        let semester = courseToAssign.courseDetails.semester;
+
+        for (const coreq of coreqs) {
+            let course = await Course.getCourse(coreq);
+
+            let coreqInfo = {
+                course: coreq,
+                courseDetails: course,
+                load: course.credit + parseInt(coreq[7]),
+            };
+
+            if (creditLoads[semester].credits + coreqInfo.courseDetails.credit > 19) {
+                throw new Error("impossible to optimize");
+            }
+
+            assignCourses.push(coreqInfo);
+            creditLoads[semester].load += coreqInfo.load;
+            creditLoads[semester].credit += coreqInfo.courseDetails.credit;
+
+        }
+
+
+        for (const prereq of prereqs) {
+            let course = await Course.getCourse(prereqs);
+
+            let prereqInfo = {
+                course: prereq,
+                courseDetails: course,
+                load: course.credit + parseInt(prereq[7]),
+            };
+            if (semester - 1 < 0) {
+                throw new Error("impossible to optimize");
+            }
+            if (creditLoads[semester - 1].credits + prereqInfo.courseDetails.credit > 19) {
+                throw new Error("impossible to optimize");
+            }
+
+            assignCourses.push(prereqInfo);
+            creditLoads[semester].load += prereqInfo.load;
+            creditLoads[semester].credit += prereqInfo.courseDetails.credit;
+
+        }
+    }
+
+    return [coursesToAssign, creditLoads];
+
+}
+
+function sortUnassignedCourses(unassignedCourses) {
+    unassignedCourses.sort((a, b) => {
+        // First, compare by the number of dependent courses (higher first)
+        const dependentCoursesA = countDependentCourses(a, assignedCourses);
+        const dependentCoursesB = countDependentCourses(b, assignedCourses);
+        if (dependentCoursesB !== dependentCoursesA) {
+            return dependentCoursesB - dependentCoursesA;
+        }
+        // If dependent courses are equal, compare by the suffix of their IDs (higher suffix later)
+        const suffixA = Course.getSuffix(a.id);
+        const suffixB = Course.getSuffix(b.id);
+        return suffixA - suffixB;
+    });
+
+    return unassignedCourses;
+
+}
+
+//not locked
+async function assignCourse(course, assignedCourses, unassignedCourses, semester, creditLoad) {
+
+    let prereqs = courseToAssign.courseDetails.prereqs.filter(course => !assignedCourses.includes(course));
+    let coreqs = courseToAssign.courseDetails.coreqs.filter(course => !assignedCourses.includes(course));
+
+    let tentativePlan = creditLoad;
+    let approved = false;
+
+    while (!approved) {
+        for (const prereq of prereqs) {
+            let prevSemester = semester - 1;
+
+        }
+
+    }
+}
+
+//TODO calculate averageload - once a semester closes then it is recalculated
+
+function isSemesterAvailable(semester, creditLoads, averageLoad) {
+    
+    if (semester.full) {
+        return;
+    }
+
+    if (semester.credits >= 19 || semester.load > averageLoad || semester.load + unassignedCourse.load > averageLoad || semester.credits + unassignedCourse.courseDetails.credits > 19) {
+        semester.full = true;
+        return;
+    }
+
+}
+
 
 
 async function validatePreCoReqs(futureCourses, fullPlan = true) {
@@ -530,7 +651,7 @@ async function testing3() {
     let answer = await optimizePlan(req);
     console.log(answer);
 }
-testing3();
+// testing3();
 
 
 module.exports = { viewPlan, viewStatus, addCourse, removeCourse, viewSample, validatePlan, optimizePlan, savePlan }
