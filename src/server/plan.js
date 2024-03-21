@@ -302,11 +302,81 @@ function findDistanceToNoPrereq(courseTree, givenCourseID) {
 }
 
 //Quickest and its minions
-async function fillInSemesterQuickestOptimize(futureCourses) {
+async function fillInSemesterQuickestOptimize(futureCourses, creditloads) {
     try {
+        //Given: {tree:futureCourses, creditloads: :[{}]}, where creditloads contains: [{ load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }]
+        
+            let queue = [...courseTree];
+            let level = 0;
+            let nextLevelStartIndex = queue.length;
+            let longestRoot = {level: 0, course: '', length: 0};
+          
+            while (queue.length > 0) {
+              let node = queue.shift();
+              let currentLevel = level;
+          
+              // Check if we've moved to the next level
+              if (queue.length < nextLevelStartIndex) {
+                level++;
+                nextLevelStartIndex = queue.length;
+                console.log(`Longest root at level ${longestRoot.level}: ${longestRoot.course} with length ${longestRoot.length}`);
+                for(let semester of creditloads)
+                {
+                    if((!semester.full) && (semester.credits + longestRoot.course.credit) <= 19)
+                    {
+                        longestRoot.course.semester = indexOf(semester);
+                        semester.credits += longestRoot.course.credit;
+                    }
+                }
+                longestRoot = {level: level, course: '', length: 0}; // Reset for the new level
+              }
+          
+              // Process the node
+              if((node.course.length > longestRoot.length) && (node.course.semester === undefined)) {
+                longestRoot.course = node.course;
+                longestRoot.length = node.course.length;
+              }
+          
+              // Add children to the queue
+              if (node.prereqsFor) {
+                queue.push(...node.prereqsFor);
+              }
+            }
+          
+          
 
-        //put all courses with pre-assigned semesters into the plan
-        for (let course of futureCourses) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+          //put all courses with pre-assigned semesters into the plan
+          for (let course of futureCourses) {
             if (course.semester !== undefined) {
 
                 let finalDepth = findLengthOfPrereqChain(courseTree, course.courseID); //TODO may need an await //figures out how many courses in a chain of pre-req after pre-req depend on this course
