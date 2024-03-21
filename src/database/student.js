@@ -21,7 +21,7 @@ class Student {
 }
 
 class FutureCourse {
-    constructor(course, semester, year) {
+    constructor(course, semester) {
         this.course = this.setCourse(course)
         this.semester = this.setSemester(semester);
     }
@@ -42,7 +42,7 @@ class FutureCourse {
     }
 
     setSemester(semester) {
-        if (typeof semester !== int) {
+        if (typeof semester !== 'number') {
             throw new Error("Semester must be a int.");
         }
 
