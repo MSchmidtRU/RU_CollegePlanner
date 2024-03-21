@@ -117,18 +117,6 @@ async function validatePlan(req) {
 
 }
 
-async function isValidPlan(netID, concentrationID) {
-    const req = {
-        params: {
-            netID: netID,
-            concentrationID: concentrationID
-        }
-    }
-    let [data, code] = await isValidPlan(req);
-
-    return data.validatePreCoReqs.isValidOrder && data.validateConcentrationCourses.isFulfilledConcentationCourses && data.validateResidency.isValidResReq;
-}
-
 async function optimizePlan(req) {
     try {
         let netID = req.params.netID;
@@ -139,8 +127,8 @@ async function optimizePlan(req) {
             throw new Error("Undefined parameter");
         }
 
-        let readyTogo = await isOptimizable(futureCourses);
-
+        let readyToGo = await isOptimizable(futureCourses);
+        return readyToGo;
         
 
         if (method == 'quickest') {
@@ -178,27 +166,57 @@ async function savePlan(req) {
     }
 }
 
+//THUS ENDS COURSES CALLED BY THE SERVER
+
+//isOptamizable and its minions
 async function isOptimizable(futureCourses)
 {
     try{
-        let isValidPreCoReq = validatePreCoReqs(futureCourses, false);
+        let isValidPreCoReq = await validatePreCoReqs(futureCourses, false);
 
         if (!isValidPreCoReq) {
             throw new Error("Locked courses are not in a valid order");
         }
 
-        let creditsPerSemester = [0,0,0,0,0,0,0,0];
+//time to build the tree:
 
-        for (const course of futureCourses)
-        {
-            creditsPerSemester[course.semester]++;
-        }
+    for (let futureCourse of futureCourses) {
+        let courseDetails = await Course.getCourse(futureCourse.course);
+        futureCourse.prereqs = courseDetails.prereqs;
+        futureCourse.coreqs = courseDetails.coreqs;
+        futureCourse.credit = courseDetails.credit;
+        futureCourse.load = courseDetails.credit + parseInt(futureCourse.course[7]);
+    }
 
-        const hasAbove19 = creditsPerSemester.findIndex(number => number > 19);
-        if(hasAbove19 != -1)
-        {
-            throw new Error("There exists a semester with locked credits more than 19. This is invalid.");
+    let combinedCourses = new Map();
+    for (let course of futureCourses) {
+        let combinedCourseID = [course.course, ...course.coreqs].sort().join("-");
+        if (!combinedCourses.has(combinedCourseID)) {
+            combinedCourses.set(combinedCourseID, {
+                courseID: combinedCourseID,
+                credit: course.credit,
+                load: course.load, // add together the loads of all coreqs
+                prereqs: course.prereqs, //assuming all coreqs have the same prereqs
+                semester: course.semester,
+            });
         }
+        else {
+            // If this combination of courses is already in the map, update the creditCount
+            combinedCourses.get(combinedCourseID).credit += course.credit;
+            combinedCourses.get(combinedCourseID).load += course.load;
+        }
+    }
+
+    for (const course of combinedCourses) {
+        if (combinedCourses.includes(course)) {
+            course.prereqsFor = getPrereqsFor(course, combinedCourses);
+            let allPrereqsFor = getNestedPrereqs(course.prereqsFor);
+
+            combinedCourses = combinedCourses.filter(combinedCourse => !allPrereqsFor.includes(combinedCourse.course))
+        }
+    }
+    return combinedCourses;
+    let creditLoads = [{ load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }]
 
 
     }catch(e)
@@ -208,90 +226,89 @@ async function isOptimizable(futureCourses)
 
 }
 
+/*
+function TAANITESTHER(combinedCourses) {
+    for (const course of combinedCourses) {
+        if (combinedCourses.includes(course)) {
+            course.prereqsFor = getChildren(course, combinedCourses);
+            let allPrereqsFor = getNestedChildren(course.prereqsFor);
+
+            combinedCourses = combinedCourses.filter(combinedCourse => !allPrereqsFor.includes(combinedCourse.course))
+        }
+    }
+    return combinedCourses;
+}*/
+
+function getPrereqsFor(course, combinedCourses) {
+    let prereqsFor = combinedCourses.filter(combinedCourse => combinedCourse.prereqs.includes(course.course));
+
+    for (const prereqCourse of prereqsFor) {
+        const nestedPrereqs = getPrereqsFor(prereqCourse, combinedCourses);
+        prereqCourse.prereqsFor = nestedPrereqs;
+    }
+
+    return prereqsFor;
+}
+
+function getNestedPrereqs(courseObjects) {
+    let courses = [];
+
+    courseObjects.forEach(courseObj => {
+        courses.push(courseObj.course);
+        if (courseObj.prereqsFor && courseObj.prereqsFor.length > 0) {
+            courses.push(...getNestedPrereqs(courseObj.prereqsFor));
+        }
+    });
+
+    return courses;
+}
+
+function findLengthOfPrereqChain(courseTree, courseID) {
+    let finalDepth = 0;
+    let visited = new Set();
+
+    dfs(courseID, 0);
+
+    function dfs(courseID, depth) {
+        visited.add(courseID);
+        finalDepth = Math.max(finalDepth, depth);
+        let course = courseTree.get(courseID);
+        for (let child of course.children) {
+            if (!visited.has(child)) {
+                dfs(child, depth + 1);
+            }
+        }
+    }
+
+    return finalDepth;
+}
+
+function findDistanceToNoPrereq(courseTree, givenCourseID) {
+    let queue = [{ courseID: givenCourseID, level: 0 }];
+    let visited = new Set();
+
+    while (queue.length > 0) {
+        let { courseID, level } = queue.shift();
+        visited.add(courseID);
+
+        let course = courseTree.find(course => course.courseID === courseID);
+        if (!course.prereq || course.prereq.length === 0) {
+            return level; // Distance found
+        }
+
+        for (let prereq of course.prereq) {
+            if (!visited.has(prereq)) {
+                queue.push({ courseID: prereq, level: level + 1 });
+            }
+        }
+    }
+
+    return -1; // No course without prerequisites found
+}
+
+//Quickest and its minions
 async function fillInSemesterQuickestOptimize(futureCourses) {
     try {
-
-        let futureCoursesData = []; //array of objects: {courseID, prereq, coreq, credit}
-        for (const futureCourse of futureCourses) {
-            let course = await Course.getCourse(futureCourse.course);
-            const prereqs = course.prereqs;
-            const coreqs = course.coreqs;
-            const credit = await course.credit;
-            futureCoursesData.push({ courseID: futureCourse.course, prereqs: prereqs, coreqs: coreqs, credit: credit });
-        }
-
-        let futureCoursesIDs = []
-        for(const course of futureCoursesData) 
-        {futureCoursesIDs.push(course.courseID)}
-
-        //checking that all pre and coreqs exist in the future courses
-        let errorsInExistanceOfCourses = '';
-        for (const course of futureCoursesData) {
-            const requiredInList = course.prereqs.concat(course.coreqs);
-            for (const courseReqID of requiredInList) {
-                if (!(futureCoursesIDs.includes(courseReqID))) {
-                    errorsInExistanceOfCourses += `${course.courseID} has ${courseReqID} listed as a pre or coreq, but it is not listed in your plan.`;
-                }
-            }
-        }
-        if (errorsInExistanceOfCourses != '') {
-            throw new Error(errorsInExistanceOfCourses);
-        }
-        //check whether there are any conflicts in the set courses- courses that are coreqs set for different semesters, pre-coreq switched
-
-        //time to create a map of the courses and their pre/co situation
-        let combinedCourses = new Map();
-        for (let course of futureCoursesData) {
-            let combinedCourseID = [course.courseID, ...course.coreqs].sort().join("-");
-            if (!combinedCourses.has(combinedCourseID)) {
-                combinedCourses.set(combinedCourseID, {
-                    courseID: combinedCourseID,
-                    credit: course.credit,
-                    prereqs: course.prereqs, //assuming all coreqs have the same prereqs
-                });
-            }
-            else {
-                // If this combination of courses is already in the map, update the creditCount
-                combinedCourses.get(combinedCourseID).credit += course.credit;
-              }
-          }
-          //structure of combinedCourses:
-          // courseID:xxx:xxx:xxx-xxx:xxx:xxx-xxx:xxx:xxx where these are coreqs
-          //credit: course1Credit+course2Credit+course3Credit
-          //prereqs: [xxx:xxx:xxx, xxx:xxx:xxx, xxx:xxx:xxx, xxx:xxx:xxx] //keep in mind that some of these prereqs are coreqs of each other while others are not. This will be updated at a later stage
-            }
-        }
-
-        //time to put the courses into a heiarchal tree
-        let courseTree = new Map();
-
-        for (let [courseID, course] of combinedCourses) {
-            // Add the course to the course tree
-            if (!courseTree.has(courseID)) {
-                courseTree.set(courseID, {
-                    courseID: courseID,
-                    credit: course.credit,
-                    prereqs: course.prereqs,
-                    coreqs: course.coreqs,
-                    children: []
-                });
-            }
-
-            // Add the course as a child of its prerequisites
-            for (let prereq of course.prereqs) {
-                let foundPrerequisite = [...courseTree.keys()].find(key => key.includes(prereq));
-                if (foundPrerequisite) {
-                    // If a course with a matching prerequisite is found, add the current course as its child
-                    courseTree.get(foundPrerequisite).children.push(courseID); //it pushes the courseID as a child of the prereq
-                }
-            }
-          }
-            //fixing the current prereqs so that courses that are coreqs for each other are listed as one joined prereq
-
-
-          
-          let semesterCourses = new Array(8).fill(0).map(() => []); //gonna store the plan
-          let semesterCreditCounts = [0,0,0,0,0,0,0,0];
         
           //put all courses with pre-assigned semesters into the plan
           for (let course of futureCourses) {
@@ -347,50 +364,7 @@ async function fillInSemesterQuickestOptimize(futureCourses) {
 
 }
 
-function findLengthOfPrereqChain(courseTree, courseID) {
-    let finalDepth = 0;
-    let visited = new Set();
-
-    dfs(courseID, 0);
-
-    function dfs(courseID, depth) {
-        visited.add(courseID);
-        finalDepth = Math.max(finalDepth, depth);
-        let course = courseTree.get(courseID);
-        for (let child of course.children) {
-            if (!visited.has(child)) {
-                dfs(child, depth + 1);
-            }
-        }
-    }
-
-    return finalDepth;
-}
-
-function findDistanceToNoPrereq(courseTree, givenCourseID) {
-    let queue = [{ courseID: givenCourseID, level: 0 }];
-    let visited = new Set();
-
-    while (queue.length > 0) {
-        let { courseID, level } = queue.shift();
-        visited.add(courseID);
-
-        let course = courseTree.find(course => course.courseID === courseID);
-        if (!course.prereq || course.prereq.length === 0) {
-            return level; // Distance found
-        }
-
-        for (let prereq of course.prereq) {
-            if (!visited.has(prereq)) {
-                queue.push({ courseID: prereq, level: level + 1 });
-            }
-        }
-    }
-
-    return -1; // No course without prerequisites found
-}
-
-
+//Balanced and its minions
 async function fillInSemesterBalancedOptimize(futureCourses) {
 
     for (let futureCourse of futureCourses) {
@@ -494,34 +468,6 @@ function countDependentCourses(course, futureCourses) {
         }
     }
 }
-
-
-function getPrereqsFor(course, combinedCourses) {
-    let prereqsFor = combinedCourses.filter(combinedCourse => combinedCourse.prereqs.includes(course.course));
-
-    for (const prereqCourse of prereqsFor) {
-        const nestedPrereqs = getPrereqsFor(prereqCourse, combinedCourses);
-        prereqCourse.prereqsFor = nestedPrereqs;
-    }
-
-    return prereqsFor;
-}
-
-
-
-function getNestedPrereqs(courseObjects) {
-    let courses = [];
-
-    courseObjects.forEach(courseObj => {
-        courses.push(courseObj.course);
-        if (courseObj.prereqsFor && courseObj.prereqsFor.length > 0) {
-            courses.push(...getNestedPrereqs(courseObj.prereqsFor));
-        }
-    });
-
-    return courses;
-}
-
 
 async function assignPreCoreqs(coursesToAssign, assignedCourses, creditLoads) {
     for (const courseToAssign of coursesToAssign) {
@@ -627,7 +573,7 @@ function isSemesterAvailable(semester, creditLoads, averageLoad) {
 }
 
 
-
+//validate minions
 async function validatePreCoReqs(futureCourses, fullPlan = true) {
     let invalidPrereqs = {}
     let invalidCoreqs = {}
@@ -694,34 +640,6 @@ async function validatePreCoReqs(futureCourses, fullPlan = true) {
     });
 
     return { isValidOrder: (invalidCoreqs.length == 0 && invalidPrereqs.length == 0), invalidPrereqs: invalidPrereqs, invalidCoreqs: invalidCoreqs }
-}
-
-function TAANITESTHER(combinedCourses) {
-    for (const course of combinedCourses) {
-        course.prereqsFor = getPrereqsFor(course, combinedCourses);
-        let allPrereqsFor = getNestedPrereqs(course.prereqsFor);
-
-        combinedCourses = combinedCourses.filter(combinedCourse => !allPrereqsFor.includes(combinedCourse.course))
-    }
-
-    return combinedCourses;
-}
-
-async function testing1() {
-    courseObjs = [{ course: { course: 'CSC101', semester: 'spring', year: 'freshman' }, prereqs: ['CSC100'], coreqs: [] },
-    { course: { course: 'CSC100', semester: 'fall', year: 'freshman' }, prereqs: [], coreqs: [] },
-    { course: { course: "CSC200", semester: "spring", year: "sophomore" }, prereqs: ["CSC100"], coreqs: ["MAT150"] },
-    { course: { course: "MAT150", semester: "fall", year: "sophomore" }, prereqs: ["MAT100"], coreqs: [] },
-    { course: { course: "MAT100", semester: "spring", year: "freshman" }, prereqs: [], coreqs: [] },
-    { course: { course: "PHY200", semester: "fall", year: "junior" }, prereqs: ["PHY100", "MAT150"], coreqs: [] },
-    { course: { course: "ENG200", semester: "spring", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
-    { course: { course: "ENG100", semester: "fall", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
-    { course: { course: "PHY100", semester: "spring", year: "sophomore" }, prereqs: [], coreqs: [] }
-    ];
-    validatePreCoReqs(courseObjs);
-    // let student = await Student.getStudent('ach127');
-    //console.log(await validateResidency(31, 'nss170', '14:332'));
-    console.log(await viewPlan('nss170'));
 }
 
 function addToInvalidReq(obj, course, invalidPrereq) {
@@ -805,6 +723,36 @@ async function validateResidency(concentrationID, futureCourses) {
     return { isValidResReq: !(residencyCredits < residencyReq), numMissing: residencyReq - residencyCredits }
 }
 
+//extras
+async function isValidPlan(netID, concentrationID) {
+    const req = {
+        params: {
+            netID: netID,
+            concentrationID: concentrationID
+        }
+    }
+    let [data, code] = await isValidPlan(req);
+
+    return data.validatePreCoReqs.isValidOrder && data.validateConcentrationCourses.isFulfilledConcentationCourses && data.validateResidency.isValidResReq;
+}
+
+async function testing1() {
+    courseObjs = [{ course: { course: 'CSC101', semester: 'spring', year: 'freshman' }, prereqs: ['CSC100'], coreqs: [] },
+    { course: { course: 'CSC100', semester: 'fall', year: 'freshman' }, prereqs: [], coreqs: [] },
+    { course: { course: "CSC200", semester: "spring", year: "sophomore" }, prereqs: ["CSC100"], coreqs: ["MAT150"] },
+    { course: { course: "MAT150", semester: "fall", year: "sophomore" }, prereqs: ["MAT100"], coreqs: [] },
+    { course: { course: "MAT100", semester: "spring", year: "freshman" }, prereqs: [], coreqs: [] },
+    { course: { course: "PHY200", semester: "fall", year: "junior" }, prereqs: ["PHY100", "MAT150"], coreqs: [] },
+    { course: { course: "ENG200", semester: "spring", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
+    { course: { course: "ENG100", semester: "fall", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
+    { course: { course: "PHY100", semester: "spring", year: "sophomore" }, prereqs: [], coreqs: [] }
+    ];
+    validatePreCoReqs(courseObjs);
+    // let student = await Student.getStudent('ach127');
+    //console.log(await validateResidency(31, 'nss170', '14:332'));
+    console.log(await viewPlan('nss170'));
+}
+
 async function testing2() {
     // courseObjs = [{ course: { course: 'CSC101', semester: 'spring', year: 'freshman' }, prereqs: ['CSC100'], coreqs: [] },
     // { course: { course: 'CSC100', semester: 'fall', year: 'freshman' }, prereqs: [], coreqs: [] },
@@ -839,7 +787,7 @@ async function testing3() {
             method: 'quickest',
         },
         body:{
-            futureCourses: [new Student.FutureCourse('01:198:111', 1),
+            futureCourses: /*[new Student.FutureCourse('01:198:111', 1),
                             new Student.FutureCourse('01:198:201', 2),
                             new Student.FutureCourse('01:198:112', 2),
                             new Student.FutureCourse('01:198:113', 3),
@@ -847,13 +795,21 @@ async function testing3() {
                             new Student.FutureCourse('01:198:115', 5),
                             new Student.FutureCourse('01:198:116', 6),
                             new Student.FutureCourse('01:198:202', 6),
-                        ]
+                        ]*/
+                        [{course: '01:198:111', semester:1},
+                        {course: '01:198:201', semester:2},
+                        {course: '01:198:112', semester:2},
+                        {course: '01:198:113', semester:3},
+                        {course: '01:198:114', semester:4},
+                        {course: '01:198:115', semester:5},
+                        {course: '01:198:116', semester:6},
+                        {course: '01:198:202', semester:6}]
         }
     }
     let answer = await optimizePlan(req);
     console.log(answer);
 }
-// testing3();
+testing3();
 
 async function testing4() {
     let combinedCourses = [
@@ -874,6 +830,6 @@ async function testing4() {
     }
     console.log(combinedCourses);
 }
-testing4();
+//testing4();
 
 module.exports = { viewPlan, viewStatus, addCourse, removeCourse, viewSample, validatePlan, optimizePlan, savePlan }
