@@ -4,7 +4,7 @@ const Concentration = require("../database/concentration.js");
 const Course = require("../database/course.js");
 const { firestore } = require("../database/firebase.js");
 
-
+/*
 const semesterMap = {
     'fall': 0,
     'spring': 1,
@@ -17,7 +17,8 @@ const yearMap = {
     'junior': 2,
     'senior': 3,
     'unknown': -1
-};
+};*/
+
 
 
 async function viewPlan(req) {
@@ -30,7 +31,6 @@ async function viewPlan(req) {
                 return {
                     course: course.course,
                     semester: course.semester,
-                    year: course.year
                 };
             });
             return [JSON.stringify(jsonFutureCourses), 200];
@@ -50,7 +50,7 @@ function viewStatus(req) {
 async function addCourse(req) {
     try {
         const body = parseJson(req.body);
-        const futureCourse = new Student.FutureCourse(body.courseID, body.semester, body.year);
+        const futureCourse = new Student.FutureCourse(body.courseID, body.semester);
         let updatedPlan = await Student.addFutureCourse(req.params.netID, futureCourse);
         return [JSON.stringify(updatedPlan), 200, "plain/text"];
     } catch (e) {
@@ -140,6 +140,24 @@ async function optimizePlan(req) {
             throw new Error("Undefined parameter");
         }
 
+        let isValidPreCoReq = validatePreCoReqs(futureCourses, false);
+
+        if (!isValidPreCoReq) {
+            throw new Error("Locked courses are not in a valid order");
+        }
+        let creditsPerSemester = [0,0,0,0,0,0,0,0];
+        
+        for (const course of futureCourses)
+        {
+            creditsPerSemester[course.semester]++;
+        }
+
+        const hasAbove19 = creditsPerSemester.findIndex(number => number > 19);
+        if(hasAbove19 != -1)
+        {
+            throw new Error("There exists a semester with locked credits more than 19. This is invalid.");
+        }
+
         if (method == 'quickest') {
             let result = await fillInSemesterQuickestOptimize(futureCourses);
         }
@@ -166,7 +184,7 @@ async function savePlan(req) {
 
         for (const course of coursesToSave) {
 
-            let courseSaving = new Student.FutureCourse(course.courseID, course.semester, course.year);
+            let courseSaving = new Student.FutureCourse(course.courseID, course.semester);
             await Student.addFutureCourse(netID, courseSaving);
         }
         return ['Success saving new plan!', 200, "plain/text"];
@@ -424,11 +442,10 @@ async function validatePreCoReqs(futureCourses, fullPlan = true) {
     courseObjs.forEach(courseObj => {
         const { course, prereqs, coreqs } = courseObj;
 
-        const { semester, year } = course;
-        const semesterNumber = semesterMap[semester];
-        const yearNumber = yearMap[year];
+        const { semester} = course;
+        const semesterNumber = semester;
 
-        if (semesterNumber == -1 || yearNumber == -1) { return }
+        if (semesterNumber == -1 ) { return }
 
         prereqs.forEach(prereqID => {
             const prereqCourse = courseObjs.find(obj => obj.course.course === prereqID);
@@ -438,16 +455,16 @@ async function validatePreCoReqs(futureCourses, fullPlan = true) {
                 return;
             }
 
-            const { semester: prereqSemester, year: prereqYear } = prereqCourse.course;
-            const prereqSemesterNumber = semesterMap[prereqSemester];
-            const prereqYearNumber = yearMap[prereqYear];
+            const { semester: prereqSemester} = prereqCourse.course;
+            const prereqSemesterNumber = prereqSemester;
 
-            if (prereqSemesterNumber == -1 || prereqYearNumber - 1) {
+
+            if (prereqSemesterNumber == -1) {
                 if (fullPlan) { invalidPrereqs = addToInvalidReq(invalidPrereqs, course.course, prereqID) }
                 return;
             }
 
-            if (!(yearNumber > prereqYearNumber || (yearNumber === prereqYearNumber && semesterNumber >= prereqSemesterNumber))) {
+            if (!(semesterNumber >= prereqSemesterNumber)) {//TODO @noa check that I edited this correctly
                 invalidPrereqs = addToInvalidReq(invalidPrereqs, course.course, prereqID);
             }
         });
@@ -459,17 +476,16 @@ async function validatePreCoReqs(futureCourses, fullPlan = true) {
                 return;
             }
 
-            const { semester: coreqSemester, year: coreqYear } = coreqCourse.course;
-            const coreqYearNumber = yearMap[coreqYear];
-            const coreqSemseterNumber = semesterMap[coreqSemester];
+            const { semester: coreqSemester} = coreqCourse.course;
+            const coreqSemseterNumber = coreqSemester;
 
-            if (coreqSemseterNumber == -1 || coreqYearNumber - 1) {
+            if (coreqSemseterNumber == -1) {//TODO @noa check that I edited this correctly
                 if (fullPlan) { invalidCoreqs = addToInvalidReq(invalidCoreqs, course.course, coreqID); }
                 return;
             }
 
 
-            if (!(yearNumber > coreqYearNumber || (yearNumber === coreqYearNumber && semesterNumber >= coreqSemseterNumber))) {
+            if (!(semesterNumber >= coreqSemseterNumber)) {
                 invalidCoreqs = addToInvalidReq(invalidCoreqs, course.course, coreqID);
             }
         });
@@ -616,7 +632,7 @@ async function testing3() {
     let answer = await optimizePlan(req);
     console.log(answer);
 }
-testing3();
+//testing3();
 
 
 module.exports = { viewPlan, viewStatus, addCourse, removeCourse, viewSample, validatePlan, optimizePlan, savePlan }
