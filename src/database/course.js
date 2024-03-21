@@ -79,6 +79,8 @@ async function getPrereqs(courseID) {
 
 }
 
+
+
 async function getCoreqs(courseID) {
     try {
         let course = await getCourse(courseID);
@@ -87,6 +89,17 @@ async function getCoreqs(courseID) {
     } catch (e) {
         throw e;
     }
+}
+
+async function getCourseCredit(courseID) {
+    try {
+        let course = await getCourse(courseID);
+        let credit = course.credit;
+        return credit;
+    } catch (e) {
+        throw e;
+    }
+
 }
 
 async function validateCourse(netID) {
@@ -164,4 +177,4 @@ async function testing() {
 }
 testing();
 
-module.exports = { Course, getCourse, getPrereqs, getCoreqs }
+module.exports = { Course, getCourse, getPrereqs, getCoreqs, getCourseCredit }
