@@ -24,7 +24,6 @@ class FutureCourse {
     constructor(course, semester, year) {
         this.course = this.setCourse(course)
         this.semester = this.setSemester(semester);
-        this.year = this.setYear(year);
     }
 
     setCourse(course) {
@@ -43,29 +42,16 @@ class FutureCourse {
     }
 
     setSemester(semester) {
-        if (typeof semester !== 'string') {
-            throw new Error("Semester must be a string.");
+        if (typeof semester !== int) {
+            throw new Error("Semester must be a int.");
         }
 
-        if (semester.match(/(spring|fall|unknown)/i)) {
+        if ((semester > 0) && (semester < 8) ) {
             return semester;
         } else {
-            throw new Error("Invalid semester value - must be spring, fall, or unknown");
+            throw new Error("Invalid semester int from 0 to 7");
         }
     }
-
-    setYear(year) {
-        if (typeof year !== 'string') {
-            throw new Error("Year must be a string.");
-        }
-
-        if (year.match(/(freshman|sophomore|junior|senior|unknown)/i)) {
-            return year;
-        } else {
-            throw new Error("Invalid year value - must be freshman, sophomore, junior, senior");
-        }
-    }
-
 
 }
 
@@ -127,8 +113,7 @@ async function getStudent(netID) {
                     if (courseDoc.exists) {
                         return new FutureCourse(
                             courseDoc.id,
-                            courseObj.semester,
-                            courseObj.year);
+                            courseObj.semester);
 
                 } else {
                     //console.log(`Course document ${courseRef.id} does not exist.`);
@@ -197,8 +182,7 @@ async function addFutureCourse(netID, futureCourse) {
 
             const data = {
                 course: Helper.createReference("courses", futureCourse.course),
-                semester: futureCourse.semester,
-                year: futureCourse.year
+                semester: futureCourse.semester
             }
 
             const res = await firestore.collection('student').doc(netID).update({ future_courses: FieldValue.arrayUnion(data) });

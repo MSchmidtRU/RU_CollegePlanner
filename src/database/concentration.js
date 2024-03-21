@@ -49,7 +49,7 @@ async function getConcentration(concentrationID) {
             const courseRef = courseObj.course;
             const courseDoc = await courseRef.get();
             if (courseDoc.exists) {
-                return new FutureCourse(courseDoc.id, courseObj.semester, courseObj.year);
+                return new FutureCourse(courseDoc.id, courseObj.semester);
             } else {
                 console.log(`Course document ${courseRef.id} does not exist.`);
                 return null;
@@ -82,7 +82,6 @@ async function insertConcentration(concentrationID, concentration) {
             const sampleScheduleData = {
                 course: Helper.createReference("courses", object.course),
                 semester: object.semester,
-                year: object.year
             };
             await firestore.collection('concentration').doc(concentrationID).update({ sample_schedule: FieldValue.arrayUnion(sampleScheduleData) });
         }
