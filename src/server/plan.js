@@ -4,22 +4,6 @@ const Concentration = require("../database/concentration.js");
 const Course = require("../database/course.js");
 const { firestore } = require("../database/firebase.js");
 
-/*
-const semesterMap = {
-    'fall': 0,
-    'spring': 1,
-    'unknown': -1
-};
-
-const yearMap = {
-    'freshman': 0,
-    'sophomore': 1,
-    'junior': 2,
-    'senior': 3,
-    'unknown': -1
-};*/
-
-
 
 async function viewPlan(req) {
     try {
@@ -187,11 +171,12 @@ async function isOptimizable(futureCourses) {
             futureCourse.load = courseDetails.credit + parseInt(futureCourse.course[7]);
         }
 
-        let combinedCourses = new Map();
+        let combinedCourses = [];
         for (let course of futureCourses) {
             let combinedCourseID = [course.course, ...course.coreqs].sort().join("-");
-            if (!combinedCourses.has(combinedCourseID)) {
-                combinedCourses.set(combinedCourseID, {
+
+            if (!combinedCourses.some(test => test.courseID == combinedCourseID)) {
+                combinedCourses.push({
                     courseID: combinedCourseID,
                     credit: course.credit,
                     load: course.load, // add together the loads of all coreqs
@@ -201,8 +186,15 @@ async function isOptimizable(futureCourses) {
             }
             else {
                 // If this combination of courses is already in the map, update the creditCount
-                combinedCourses.get(combinedCourseID).credit += course.credit;
-                combinedCourses.get(combinedCourseID).load += course.load;
+
+                combinedCourses.map(combinedCourse => {
+                    if (combinedCourse.courseID === combinedCourseID) {
+                        return { ...combinedCourse, ...{ credit: combinedCourse.credit + course.credit, load: combinedCourse.load + course.load } };
+                    }
+                    return combinedCourse;
+                });
+                // combinedCourses.get(combinedCourseID).credit += course.credit;
+                // combinedCourses.get(combinedCourseID).load += course.load;
             }
         }
 
@@ -211,7 +203,7 @@ async function isOptimizable(futureCourses) {
                 course.prereqsFor = getPrereqsFor(course, combinedCourses);
                 let allPrereqsFor = getNestedPrereqs(course.prereqsFor);
 
-                combinedCourses = combinedCourses.filter(combinedCourse => !allPrereqsFor.includes(combinedCourse.course))
+                combinedCourses = combinedCourses.filter(combinedCourse => !allPrereqsFor.includes(combinedCourse.courseID))
             }
         }
         return combinedCourses;
@@ -238,7 +230,12 @@ function TAANITESTHER(combinedCourses) {
 }*/
 
 function getPrereqsFor(course, combinedCourses) {
-    let prereqsFor = combinedCourses.filter(combinedCourse => combinedCourse.prereqs.includes(course.course));
+    let courses = course.courseID.split('-');
+    let prereqsFor = [];
+    for (obj of courses) {
+        prereqsFor.push(...combinedCourses.filter(combinedCourse => combinedCourse.prereqs.includes(obj)));
+    }
+
 
     for (const prereqCourse of prereqsFor) {
         const nestedPrereqs = getPrereqsFor(prereqCourse, combinedCourses);
@@ -252,7 +249,7 @@ function getNestedPrereqs(courseObjects) {
     let courses = [];
 
     courseObjects.forEach(courseObj => {
-        courses.push(courseObj.course);
+        courses.push(courseObj.courseID);
         if (courseObj.prereqsFor && courseObj.prereqsFor.length > 0) {
             courses.push(...getNestedPrereqs(courseObj.prereqsFor));
         }
@@ -471,8 +468,8 @@ function assignCourse(unassignedCourse, averageLoad, creditLoads) {
     for (let child of children) {
         let nextAvailableSemester = findNextAvailableSemester(creditLoads);
         let creditLoad = creditLoads[nextAvailableSemester];
-        if (creditLoad.credit + )
-            unassignedCourse.semester = nextAvailableSemester;
+        // if (creditLoad.credit + )
+        unassignedCourse.semester = nextAvailableSemester;
 
         creditLoads = updateCreditLoads(unassignedCourse, nextAvailableSemester, creditLoads);
 
@@ -727,23 +724,16 @@ async function testing3() {
             method: 'quickest',
         },
         body: {
-            futureCourses: /*[new Student.FutureCourse('01:198:111', 1),
-                            new Student.FutureCourse('01:198:201', 2),
-                            new Student.FutureCourse('01:198:112', 2),
-                            new Student.FutureCourse('01:198:113', 3),
-                            new Student.FutureCourse('01:198:114', 4),
-                            new Student.FutureCourse('01:198:115', 5),
-                            new Student.FutureCourse('01:198:116', 6),
-                            new Student.FutureCourse('01:198:202', 6),
-                        ]*/
-                [{ course: '01:198:111', semester: 1 },
-                { course: '01:198:201', semester: 2 },
-                { course: '01:198:112', semester: 2 },
-                { course: '01:198:113', semester: 3 },
-                { course: '01:198:114', semester: 4 },
-                { course: '01:198:115', semester: 5 },
-                { course: '01:198:116', semester: 6 },
-                { course: '01:198:202', semester: 6 }]
+            futureCourses: [new Student.FutureCourse('01:198:111', 1),
+            new Student.FutureCourse('01:198:201', 2),
+            new Student.FutureCourse('01:198:112', 2),
+            new Student.FutureCourse('01:198:113', 3),
+            new Student.FutureCourse('01:198:114', 4),
+            new Student.FutureCourse('01:198:115', 5),
+            new Student.FutureCourse('01:198:116', 6),
+            new Student.FutureCourse('01:198:202', 6),
+            ]
+
         }
     }
     let answer = await optimizePlan(req);
