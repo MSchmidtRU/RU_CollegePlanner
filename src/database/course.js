@@ -68,6 +68,16 @@ async function insertCourse(courseID, course) {
     }
 }
 
+async function deleteCourse(courseID) {
+    try {
+        //const res = await firestore.collection('courses').doc(courseID).set(courseData);
+        const res = await firestore.collection('courses').doc(courseID).delete();
+    } catch (e) {
+        console.error('Error deleting the course:', e);
+        throw e;
+    }
+}
+
 async function insertArrayofCourses(courses) {
     for (const course in courses) {
         if (Object.hasOwnProperty.call(courses, course)) {
@@ -136,7 +146,10 @@ function testing() {
     }
 
     insertArrayofCourses(courses);
+    deleteCourse('03:267:101');
+    //console.log(getCourse('03:267:101'));
+    //console.log(getCourse('03:267:102'));
 }
 // testing();
 
-module.exports = { Course, getCourse, getPrereqs, getCoreqs, getCourseCredit }
+module.exports = { Course, getCourse, getPrereqs, getCoreqs, getCourseCredit, insertArrayofCourses, deleteCourse}
