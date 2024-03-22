@@ -327,38 +327,6 @@ async function fillInSemesterQuickestOptimize(futureCourses, creditloads) {
                 queue.push(...node.prereqsFor);
               }
             }
-          
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         
           //put all courses with pre-assigned semesters into the plan
           for (let course of futureCourses) {
@@ -712,51 +680,7 @@ async function isValidPlan(netID, concentrationID) {
     return data.validatePreCoReqs.isValidOrder && data.validateConcentrationCourses.isFulfilledConcentationCourses && data.validateResidency.isValidResReq;
 }
 
-async function testing1() {
-    courseObjs = [{ course: { course: 'CSC101', semester: 'spring', year: 'freshman' }, prereqs: ['CSC100'], coreqs: [] },
-    { course: { course: 'CSC100', semester: 'fall', year: 'freshman' }, prereqs: [], coreqs: [] },
-    { course: { course: "CSC200", semester: "spring", year: "sophomore" }, prereqs: ["CSC100"], coreqs: ["MAT150"] },
-    { course: { course: "MAT150", semester: "fall", year: "sophomore" }, prereqs: ["MAT100"], coreqs: [] },
-    { course: { course: "MAT100", semester: "spring", year: "freshman" }, prereqs: [], coreqs: [] },
-    { course: { course: "PHY200", semester: "fall", year: "junior" }, prereqs: ["PHY100", "MAT150"], coreqs: [] },
-    { course: { course: "ENG200", semester: "spring", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
-    { course: { course: "ENG100", semester: "fall", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
-    { course: { course: "PHY100", semester: "spring", year: "sophomore" }, prereqs: [], coreqs: [] }
-    ];
-    validatePreCoReqs(courseObjs);
-    // let student = await Student.getStudent('ach127');
-    //console.log(await validateResidency(31, 'nss170', '14:332'));
-    console.log(await viewPlan('nss170'));
-}
-
-async function testing2() {
-    // courseObjs = [{ course: { course: 'CSC101', semester: 'spring', year: 'freshman' }, prereqs: ['CSC100'], coreqs: [] },
-    // { course: { course: 'CSC100', semester: 'fall', year: 'freshman' }, prereqs: [], coreqs: [] },
-    // { course: { course: "CSC200", semester: "spring", year: "sophomore" }, prereqs: ["CSC100"], coreqs: ["MAT150"] },
-    // { course: { course: "MAT150", semester: "fall", year: "sophomore" }, prereqs: ["MAT100"], coreqs: [] },
-    // { course: { course: "MAT100", semester: "spring", year: "freshman" }, prereqs: [], coreqs: [] },
-    // { course: { course: "PHY200", semester: "fall", year: "junior" }, prereqs: ["PHY100", "MAT150"], coreqs: [] },
-    // { course: { course: "ENG200", semester: "spring", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
-    // { course: { course: "ENG100", semester: "fall", year: "sophomore" }, prereqs: ["ENG100"], coreqs: [] },
-    // { course: { course: "PHY100", semester: "spring", year: "sophomore" }, prereqs: [], coreqs: [] }
-    // ];
-    // validatePreCoReqs(courseObjs);
-    // // let student = await Student.getStudent('ach127');
-    // //console.log(await validateResidency(31, 'nss170', '14:332'));
-    // console.log(await viewPlan('nss170'));
-
-    const courseObject = {
-        'course1': ['ID4', 'ID3', 'ID9'],
-        'course2': ['ID5', 'ID4', 'ID7'],
-        'course3': ['ID5', 'ID7'],
-        'course4': ['ID5']
-    };
-
-    const result = fulfillReqs(courseObject);
-    console.log(result);
-}
-
-async function testing3() {
+async function testing() {
     const req = {
         params: {
             netID: 'ach127',
@@ -772,7 +696,6 @@ async function testing3() {
             new Student.FutureCourse('01:198:116', -1),
             new Student.FutureCourse('01:198:202', -1),
             ]
-
         }
     }
 
@@ -781,7 +704,7 @@ async function testing3() {
     let test = fillInSemesterBalancedOptimize(futureCourses, creditLoads);
     console.log(test);
 }
-testing3();
+testing();
 
 
 
