@@ -290,46 +290,44 @@ function findDistanceToNoPrereq(courseTree, givenCourseID) {
 async function fillInSemesterQuickestOptimize(futureCourses, creditloads) {
     try {
         //Given: {tree:futureCourses, creditloads: :[{}]}, where creditloads contains: [{ load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }]
-        
-            let queue = [...courseTree];
-            let level = 0;
-            let nextLevelStartIndex = queue.length;
-            let longestRoot = {level: 0, course: '', length: 0};
-          
-            while (queue.length > 0) {
-              let node = queue.shift();
-              let currentLevel = level;
-          
-              // Check if we've moved to the next level
-              if (queue.length < nextLevelStartIndex) {
+
+        let queue = [...courseTree];
+        let level = 0;
+        let nextLevelStartIndex = queue.length;
+        let longestRoot = { level: 0, course: '', length: 0 };
+
+        while (queue.length > 0) {
+            let node = queue.shift();
+            let currentLevel = level;
+
+            // Check if we've moved to the next level
+            if (queue.length < nextLevelStartIndex) {
                 level++;
                 nextLevelStartIndex = queue.length;
                 console.log(`Longest root at level ${longestRoot.level}: ${longestRoot.course} with length ${longestRoot.length}`);
-                for(let semester of creditloads)
-                {
-                    if((!semester.full) && (semester.credits + longestRoot.course.credit) <= 19)
-                    {
+                for (let semester of creditloads) {
+                    if ((!semester.full) && (semester.credits + longestRoot.course.credit) <= 19) {
                         longestRoot.course.semester = indexOf(semester);
                         semester.credits += longestRoot.course.credit;
                     }
                 }
-                longestRoot = {level: level, course: '', length: 0}; // Reset for the new level
-              }
-          
-              // Process the node
-              if((node.course.length > longestRoot.length) && (node.course.semester === undefined)) {
+                longestRoot = { level: level, course: '', length: 0 }; // Reset for the new level
+            }
+
+            // Process the node
+            if ((node.course.length > longestRoot.length) && (node.course.semester === undefined)) {
                 longestRoot.course = node.course;
                 longestRoot.length = node.course.length;
-              }
-          
-              // Add children to the queue
-              if (node.prereqsFor) {
-                queue.push(...node.prereqsFor);
-              }
             }
-        
-          //put all courses with pre-assigned semesters into the plan
-          for (let course of futureCourses) {
+
+            // Add children to the queue
+            if (node.prereqsFor) {
+                queue.push(...node.prereqsFor);
+            }
+        }
+
+        //put all courses with pre-assigned semesters into the plan
+        for (let course of futureCourses) {
             if (course.semester !== undefined) {
 
                 let finalDepth = findLengthOfPrereqChain(courseTree, course.courseID); //TODO may need an await //figures out how many courses in a chain of pre-req after pre-req depend on this course
@@ -706,6 +704,43 @@ async function testing() {
 }
 testing();
 
+
+function checkDependencies(data) {
+    let missingCourses = [];
+
+    // Iterate through each course
+    for (let courseID in data) {
+        let course = data[courseID];
+
+        // Check prerequisites
+        if (course.prereqs && course.prereqs.length > 0) {
+            for (let prereqID of course.prereqs) {
+                if (!data[prereqID]) {
+                    missingCourses.push({ courseID: courseID, dependencyID: prereqID, type: 'prereq' });
+                }
+            }
+        }
+
+        // Check corequisites
+        if (course.coreqs && course.coreqs.length > 0) {
+            for (let coreqID of course.coreqs) {
+                if (!data[coreqID]) {
+                    missingCourses.push({ courseID: courseID, dependencyID: coreqID, type: 'coreq' });
+                }
+            }
+        }
+    }
+
+    // Log missing dependencies
+    if (missingCourses.length > 0) {
+        console.log("The following courses have missing dependencies:");
+        for (let missingCourse of missingCourses) {
+            console.log(`Course ${missingCourse.courseID} has a missing ${missingCourse.type}: ${missingCourse.dependencyID}`);
+        }
+    } else {
+        console.log("All courses have their dependencies listed.");
+    }
+}
 
 
 module.exports = { viewPlan, viewStatus, addCourse, removeCourse, viewSample, validatePlan, optimizePlan, savePlan }
