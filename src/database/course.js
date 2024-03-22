@@ -78,6 +78,43 @@ async function deleteCourse(courseID) {
     }
 }
 
+
+//IMPORTANT: ONLY USE TO CLEAR ALL COURSES FROM DATABASE!!
+async function deleteAllCourses(db) {
+    const collectionRef = db.collection('courses');
+    const query = collectionRef.orderBy('__name__');
+  
+    return new Promise((resolve, reject) => {
+      deleteQueryBatch(db, query, resolve).catch(reject);
+    });
+  }
+  
+async function deleteQueryBatch(db, query, resolve) {
+    const snapshot = await query.get();
+  
+    const batchSize = snapshot.size;
+    if (batchSize === 0) {
+      // When there are no documents left, we are done
+      resolve();
+      return;
+    }
+  
+    // Delete documents in a batch
+    const batch = db.batch();
+    snapshot.docs.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+    await batch.commit();
+  
+    // Recurse on the next process tick, to avoid
+    // exploding the stack.
+    process.nextTick(() => {
+      deleteQueryBatch(db, query, resolve);
+    });
+}
+
+
+
 async function insertArrayofCourses(courses) {
     for (const course in courses) {
         if (Object.hasOwnProperty.call(courses, course)) {
@@ -126,7 +163,7 @@ async function validateCourse(netID) {
     //for each course in the list of reuired courses for the concentration, if gets all equivelent coruses,  checks if that course is in the student's completed, enrolled, or future courses. If not it checks if
 }
 
-function testing() {
+async function testing() {
     let courses =
     {
         "03:267:101": {
@@ -145,11 +182,8 @@ function testing() {
         },
     }
 
-    insertArrayofCourses(courses);
-    deleteCourse('03:267:101');
-    //console.log(getCourse('03:267:101'));
-    //console.log(getCourse('03:267:102'));
+    await insertArrayofCourses(courses);
 }
-// testing();
+testing();
 
 module.exports = { Course, getCourse, getPrereqs, getCoreqs, getCourseCredit, insertArrayofCourses, deleteCourse}
