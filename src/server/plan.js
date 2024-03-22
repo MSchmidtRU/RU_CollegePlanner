@@ -152,6 +152,7 @@ async function savePlan(req) {
 
 //THUS ENDS COURSES CALLED BY THE SERVER
 
+
 //isOptamizable and its minions
 async function isOptimizable(futureCourses) {
     try {
@@ -209,25 +210,10 @@ async function isOptimizable(futureCourses) {
         return combinedCourses;
         let creditLoads = [{ load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }]
 
-
     } catch (e) {
         throw e;
     }
-
 }
-
-/*
-function TAANITESTHER(combinedCourses) {
-    for (const course of combinedCourses) {
-        if (combinedCourses.includes(course)) {
-            course.prereqsFor = getChildren(course, combinedCourses);
-            let allPrereqsFor = getNestedChildren(course.prereqsFor);
-
-            combinedCourses = combinedCourses.filter(combinedCourse => !allPrereqsFor.includes(combinedCourse.course))
-        }
-    }
-    return combinedCourses;
-}*/
 
 function getPrereqsFor(course, combinedCourses) {
     let courses = course.courseID.split('-');
@@ -235,7 +221,6 @@ function getPrereqsFor(course, combinedCourses) {
     for (obj of courses) {
         prereqsFor.push(...combinedCourses.filter(combinedCourse => combinedCourse.prereqs.includes(obj)));
     }
-
 
     for (const prereqCourse of prereqsFor) {
         const nestedPrereqs = getPrereqsFor(prereqCourse, combinedCourses);
@@ -354,157 +339,7 @@ async function fillInSemesterQuickestOptimize(futureCourses) {
     } catch (e) {
         throw e;
     }
-
-
-
 }
-
-
-async function fillInSemesterBalancedOptimize(futureCourses) {
-
-
-    let unassignedCourses = [];
-    let assignedCourses = [];
-    let totalLoad;
-
-    //seperate assigned and unassigned courses
-    for (const course of futureCourses) {
-        if (course.semester >= 0) {
-            assignedCourses.push(course);
-        } else {
-            unassignedCourses.push(course);
-        }
-
-        totalLoad += course.load;
-    }
-
-    unassignedCourses = sortUnassignedCourses(unassignedCourses);
-
-    for (const unassignedCourse of unassignedCourses) {
-        let numChildren = getNestedChildren(assignedCourses.prereqsFor);
-        let averageLoad = getAverageLoad(totalLoad, creditLoads);
-        let numAvailableSemesters = creditLoads.filter(semester => !semester.full);
-
-        let numOptions = numAvailableSemesters - numChildren;
-
-        if (numOptions < 1) {
-            throw new Error("not possible") //TODO if recursion then maybe not throw
-        } else {
-            creditLoads = assignCourse(unassignedCourse, averageLoad, creditLoads);
-
-        }
-
-
-
-
-
-    }
-
-
-}
-
-function getChildren(course, combinedCourses) {
-    let prereqsFor = combinedCourses.filter(combinedCourse => combinedCourse.prereqs.includes(course.course));
-
-    for (const prereqCourse of prereqsFor) {
-        const nestedPrereqs = getChildren(prereqCourse, combinedCourses);
-        prereqCourse.prereqsFor = nestedPrereqs;
-    }
-
-    return prereqsFor;
-}
-
-
-function getNestedChildren(courseObjects) {
-    let courses = [];
-
-    courseObjects.forEach(courseObj => {
-        courses.push(courseObj.course);
-        if (courseObj.prereqsFor && courseObj.prereqsFor.length > 0) {
-            courses.push(...getNestedChildren(courseObj.prereqsFor));
-        }
-    });
-
-    return courses;
-}
-
-
-function sortUnassignedCourses(unassignedCourses) {
-    unassignedCourses.sort((a, b) => {
-
-        const dependentCoursesA = getNestedChildren(a.prereqsFor).length;
-        const dependentCoursesB = getNestedChildren(b.prereqsFor).length;
-        if (dependentCoursesB !== dependentCoursesA) {
-            return dependentCoursesB - dependentCoursesA;
-        }
-        // If dependent courses are equal, compare by the suffix of their IDs (higher suffix later)
-        const suffixA = a.course.split(":").pop();
-        const suffixB = b.course.split(":").pop();
-        return suffixA - suffixB;
-    });
-
-    return unassignedCourses;
-
-}
-
-function getAverageLoad(totalLoad, semesterLoads) {
-
-    let numAvailableSemesters;
-
-    for (let semester of semesterLoads) {
-        if (semester.full) {
-            numAvailableSemesters++;
-        } else {
-            totalLoad -= semester.load;
-        }
-
-    }
-    return totalLoad / numAvailableSemesters;
-}
-
-function assignCourse(unassignedCourse, averageLoad, creditLoads) {
-    let children = unassignedCourse.prereqsFor;
-
-    for (let child of children) {
-        let nextAvailableSemester = findNextAvailableSemester(creditLoads);
-        let creditLoad = creditLoads[nextAvailableSemester];
-        // if (creditLoad.credit + )
-        unassignedCourse.semester = nextAvailableSemester;
-
-        creditLoads = updateCreditLoads(unassignedCourse, nextAvailableSemester, creditLoads);
-
-    }
-
-}
-
-function findNextAvailableSemester(creditLoads) {
-    for (let i = 0; i < creditLoads.length; i++) {
-        if (creditLoads[i].full) {
-            return;
-        }
-        return i;
-    }
-}
-
-// function updateCreditLoads(unassignedCourse, semester, creditLoads) {
-//     if()
-// }
-
-//TODO calculate averageload - once a semester closes then it is recalculated
-
-function isSemesterAvailable(semester, creditLoads, averageLoad) {
-
-    if (semester.full) {
-        return;
-    }
-
-    if (semester.credits >= 19 || semester.load > averageLoad || semester.load + unassignedCourse.load > averageLoad || semester.credits + unassignedCourse.courseDetails.credits > 19) {
-        semester.full = true;
-        return;
-    }
-
-}
-
 
 //validate minions
 async function validatePreCoReqs(futureCourses, fullPlan = true) {
@@ -587,6 +422,7 @@ function addToInvalidReq(obj, course, invalidPrereq) {
     return obj;
 
 }
+
 async function validateConcentrationCourses(concentrationID, studentCourses) {
     const concentrationCourses = await Concentration.getCourses(concentrationID);
 
@@ -600,13 +436,12 @@ async function validateConcentrationCourses(concentrationID, studentCourses) {
 
     });
 
-    const assingedCourses = assignCourses(fulfilledCourses);
+    const assingedCourses = fulfillReqs(fulfilledCourses);
 
     return assingedCourses;
-
 }
 
-function assignCourses(courseObject) {
+function fulfillReqs(courseObject) {
     const refinedMap = {};
     const unusedIds = new Set(Object.values(courseObject).flat());
     const usedIds = new Set();
@@ -657,6 +492,140 @@ async function validateResidency(concentrationID, futureCourses) {
 }
 
 
+//balanced minions
+async function fillInSemesterBalancedOptimize(futureCourses, creditLoads) {
+    let unassignedCourses = [];
+    let assignedCourses = [];
+    let totalLoad = getTotalLoad(futureCourses);
+
+    //seperate assigned and unassigned courses
+    for (const course of futureCourses) {
+        if (course.semester >= 0) {
+            assignedCourses.push(course);
+        } else {
+            unassignedCourses.push(course);
+        }
+    }
+    unassignedCourses = sortUnassignedCourses(unassignedCourses);
+    assignedCourses.push(...assignCourse(unassignedCourses, totalLoad, creditLoads, -1));
+    console.log(assignedCourses);
+
+
+}
+
+function sortUnassignedCourses(unassignedCourses) {
+    unassignedCourses.sort((a, b) => {
+
+        const dependentCoursesA = findChildrenDepth(a.prereqsFor);
+        const dependentCoursesB = findChildrenDepth(b.prereqsFor);
+        if (dependentCoursesB !== dependentCoursesA) {
+            return dependentCoursesB - dependentCoursesA;
+        }
+        // If dependent courses are equal, compare by the suffix of their IDs (higher suffix later)
+        const suffixA = a.course.split(":").pop();
+        const suffixB = b.course.split(":").pop();
+        return suffixA - suffixB;
+    });
+
+    return unassignedCourses;
+
+}
+function getTotalLoad(courses) {
+    let totalLoad = 0;
+
+    for (let course of courses) {
+        totalLoad += course.load;
+
+        if (course.prereqsFor && course.prereqsFor.length) {
+            totalLoad += getTotalLoad(course.prereqsFor);
+        }
+    }
+
+    return totalLoad;
+}
+
+function getAverageLoad(totalLoad, semesterLoads) {
+
+    let numAvailableSemesters = 0;
+
+    for (let semester of semesterLoads) {
+        if (!semester.full) {
+            numAvailableSemesters++;
+        } else {
+            totalLoad -= semester.load;
+        }
+
+    }
+    return totalLoad / numAvailableSemesters;
+}
+
+
+function assignCourse(unassignedCourses, totalLoad, creditLoads, parentSemester) {
+    let assignedCourse = [];
+
+    for (let unassignedCourse of unassignedCourses) {
+        let nextSemester = parentSemester + 1; // Increment the parent's semester for the child
+        let numChildren = findChildrenDepth(unassignedCourse.prereqsFor);
+        let averageLoad = getAverageLoad(totalLoad, creditLoads);
+        let numAvailableSemesters = creditLoads.filter(semester => !semester.full).length;
+
+        let numOptions = numAvailableSemesters - numChildren;
+
+        if (numOptions < 1) {
+            throw new Error("not possible") //TODO if recursion then maybe not throw
+        } else {
+            for (let i = nextSemester; i < creditLoads.length; i++) { // Start from next semester
+                if (creditLoads[i].full) {
+                    continue;
+                }
+                if (creditLoads[i].credit + unassignedCourse.credit > 19) {
+                    continue;
+                }
+
+                unassignedCourse.semester = i;
+                creditLoads[i].load += unassignedCourse.load;
+                creditLoads[i].credit += unassignedCourse.credit;
+                if (creditLoads[i].load > averageLoad || creditLoads[i].credit === 19) {
+                    creditLoads[i].full = true;
+                }
+
+                // Recursively assign children courses
+                if (unassignedCourse.prereqsFor && unassignedCourse.prereqsFor.length > 0) {
+                    assignedCourse.push(...assignCourse(unassignedCourse.prereqsFor, totalLoad, creditLoads, unassignedCourse.semester));
+                }
+
+                // Push the parent course after all children are assigned
+                assignedCourse.push(unassignedCourse);
+
+                break; // Break the loop after assigning the course
+            }
+        }
+    }
+
+    return assignedCourse;
+}
+
+
+function findChildrenDepth(courseArray) {
+    if (!Array.isArray(courseArray) || courseArray.length === 0) {
+        return 0; // If courseArray is not an array or is an empty array, return 0
+    }
+
+    let maxDepth = 0;
+
+    for (let course of courseArray) {
+        if (course.prereqsFor && course.prereqsFor.length) {
+            for (let prereqFor of course.prereqsFor) {
+                const depth = findChildrenDepth([prereqFor]); // Call recursively with an array
+                if (depth > maxDepth) {
+                    maxDepth = depth;
+                }
+            }
+        }
+    }
+
+    return 1 + maxDepth;
+}
 
 
 
@@ -713,7 +682,7 @@ async function testing2() {
         'course4': ['ID5']
     };
 
-    const result = assignCourses(courseObject);
+    const result = fulfillReqs(courseObject);
     console.log(result);
 }
 
@@ -724,45 +693,26 @@ async function testing3() {
             method: 'quickest',
         },
         body: {
-            futureCourses: [new Student.FutureCourse('01:198:111', 1),
-            new Student.FutureCourse('01:198:201', 2),
-            new Student.FutureCourse('01:198:112', 2),
-            new Student.FutureCourse('01:198:113', 3),
-            new Student.FutureCourse('01:198:114', 4),
-            new Student.FutureCourse('01:198:115', 5),
-            new Student.FutureCourse('01:198:116', 6),
-            new Student.FutureCourse('01:198:202', 6),
+            futureCourses: [new Student.FutureCourse('01:198:111', -1),
+            new Student.FutureCourse('01:198:201', -1),
+            new Student.FutureCourse('01:198:112', -1),
+            new Student.FutureCourse('01:198:113', -1),
+            new Student.FutureCourse('01:198:114', -1),
+            new Student.FutureCourse('01:198:115', -1),
+            new Student.FutureCourse('01:198:116', -1),
+            new Student.FutureCourse('01:198:202', -1),
             ]
 
         }
     }
-    let answer = await optimizePlan(req);
-    console.log(answer);
+
+    let creditLoads = [{ full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }];
+    let futureCourses = await isOptimizable(req.body.futureCourses);
+    let test = fillInSemesterBalancedOptimize(futureCourses, creditLoads);
+    console.log(test);
 }
 testing3();
 
-async function testing4() {
-    let combinedCourses = [
-        { course: 'xx:xxx:111', prereqs: [] },
-        { course: 'xx:xxx:112', prereqs: ['xx:xxx:111'] },
-        { course: 'xxx:xxx:115', prereqs: ['xx:xxx:111'] },
-        { course: 'xxx:xxx:120', prereqs: ['xx:xxx:112'] },
-        { course: 'xxx:xxx:250', prereqs: ['xx:xxx:112'] },
-        { course: 'xxx:xxx:255', prereqs: ['xxx:xxx:250'] },
-        { course: 'xxx:xxx:309', prereqs: [] },
-        { course: 'xxx:xxx:288', prereqs: [] }
-    ];
 
-    for (const course of combinedCourses) {
-        if (combinedCourses.includes(course)) {
-            course.prereqsFor = getChildren(course, combinedCourses);
-            let allPrereqsFor = getNestedChildren(course.prereqsFor);
-            combinedCourses = combinedCourses.filter(combinedCourse => !allPrereqsFor.includes(combinedCourse.course))
-        }
-    }
-    let test = fillInSemesterBalancedOptimize(combinedCourses, []);
-
-}
-//testing4();
 
 module.exports = { viewPlan, viewStatus, addCourse, removeCourse, viewSample, validatePlan, optimizePlan, savePlan }

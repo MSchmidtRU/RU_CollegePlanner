@@ -46,10 +46,10 @@ class FutureCourse {
             throw new Error("Semester must be a int.");
         }
 
-        if ((semester > 0) && (semester < 8) ) {
+        if ((semester > 0) && (semester < 8) || semester == -1) {
             return semester;
         } else {
-            throw new Error("Invalid semester int from 0 to 7");
+            throw new Error("Invalid semester int from 0 to 7 or -1");
         }
     }
 
@@ -81,48 +81,48 @@ async function getStudent(netID) {
         if (!doc.exists) {
             throw new Error('Student document not found');
         };
-            // Document exists, access its data
-            const studentData = doc.data();
+        // Document exists, access its data
+        const studentData = doc.data();
 
-            // Fetch basic student info
-            const GPA = studentData.GPA;
-            const email = studentData.email;
-            const first_name = studentData.first_name;
-            const last_name = studentData.last_name;
-            const grad_year = studentData.grad_year;
-            const phone = studentData.phone;
+        // Fetch basic student info
+        const GPA = studentData.GPA;
+        const email = studentData.email;
+        const first_name = studentData.first_name;
+        const last_name = studentData.last_name;
+        const grad_year = studentData.grad_year;
+        const phone = studentData.phone;
 
-            const concentrationsArray = studentData.concentrations || [];
-            const concentrations = await Helper.getAssociatedIDs(concentrationsArray); //for all these type I got a list of course IDs and I figure that if there's something we need to know about a particular course we can access it directly through the collection, given the ID
+        const concentrationsArray = studentData.concentrations || [];
+        const concentrations = await Helper.getAssociatedIDs(concentrationsArray); //for all these type I got a list of course IDs and I figure that if there's something we need to know about a particular course we can access it directly through the collection, given the ID
 
-            const completedCoursesArray = studentData.completed_courses || [];
-            const completed_courses = await Helper.getAssociatedIDs(completedCoursesArray);
+        const completedCoursesArray = studentData.completed_courses || [];
+        const completed_courses = await Helper.getAssociatedIDs(completedCoursesArray);
 
-            const enrolledCoursesArray = studentData.enrolled_courses || [];
-            const enrolled_courses = await Helper.getAssociatedIDs(enrolledCoursesArray);
+        const enrolledCoursesArray = studentData.enrolled_courses || [];
+        const enrolled_courses = await Helper.getAssociatedIDs(enrolledCoursesArray);
 
-            const semesterCoursesArray = studentData.semester_courses || [];
-            const semester_courses = await Helper.getAssociatedIDs(semesterCoursesArray);
+        const semesterCoursesArray = studentData.semester_courses || [];
+        const semester_courses = await Helper.getAssociatedIDs(semesterCoursesArray);
 
-            const futureCoursesArray = studentData.future_courses || [];
-            //I had to do this one differently since there's no array of references the same way as the others
-            const future_courses = await Promise.all(futureCoursesArray.map(async courseObj => {
-                const courseRef = courseObj.course;
+        const futureCoursesArray = studentData.future_courses || [];
+        //I had to do this one differently since there's no array of references the same way as the others
+        const future_courses = await Promise.all(futureCoursesArray.map(async courseObj => {
+            const courseRef = courseObj.course;
 
-                    const courseDoc = await courseRef.get();
-                    if (courseDoc.exists) {
-                        return new FutureCourse(
-                            courseDoc.id,
-                            courseObj.semester);
+            const courseDoc = await courseRef.get();
+            if (courseDoc.exists) {
+                return new FutureCourse(
+                    courseDoc.id,
+                    courseObj.semester);
 
-                } else {
-                    //console.log(`Course document ${courseRef.id} does not exist.`);
-                    //return null;
-                    throw new Error('Student document not found');
-                }
-            }));
+            } else {
+                //console.log(`Course document ${courseRef.id} does not exist.`);
+                //return null;
+                throw new Error('Student document not found');
+            }
+        }));
 
-            return new Student(first_name, last_name, email, phone, grad_year, GPA, concentrations, completed_courses, enrolled_courses, future_courses, semester_courses);
+        return new Student(first_name, last_name, email, phone, grad_year, GPA, concentrations, completed_courses, enrolled_courses, future_courses, semester_courses);
     } catch (error) {
         throw error;
     }
@@ -254,4 +254,4 @@ async function testing() {
 }
 //testing();
 
-module.exports = { Student, getStudent, getFutureCourses, addFutureCourse, removeFutureCourse, FutureCourse};
+module.exports = { Student, getStudent, getFutureCourses, addFutureCourse, removeFutureCourse, FutureCourse };
