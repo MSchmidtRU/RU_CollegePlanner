@@ -6,12 +6,13 @@ class Course {
     constructor(name, description, credit, prereqs, coreqs, sections) {
         this.name = name;
         this.description = description;
-        this.credit = credit;
+        this.credits = credit;
         this.prereqs = prereqs
         this.coreqs = coreqs
         this.sections = Helper.isInstance(sections, Section) ? sections : [];
     }
 }
+
 async function getCourse(courseID) {
     try {
         // Reference to the document in the "student" collection
@@ -26,7 +27,7 @@ async function getCourse(courseID) {
         const courseData = doc.data();
 
         // Fetch basic student info
-        const credit = courseData.credit;
+        const credit = courseData.credits;
         const description = courseData.description;
         const name = courseData.name;
 
@@ -55,7 +56,7 @@ async function insertCourse(courseID, course) {
         const courseData = {
             name: course.name,
             description: course.description,
-            credit: course.credit,
+            credits: course.credits,
             prereqs: Helper.createReference("courses", course.prereqs),
             coreqs: Helper.createReference("courses", course.coreqs),
             sections: Helper.createReference("sections", course.sections)
@@ -119,7 +120,8 @@ async function insertArrayofCourses(courses) {
     for (const course in courses) {
         if (Object.hasOwnProperty.call(courses, course)) {
             const courseObj = courses[course];
-            courseInfo = new Course(courseObj.name, courseObj.description, courseObj.credits, courseObj.prereqs, courseObj.correqs);
+            console.log(courseObj);
+            courseInfo = new Course(courseObj.name, courseObj.description, courseObj.credits, courseObj.prereqs, courseObj.coreqs);
             await insertCourse(course, courseInfo)
         }
     }
@@ -164,26 +166,52 @@ async function validateCourse(netID) {
 }
 
 async function testing() {
-    let courses =
-    {
-        "03:267:101": {
-            "name": "Introduction to Psychology",
-            "description": "Introduction to the scientific study of behavior and mental processes, including research methods, biological bases of behavior, perception, learning, memory, and cognition.",
-            "credits": 3,
-            "prereqs": [],
-            "correqs": []
-        },
-        "03:267:102": {
-            "name": "Research Methods in Psychology",
-            "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
-            "credits": 4,
-            "prereqs": ["03:267:101"],
-            "correqs": []
-        },
-    }
-
-    await insertArrayofCourses(courses);
+    console.log(await getCourse("01:198:111"))
 }
 testing();
 
-module.exports = { Course, getCourse, getPrereqs, getCoreqs, getCourseCredit, insertArrayofCourses, deleteCourse}
+async function addCourses(filepath){
+    const fs = require('fs');
+
+    // Read the JSON file
+    fs.readFile(filepath, 'utf8', async (err, data) => {
+
+    if (err) {
+        console.error('Error reading file:', err);
+        return;
+    }
+
+    try {
+        // Parse JSON data
+        const courses = JSON.parse(data);
+
+        // Create an empty object to store formatted courses
+        const formattedCourses = [];
+
+        // Loop through each course object
+        courses.forEach(course => {
+        // Extract courseID and remove sections array
+        const { courseID, sections, ...courseData } = course;
+
+        // Store course data in the desired format
+        formattedCourses[courseID] = courseData;
+        });
+
+        // Log the formatted courses object
+        console.log(formattedCourses);
+
+        //Attempt to add all courses in
+        res = await insertArrayofCourses(formattedCourses);
+        console.log(res);
+        //await console.log(await getCourse('30:158:309'));
+
+    } catch (error) {
+        console.error('Error parsing JSON:', error);
+    }
+    });
+
+}
+
+//addCourses('./school01.json');
+
+module.exports = { Course, getCourse, getPrereqs, getCoreqs, getCourseCredit, deleteCourse}
