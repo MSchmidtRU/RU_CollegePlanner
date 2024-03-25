@@ -6,12 +6,13 @@ class Course {
     constructor(name, description, credit, prereqs, coreqs, sections) {
         this.name = name;
         this.description = description;
-        this.credit = credit;
+        this.credits = credit;
         this.prereqs = prereqs
         this.coreqs = coreqs
         this.sections = Helper.isInstance(sections, Section) ? sections : [];
     }
 }
+
 async function getCourse(courseID) {
     try {
         // Reference to the document in the "student" collection
@@ -26,7 +27,7 @@ async function getCourse(courseID) {
         const courseData = doc.data();
 
         // Fetch basic student info
-        const credit = courseData.credit;
+        const credit = courseData.credits;
         const description = courseData.description;
         const name = courseData.name;
 
@@ -55,16 +56,74 @@ async function insertCourse(courseID, course) {
         const courseData = {
             name: course.name,
             description: course.description,
-            credit: course.credit,
+            credits: course.credits,
             prereqs: Helper.createReference("courses", course.prereqs),
             coreqs: Helper.createReference("courses", course.coreqs),
             sections: Helper.createReference("sections", course.sections)
         }
 
         const res = await firestore.collection('courses').doc(courseID).set(courseData);
-    } catch (error) {
+    } catch (e) {
         console.error('Error saving to Course document:', e);
         throw e;
+    }
+}
+
+async function deleteCourse(courseID) {
+    try {
+        //const res = await firestore.collection('courses').doc(courseID).set(courseData);
+        const res = await firestore.collection('courses').doc(courseID).delete();
+    } catch (e) {
+        console.error('Error deleting the course:', e);
+        throw e;
+    }
+}
+
+
+//IMPORTANT: ONLY USE TO CLEAR ALL COURSES FROM DATABASE!!
+async function deleteAllCourses(db) {
+    const collectionRef = db.collection('courses');
+    const query = collectionRef.orderBy('__name__');
+  
+    return new Promise((resolve, reject) => {
+      deleteQueryBatch(db, query, resolve).catch(reject);
+    });
+  }
+  
+async function deleteQueryBatch(db, query, resolve) {
+    const snapshot = await query.get();
+  
+    const batchSize = snapshot.size;
+    if (batchSize === 0) {
+      // When there are no documents left, we are done
+      resolve();
+      return;
+    }
+  
+    // Delete documents in a batch
+    const batch = db.batch();
+    snapshot.docs.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+    await batch.commit();
+  
+    // Recurse on the next process tick, to avoid
+    // exploding the stack.
+    process.nextTick(() => {
+      deleteQueryBatch(db, query, resolve);
+    });
+}
+
+
+
+async function insertArrayofCourses(courses) {
+    for (const course in courses) {
+        if (Object.hasOwnProperty.call(courses, course)) {
+            const courseObj = courses[course];
+            console.log(courseObj);
+            courseInfo = new Course(courseObj.name, courseObj.description, courseObj.credits, courseObj.prereqs, courseObj.coreqs);
+            await insertCourse(course, courseInfo)
+        }
     }
 }
 
@@ -107,74 +166,52 @@ async function validateCourse(netID) {
 }
 
 async function testing() {
-    let courses =
-    {
-        "03:267:101": {
-          "name": "Introduction to Psychology",
-          "description": "Introduction to the scientific study of behavior and mental processes, including research methods, biological bases of behavior, perception, learning, memory, and cognition.",
-          "credits": 3,
-          "prereqs": [],
-          "correqs": []
-        },
-        "03:267:102": {
-          "name": "Research Methods in Psychology",
-          "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
-          "credits": 4,
-          "prereqs": ["03:267:101"],
-          "correqs": []
-        },
-        "03:267:201": {
-          "name": "Biological Psychology",
-          "description": "Study of the biological bases of behavior, including neuroanatomy, neurophysiology, and the biological mechanisms underlying sensation, perception, and motivation.",
-          "credits": 3,
-          "prereqs": ["03:267:101"],
-          "correqs": []
-        },
-        "03:267:202": {
-          "name": "Developmental Psychology",
-          "description": "Study of psychological development across the lifespan, including cognitive, emotional, and social development.",
-          "credits": 3,
-          "prereqs": ["03:267:101"],
-          "correqs": []
-        },
-        "03:267:301": {
-          "name": "Abnormal Psychology",
-          "description": "Study of psychological disorders, including their classification, etiology, and treatment approaches.",
-          "credits": 3,
-          "prereqs": ["03:267:101"],
-          "correqs": []
-        },
-        "03:267:302": {
-          "name": "Social Psychology",
-          "description": "Study of how individuals' thoughts, feelings, and behaviors are influenced by the presence of others, including topics such as conformity, persuasion, and group dynamics.",
-          "credits": 3,
-          "prereqs": ["03:267:101"],
-          "correqs": []
-        },
-        "03:267:401": {
-          "name": "Cognitive Psychology",
-          "description": "Study of mental processes such as perception, memory, language, and problem-solving, with an emphasis on theoretical models and empirical research.",
-          "credits": 3,
-          "prereqs": ["03:267:101"],
-          "correqs": []
-        },
-        "03:267:402": {
-          "name": "Personality Psychology",
-          "description": "Study of individual differences in behavior, thought, and emotion, including major theoretical perspectives and assessment techniques.",
-          "credits": 3,
-          "prereqs": ["03:267:101"],
-          "correqs": []
-        }
-      }
-
-    for (const course in courses) {
-        if (Object.hasOwnProperty.call(courses, course)) {
-            const courseObj = courses[course];
-            courseInfo = new Course(courseObj.name, courseObj.description, courseObj.credits, courseObj.prereqs, courseObj.correqs);
-            await insertCourse(course, courseInfo)
-        }
-    }
+    console.log(await getCourse("01:198:111"))
 }
 testing();
 
-module.exports = { Course, getCourse, getPrereqs, getCoreqs, getCourseCredit }
+async function addCourses(filepath){
+    const fs = require('fs');
+
+    // Read the JSON file
+    fs.readFile(filepath, 'utf8', async (err, data) => {
+
+    if (err) {
+        console.error('Error reading file:', err);
+        return;
+    }
+
+    try {
+        // Parse JSON data
+        const courses = JSON.parse(data);
+
+        // Create an empty object to store formatted courses
+        const formattedCourses = [];
+
+        // Loop through each course object
+        courses.forEach(course => {
+        // Extract courseID and remove sections array
+        const { courseID, sections, ...courseData } = course;
+
+        // Store course data in the desired format
+        formattedCourses[courseID] = courseData;
+        });
+
+        // Log the formatted courses object
+        console.log(formattedCourses);
+
+        //Attempt to add all courses in
+        res = await insertArrayofCourses(formattedCourses);
+        console.log(res);
+        //await console.log(await getCourse('30:158:309'));
+
+    } catch (error) {
+        console.error('Error parsing JSON:', error);
+    }
+    });
+
+}
+
+//addCourses('./school01.json');
+
+module.exports = { Course, getCourse, getPrereqs, getCoreqs, getCourseCredit, deleteCourse}
