@@ -154,4 +154,4 @@ async function testing() {
 
 // testing();
 
-module.exports = { getSample, getConcentration, getCourses, getEquivelentCourses, getConcentrationResidency };
+module.exports = { Concentration, ConcentrationCourse, getSample, getConcentration, getCourses, getEquivelentCourses, getConcentrationResidency };
