@@ -214,4 +214,114 @@ async function addCourses(filepath){
 
 //addCourses('./school01.json');
 
+function testing1()
+{
+    let courses =
+    {//
+        //    331    111-112-----------
+        //     |       / \      \      \
+        //     -----121-125    123    233
+        //                     / \    /
+        //               --- 133  132
+        //              /    / \
+        //            135   122-134  
+        //            /
+        //          136
+        //      
+        "03:267:331": {
+            "name": "Introduction to Psychology",
+            "description": "Introduction to the scientific study of behavior and mental processes, including research methods, biological bases of behavior, perception, learning, memory, and cognition.",
+            "credits": 3,
+            "prereqs": [],
+            "correqs": []
+        },
+        "03:267:111": {
+            "name": "Research Methods in Psychology",
+            "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
+            "credits": 4,
+            "prereqs": [],
+            "correqs": ["03:267:112"]
+        },
+        "03:267:112": {
+            "name": "Research Methods in Psychology",
+            "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
+            "credits": 4,
+            "prereqs": [],
+            "correqs": ["03:267:111"]
+        },
+        "03:267:121": {
+            "name": "Research Methods in Psychology",
+            "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
+            "credits": 4,
+            "prereqs": ["03:267:111", "03:267:112", "03:267:331"],
+            "correqs": ["03:267:125"]
+        },
+        "03:267:125": {
+            "name": "Research Methods in Psychology",
+            "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
+            "credits": 4,
+            "prereqs": ["03:267:111", "03:267:112", "03:267:331"],
+            "correqs": ["03:267:121"]
+        },
+        "03:267:123": {
+            "name": "Research Methods in Psychology",
+            "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
+            "credits": 4,
+            "prereqs": ["03:267:111", "03:267:112"],
+            "correqs": []
+        },
+        "03:267:233": {
+            "name": "Research Methods in Psychology",
+            "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
+            "credits": 4,
+            "prereqs": ["03:267:111", "03:267:112"],
+            "correqs": []
+        },
+        "03:267:132": {
+            "name": "Research Methods in Psychology",
+            "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
+            "credits": 4,
+            "prereqs": ["03:267:123", "03:267:233"],
+            "correqs": []
+        },
+        "03:267:133": {
+            "name": "Research Methods in Psychology",
+            "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
+            "credits": 4,
+            "prereqs": ["03:267:123"],
+            "correqs": []
+        },
+        "03:267:122": {
+            "name": "Research Methods in Psychology",
+            "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
+            "credits": 4,
+            "prereqs": ["03:267:133"],
+            "correqs": ["03:267:134"]
+        },
+        "03:267:134": {
+            "name": "Research Methods in Psychology",
+            "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
+            "credits": 4,
+            "prereqs": ["03:267:133"],
+            "correqs": ["03:267:122"]
+        },
+        "03:267:135": {
+            "name": "Research Methods in Psychology",
+            "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
+            "credits": 4,
+            "prereqs": ["03:267:133"],
+            "correqs": []
+        },
+        "03:267:136": {
+            "name": "Research Methods in Psychology",
+            "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
+            "credits": 4,
+            "prereqs": ["03:267:135"],
+            "correqs": []
+        },
+    }
+    insertArrayofCourses(courses);
+}
+testing1();
+
 module.exports = { Course, getCourse, getPrereqs, getCoreqs, getCourseCredit, deleteCourse}
