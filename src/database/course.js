@@ -7,8 +7,8 @@ class Course {
         this.name = name;
         this.description = description;
         this.credits = credit;
-        this.prereqs = prereqs
-        this.coreqs = coreqs
+        this.prereqs = prereqs == undefined ? [] : prereqs;
+        this.coreqs = coreqs == undefined ? [] : coreqs;
         this.sections = Helper.isInstance(sections, Section) ? sections : [];
     }
 }
@@ -84,33 +84,33 @@ async function deleteCourse(courseID) {
 async function deleteAllCourses(db) {
     const collectionRef = db.collection('courses');
     const query = collectionRef.orderBy('__name__');
-  
+
     return new Promise((resolve, reject) => {
-      deleteQueryBatch(db, query, resolve).catch(reject);
+        deleteQueryBatch(db, query, resolve).catch(reject);
     });
-  }
-  
+}
+
 async function deleteQueryBatch(db, query, resolve) {
     const snapshot = await query.get();
-  
+
     const batchSize = snapshot.size;
     if (batchSize === 0) {
-      // When there are no documents left, we are done
-      resolve();
-      return;
+        // When there are no documents left, we are done
+        resolve();
+        return;
     }
-  
+
     // Delete documents in a batch
     const batch = db.batch();
     snapshot.docs.forEach((doc) => {
-      batch.delete(doc.ref);
+        batch.delete(doc.ref);
     });
     await batch.commit();
-  
+
     // Recurse on the next process tick, to avoid
     // exploding the stack.
     process.nextTick(() => {
-      deleteQueryBatch(db, query, resolve);
+        deleteQueryBatch(db, query, resolve);
     });
 }
 
@@ -165,57 +165,53 @@ async function validateCourse(netID) {
     //for each course in the list of reuired courses for the concentration, if gets all equivelent coruses,  checks if that course is in the student's completed, enrolled, or future courses. If not it checks if
 }
 
-async function testing() {
-    console.log(await getCourse("01:198:111"))
-}
-testing();
 
-async function addCourses(filepath){
+
+async function addCourses(filepath) {
     const fs = require('fs');
 
     // Read the JSON file
     fs.readFile(filepath, 'utf8', async (err, data) => {
 
-    if (err) {
-        console.error('Error reading file:', err);
-        return;
-    }
+        if (err) {
+            console.error('Error reading file:', err);
+            return;
+        }
 
-    try {
-        // Parse JSON data
-        const courses = JSON.parse(data);
+        try {
+            // Parse JSON data
+            const courses = JSON.parse(data);
 
-        // Create an empty object to store formatted courses
-        const formattedCourses = [];
+            // Create an empty object to store formatted courses
+            const formattedCourses = [];
 
-        // Loop through each course object
-        courses.forEach(course => {
-        // Extract courseID and remove sections array
-        const { courseID, sections, ...courseData } = course;
+            // Loop through each course object
+            courses.forEach(course => {
+                // Extract courseID and remove sections array
+                const { courseID, sections, ...courseData } = course;
 
-        // Store course data in the desired format
-        formattedCourses[courseID] = courseData;
-        });
+                // Store course data in the desired format
+                formattedCourses[courseID] = courseData;
+            });
 
-        // Log the formatted courses object
-        console.log(formattedCourses);
+            // Log the formatted courses object
+            console.log(formattedCourses);
 
-        //Attempt to add all courses in
-        res = await insertArrayofCourses(formattedCourses);
-        console.log(res);
-        //await console.log(await getCourse('30:158:309'));
+            //Attempt to add all courses in
+            res = await insertArrayofCourses(formattedCourses);
+            console.log(res);
+            //await console.log(await getCourse('30:158:309'));
 
-    } catch (error) {
-        console.error('Error parsing JSON:', error);
-    }
+        } catch (error) {
+            console.error('Error parsing JSON:', error);
+        }
     });
 
 }
 
 //addCourses('./school01.json');
 
-function testing1()
-{
+function testing1() {
     let courses =
     {//
         //    331    111-112-----------
@@ -233,95 +229,95 @@ function testing1()
             "description": "Introduction to the scientific study of behavior and mental processes, including research methods, biological bases of behavior, perception, learning, memory, and cognition.",
             "credits": 3,
             "prereqs": [],
-            "correqs": []
+            "coreqs": []
         },
         "03:267:111": {
             "name": "Research Methods in Psychology",
             "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
             "credits": 4,
             "prereqs": [],
-            "correqs": ["03:267:112"]
+            "coreqs": ["03:267:112"]
         },
         "03:267:112": {
             "name": "Research Methods in Psychology",
             "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
             "credits": 4,
             "prereqs": [],
-            "correqs": ["03:267:111"]
+            "coreqs": ["03:267:111"]
         },
         "03:267:121": {
             "name": "Research Methods in Psychology",
             "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
             "credits": 4,
             "prereqs": ["03:267:111", "03:267:112", "03:267:331"],
-            "correqs": ["03:267:125"]
+            "coreqs": ["03:267:125"]
         },
         "03:267:125": {
             "name": "Research Methods in Psychology",
             "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
             "credits": 4,
             "prereqs": ["03:267:111", "03:267:112", "03:267:331"],
-            "correqs": ["03:267:121"]
+            "coreqs": ["03:267:121"]
         },
         "03:267:123": {
             "name": "Research Methods in Psychology",
             "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
             "credits": 4,
             "prereqs": ["03:267:111", "03:267:112"],
-            "correqs": []
+            "coreqs": []
         },
         "03:267:233": {
             "name": "Research Methods in Psychology",
             "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
             "credits": 4,
             "prereqs": ["03:267:111", "03:267:112"],
-            "correqs": []
+            "coreqs": []
         },
         "03:267:132": {
             "name": "Research Methods in Psychology",
             "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
             "credits": 4,
             "prereqs": ["03:267:123", "03:267:233"],
-            "correqs": []
+            "coreqs": []
         },
         "03:267:133": {
             "name": "Research Methods in Psychology",
             "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
             "credits": 4,
             "prereqs": ["03:267:123"],
-            "correqs": []
+            "coreqs": []
         },
         "03:267:122": {
             "name": "Research Methods in Psychology",
             "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
             "credits": 4,
             "prereqs": ["03:267:133"],
-            "correqs": ["03:267:134"]
+            "coreqs": ["03:267:134"]
         },
         "03:267:134": {
             "name": "Research Methods in Psychology",
             "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
             "credits": 4,
             "prereqs": ["03:267:133"],
-            "correqs": ["03:267:122"]
+            "coreqs": ["03:267:122"]
         },
         "03:267:135": {
             "name": "Research Methods in Psychology",
             "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
             "credits": 4,
             "prereqs": ["03:267:133"],
-            "correqs": []
+            "coreqs": []
         },
         "03:267:136": {
             "name": "Research Methods in Psychology",
             "description": "Introduction to research methods used in psychology, including experimental design, statistical analysis, and ethical considerations.",
             "credits": 4,
             "prereqs": ["03:267:135"],
-            "correqs": []
+            "coreqs": []
         },
     }
     insertArrayofCourses(courses);
 }
-testing1();
+// testing1();
 
-module.exports = { Course, getCourse, getPrereqs, getCoreqs, getCourseCredit, deleteCourse}
+module.exports = { Course, getCourse, getPrereqs, getCoreqs, getCourseCredit, deleteCourse }

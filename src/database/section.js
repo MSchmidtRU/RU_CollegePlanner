@@ -75,7 +75,7 @@ async function testing() {
         await insertSection(sectionsDatabase[i][0], sectionsDatabase[i][1]);
     }
 }
-testing();
+// testing();
 
 
 
