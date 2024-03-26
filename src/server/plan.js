@@ -123,24 +123,35 @@ async function optimizePlan(req) {
             throw new Error("Invalid method of optimization.");
         }
         let flattenedResult = flattenTree(result);
-        let jsonArray = flattenedResult.map(course => {
+        let jsonArray = flattenedResult.map(courseID => {
             return {
-                course: course.courseID,
-                semester: course.semester,
+                courseID: courseID.courseID,
+                semester: courseID.semester,
             };
         });
-        console.log(jsonArray);
-        1
+        const splitCoreqs = jsonArray.flatMap(item => {
+            // Check if the item's course needs splitting
+            if (item.courseID.includes("-")) {
+                // Split the course into separate courses
+                const splitCourses = item.courseID.split("-");
+                // Return an array of objects with each split course and the same semester value
+                return splitCourses.map(courseID => ({ courseID: courseID, semester: item.semester }));
+            } else {
+                // If the course does not need splitting, return it as is
+                return [{ courseID: item.courseID, semester: item.semester }];
+            }
+        });
         const seen = new Set(); // Set to keep track of unique property values
-        let nonRepetativeResult = jsonArray.filter(item => {
-            if (seen.has(item.course)) {
+        let nonRepetitiveResult = splitCoreqs.filter(item => {
+            if (seen.has(item.courseID)) {
                 return false; // Skip the item if its courseID is already in the set
             } else {
-                seen.add(item.course); // Add the courseID to the set
+                seen.add(item.courseID); // Add the courseID to the set
                 return true; // Include the item in the filtered array
             }
         });
-        return [JSON.stringify(nonRepetativeResult), 200];
+
+        return [nonRepetitiveResult, 200];
     } catch (e) {
         throw e;
     }
