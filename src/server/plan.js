@@ -130,18 +130,17 @@ async function optimizePlan(req) {
             };
         });
        console.log(jsonArray);
-       /*
+       1
     const seen = new Set(); // Set to keep track of unique property values
     let nonRepetativeResult = jsonArray.filter(item => {
-        if (seen.has(item.courseID)) {
+        if (seen.has(item.course)) {
             return false; // Skip the item if its courseID is already in the set
         } else {
-            seen.add(item.courseID); // Add the courseID to the set
+            seen.add(item.course); // Add the courseID to the set
             return true; // Include the item in the filtered array
         }
     });
-        return nonRepetativeResult;*/
-        return [JSON.stringify(jsonResult), 200];
+        return [JSON.stringify(nonRepetativeResult), 200];
     } catch (e) {
         throw e;
     }
