@@ -16,7 +16,7 @@ class Concentration {
 class ConcentrationCourse {
     constructor(course, equivelent_courses) {
         this.course = course;
-        this.equivelent_courses = equivelent_courses;//Helper.isInstance(equivelent_courses, Course) ? equivelent_courses : []; //TODO ideally should check that the course is not also in the equivelent_courses
+        this.equivelent_courses = equivelent_courses;
     }
 }
 
@@ -38,10 +38,10 @@ async function getConcentration(concentrationID) {
         const residency = concentrationData.residency;
 
         const coursesArray = concentrationData.courses || [];
-        const courses = await Promise.all(Object.entries(coursesArray).map(async ([course, equivelent_courses]) => {
+        const courses = await Promise.all(coursesArray.map(async ({ course, equivalent_courses }) => {
             return new ConcentrationCourse(
                 course,
-                await Helper.getAssociatedIDs(equivelent_courses));
+                await Helper.getAssociatedIDs(equivalent_courses));
         }));
 
         const sampleScheudleArray = concentrationData.sample_schedule || [];
@@ -108,7 +108,6 @@ async function getCourses(concentrationID) {
 async function getSample(concentrationID) {
     try {
         const concentrationInfo = await getConcentration(concentrationID);
-
         return concentrationInfo.sampleSchedule;
     } catch (e) {
         throw new Error(e);
@@ -116,22 +115,14 @@ async function getSample(concentrationID) {
 }
 
 //concentration should be Concentraion class
-async function getEquivelentCourses(concentrationID, courseID) {
-    try {
-        const concentration = await getConcentration(concentrationID);
-        if (!Helper.isInstance(concentration, Concentration)) {
-            throw new Error("concentration is not an instance of Concentration");
-        }
+async function getEquivalentCourses(concentrationCourses, courseID) {
 
-        const courses = concentration.courses;
-        const course = courses.find(obj => obj.course === courseID);
-        if (!course) {
-            throw new Error('No such course requirement for given concentration.');
-        }
-        return course.equivelent_courses;
-    } catch (e) {
-        throw e;
+    const course = concentrationCourses.find(obj => obj.course === courseID);
+    if (!course) {
+        throw new Error('No such course requirement for given concentration.');
     }
+    return course.equivelent_courses;
+
 
 }
 
@@ -154,4 +145,4 @@ async function testing() {
 
 // testing();
 
-module.exports = { Concentration, getSample, getConcentration, getCourses, getEquivelentCourses, getConcentrationResidency };
+module.exports = { Concentration, getSample, getConcentration, getCourses, getEquivalentCourses, getConcentrationResidency };

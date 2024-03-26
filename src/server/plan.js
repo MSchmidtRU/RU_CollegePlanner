@@ -64,11 +64,11 @@ async function validatePlan(req) {
     if (netID != undefined && concentrationID != undefined) {
         let futureCourses = await Student.getFutureCourses(req.params.netID);
 
-        let { isValidOrder, invalidPrereq, invalidCoreqs } = await validatePreCoReqs(futureCourses);
+        let { isValidOrder, prereqErrors, coreqErrors } = await validatePreCoReqs(futureCourses);
 
         let {
             isFulfilledConcentationCourses,
-            assignedCourses,
+            refinedMap,
             unassignedCourses,
             unusedIds,
         } = await validateConcentrationCourses(concentrationID, futureCourses);
@@ -78,12 +78,12 @@ async function validatePlan(req) {
         let data = {
             validatePreCoReqs: {
                 isValidOrder,
-                invalidPrereq,
-                invalidCoreqs
+                prereqErrors,
+                coreqErrors
             },
             validateConcentrationCourses: {
                 isFulfilledConcentationCourses,
-                assignedCourses,
+                refinedMap,
                 unassignedCourses,
                 unusedIds,
             },
@@ -122,6 +122,8 @@ async function optimizePlan(req) {
         else {
             throw new Error("Invalid method of optimization.");
         }
+
+        
         let flattenedResult = flattenTree(result);
         let jsonArray = flattenedResult.map(courseID => {
             return {
@@ -576,11 +578,13 @@ async function validatePreCoReqs(futureCourses, fullPlan = true) {
 
 
             if (prereqSemesterNumber == -1) {
-                if (fullPlan) { invalidPrereqs = addToInvalidReq(invalidPrereqs, course.course, prereqID) }
+                if (fullPlan) {
+                    invalidPrereqs = addToInvalidReq(invalidPrereqs, course.course, prereqID)
+                }
                 return;
             }
 
-            if (!(semesterNumber >= prereqSemesterNumber)) {//TODO @noa check that I edited this correctly
+            if (!(semesterNumber > prereqSemesterNumber)) {//TODO @noa check that I edited this correctly
                 invalidPrereqs = addToInvalidReq(invalidPrereqs, course.course, prereqID);
             }
         });
@@ -601,14 +605,14 @@ async function validatePreCoReqs(futureCourses, fullPlan = true) {
             }
 
 
-            if (!(semesterNumber >= coreqSemseterNumber)) {
+            if (!(semesterNumber == coreqSemseterNumber)) {
                 invalidCoreqs = addToInvalidReq(invalidCoreqs, course.course, coreqID);
             }
         });
 
     });
 
-    return { isValidOrder: (invalidCoreqs.length == 0 && invalidPrereqs.length == 0), invalidPrereqs: invalidPrereqs, invalidCoreqs: invalidCoreqs }
+    return { isValidOrder: (Object.keys(invalidCoreqs).length == 0 && Object.keys(invalidPrereqs).length == 0), prereqErrors: invalidPrereqs, coreqErrors: invalidCoreqs }
 }
 
 function addToInvalidReq(obj, course, invalidPrereq) {
@@ -629,17 +633,16 @@ async function validateConcentrationCourses(concentrationID, studentCourses) {
 
     let fulfilledCourses = {}
 
-    concentrationCourses.forEach(async concentrationCourse => {
-        let equivelentCourses = await Concentration.getEquivelentCourses(concentrationID, concentrationCourse.course);
-        let courses = [concentrationCourse.course, ...equivelentCourses];
+    for (const concentrationCourse of concentrationCourses) {
+        let courses = [concentrationCourse.course, ...await Concentration.getEquivalentCourses(concentrationCourses, concentrationCourse.course)];
 
-        fulfilledCourses[concentrationCourse.course] = studentCourses.filter(course => courses.includes(course));
+        fulfilledCourses[concentrationCourse.course] = studentCourses.filter(course => courses.includes(course.course));
+    }
 
-    });
 
-    const assingedCourses = fulfillReqs(fulfilledCourses);
+    const assignedCourses = fulfillReqs(fulfilledCourses);
 
-    return assingedCourses;
+    return assignedCourses;
 }
 
 function fulfillReqs(courseObject) {
@@ -674,7 +677,7 @@ function fulfillReqs(courseObject) {
 
     const assignedCourses = Object.keys(courseObject).filter(course => refinedMap[course] === undefined);
 
-    return { isFulfilledConcentationCourses: assignedCourses.length == 0, refinedMap, assignedCourses, unusedIds: Array.from(unusedIds) };
+    return { isFulfilledConcentationCourses: assignedCourses.length == 0, refinedMap, unassignedCourses: assignedCourses, unusedIds: Array.from(unusedIds) };
 }
 
 async function validateResidency(concentrationID, futureCourses) {
@@ -685,7 +688,7 @@ async function validateResidency(concentrationID, futureCourses) {
         let school = course.course.substring(0, course.course.lastIndexOf(':'));
         if (school == concentrationID) {
             let courseObj = await Course.getCourse(course.course);
-            residencyCredits += courseObj.credit;
+            residencyCredits += courseObj.credits;
         }
     }
 
@@ -789,6 +792,9 @@ function assignCourses(courses, totalLoad, creditLoads, parentSemester, isBalanc
                 }
 
                 // Push the parent course after all children are assigned
+                if(course.semester == -1) {
+                    throw new Error("Not possible to schedule with current parameters");
+                }
                 assignedCourses.push(course);
 
                 break;
