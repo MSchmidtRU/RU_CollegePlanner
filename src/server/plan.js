@@ -207,11 +207,17 @@ async function isOptimizable(futureCourses) {
         for (const course of combinedCourses) {
             if (combinedCourses.includes(course)) {
                 course.prereqsFor = getPrereqsFor(course, combinedCourses);
+            }
+        }
+
+        for (const course of combinedCourses) {
+            if (combinedCourses.includes(course)) {
                 let allPrereqsFor = getNestedPrereqs(course.prereqsFor);
 
                 combinedCourses = combinedCourses.filter(combinedCourse => !allPrereqsFor.includes(combinedCourse.courseID))
             }
         }
+
         //return combinedCourses;
         let creditLoads = [{ load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }]
 
@@ -324,9 +330,8 @@ function getCourseFromCombinedCourses(combinedCourses, courseID) {
 function getPrereqsFor(course, combinedCourses) {
     let courses = course.courseID.split('-');
     let prereqsFor = [];
-    for (obj of courses) {
-        prereqsFor.push(...combinedCourses.filter(combinedCourse => combinedCourse.prereqs.includes(obj)));
-    }
+    prereqsFor.push(...combinedCourses.filter(combinedCourse => combinedCourse.prereqs.includes(courses[0])));
+
 
     for (const prereqCourse of prereqsFor) {
         const nestedPrereqs = getPrereqsFor(prereqCourse, combinedCourses);
