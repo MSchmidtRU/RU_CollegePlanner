@@ -640,19 +640,19 @@ function setCoursesBetweenCourseAndEnd(source, depth, operation) {
 
 //Quickest and its minions
 async function fillInSemesterQuickestOptimize(futureCourses, creditLoads) {
-    let unassignedCourses = [];
+    // let unassignedCourses = [];
     let assignedCourses = [];
 
     //seperate assigned and unassigned courses
-    assignedCourses = [...new Set(getAssignedCourses(futureCourses))];
-    //seperate assigned and unassigned courses
-    for (const course of futureCourses) {
-        if (course.semester == -1) {
-            unassignedCourses.push(course);
-        }
-    }
-    unassignedCourses = sortUnassignedCourses(unassignedCourses);
-    assignedCourses.push(...assignQuickestCourse(unassignedCourses, creditLoads, -1));
+    // assignedCourses = [...new Set(getAssignedCourses(futureCourses))];
+    // //seperate assigned and unassigned courses
+    // for (const course of futureCourses) {
+    //     if (course.semester == -1) {
+    //         unassignedCourses.push(course);
+    //     }
+    // }
+    futureCourses = sortUnassignedCourses(futureCourses);
+    assignedCourses.push(...assignCourses(futureCourses, 0, creditLoads, -1, false));
     return assignedCourses;
 }
 
@@ -812,36 +812,14 @@ async function fillInSemesterBalancedOptimize(futureCourses, creditLoads) {
     let assignedCourses = [];
     let totalLoad = getTotalLoad(futureCourses);
 
-    assignedCourses = [...new Set(getAssignedCourses(futureCourses))];
-    //seperate assigned and unassigned courses
-    for (const course of futureCourses) {
-        if (course.semester == -1) {
-            unassignedCourses.push(course);
-        }
-    }
-    unassignedCourses = sortUnassignedCourses(unassignedCourses);
-    assignedCourses.push(...assignCourse(unassignedCourses, totalLoad, creditLoads, -1));
-    // console.log(assignedCourses);
+    futureCourses = sortUnassignedCourses(futureCourses);
+    assignedCourses.push(...assignCourses(futureCourses, totalLoad, creditLoads, -1, true));
 
 
     return assignedCourses
 
 }
 
-function getAssignedCourses(courses) {
-    let assignedCourses = [];
-
-    for (let course of courses) {
-        if (course.semester > -1) {
-            assignedCourses.push(course);
-        }
-        if (course.prereqsFor && course.prereqsFor.length > 0) {
-            assignedCourses.push(...getAssignedCourses(course.prereqsFor));
-        }
-    }
-
-    return assignedCourses;
-}
 
 function sortUnassignedCourses(unassignedCourses) {
     unassignedCourses.sort((a, b) => {
@@ -889,13 +867,14 @@ function getAverageLoad(totalLoad, semesterLoads) {
     return totalLoad / numAvailableSemesters;
 }
 
-function assignQuickestCourse(unassignedCourses, creditLoads, parentSemester) {
-    let assignedCourse = [];
 
-    for (let unassignedCourse of unassignedCourses) {
+function assignCourses(courses, totalLoad, creditLoads, parentSemester, isBalanced) {
+    let assignedCourses = [];
+
+    for (let course of courses) {
         let nextSemester = parentSemester + 1; // Increment the parent's semester for the child
-        let numChildren = findChildrenDepth(unassignedCourse.prereqsFor);
-        //let averageLoad = getAverageLoad(totalLoad, creditLoads);
+        let numChildren = findChildrenDepth(course.prereqsFor);
+        let averageLoad = isBalanced ? getAverageLoad(totalLoad, creditLoads) : 0;
         let numAvailableSemesters = creditLoads.filter(semester => !semester.full).length;
 
         let numOptions = numAvailableSemesters - numChildren;
@@ -904,78 +883,39 @@ function assignQuickestCourse(unassignedCourses, creditLoads, parentSemester) {
             throw new Error("not possible") //TODO if recursion then maybe not throw
         } else {
             for (let i = nextSemester; i < creditLoads.length; i++) { // Start from next semester
-                if (creditLoads[i].full) {
-                    continue;
-                }
-                if (creditLoads[i].credits + unassignedCourse.credit > 19) {
-                    continue;
-                }
+                if (course.semester == -1) {
 
-                unassignedCourse.semester = i;
-                creditLoads[i].credits += unassignedCourse.credit;
-                if (creditLoads[i].credit === 19) {
-                    creditLoads[i].full = true;
-                }
+                    if (creditLoads[i].full) {
+                        continue;
+                    }
+                    if (creditLoads[i].credits + course.credit > 19 || (creditLoads[i].load + course.load > averageLoad && isBalanced)) {
+                        continue;
+                    }
 
-                // Recursively assign children courses
-                if (unassignedCourse.prereqsFor && unassignedCourse.prereqsFor.length > 0) {
-                    assignedCourse.push(...assignQuickestCourse(unassignedCourse.prereqsFor, creditLoads, unassignedCourse.semester));
-                }
 
-                // Push the parent course after all children are assigned
-                assignedCourse.push(unassignedCourse);
 
-                break; // Break the loop after assigning the course
-            }
-        }
-    }
-
-    return assignedCourse;
-}
-
-function assignCourse(unassignedCourses, totalLoad, creditLoads, parentSemester) {
-    let assignedCourse = [];
-
-    for (let unassignedCourse of unassignedCourses) {
-        let nextSemester = parentSemester + 1; // Increment the parent's semester for the child
-        let numChildren = findChildrenDepth(unassignedCourse.prereqsFor);
-        let averageLoad = getAverageLoad(totalLoad, creditLoads);
-        let numAvailableSemesters = creditLoads.filter(semester => !semester.full).length;
-
-        let numOptions = numAvailableSemesters - numChildren;
-
-        if (numOptions < 1) {
-            throw new Error("not possible") //TODO if recursion then maybe not throw
-        } else {
-            for (let i = nextSemester; i < creditLoads.length; i++) { // Start from next semester
-                if (creditLoads[i].full) {
-                    continue;
-                }
-                if (creditLoads[i].credits + unassignedCourse.credit > 19 || creditLoads[i].load + unassignedCourse.load > averageLoad) {
-                    continue;
-                }
-
-                unassignedCourse.semester = i;
-                creditLoads[i].load += unassignedCourse.load;
-                creditLoads[i].credits += unassignedCourse.credit;
-                if (creditLoads[i].load > averageLoad || creditLoads[i].credits === 19) {
-                    creditLoads[i].full = true;
+                    course.semester = i;
+                    creditLoads[i].load += isBalanced ? course.load : 0;
+                    creditLoads[i].credits += course.credit;
+                    if ((creditLoads[i].load > averageLoad && isBalanced) || creditLoads[i].credits === 19) {
+                        creditLoads[i].full = true;
+                    }
                 }
 
                 // Recursively assign children courses
-                if (unassignedCourse.prereqsFor && unassignedCourse.prereqsFor.length > 0) {
-                    assignedCourse.push(...assignCourse(unassignedCourse.prereqsFor, totalLoad, creditLoads, unassignedCourse.semester));
+                if (course.prereqsFor && course.prereqsFor.length > 0) {
+                    assignedCourses.push(...assignCourses(course.prereqsFor, totalLoad, creditLoads, course.semester, isBalanced));
                 }
 
                 // Push the parent course after all children are assigned
-                assignedCourse.push(unassignedCourse);
+                assignedCourses.push(course);
 
                 break;
             }
         }
     }
 
-    return assignedCourse;
+    return assignedCourses;
 }
 
 
@@ -1038,64 +978,11 @@ async function testing() {
         }
     }
 
-    //let creditLoads = [{ full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }];
     let futureCourses = await optimizePlan(req);
-    //let test = fillInSemesterBalancedOptimize(futureCourses, creditLoads);
-    /*
-    for(course in futureCourses)
-    {
-        let theObj = futureCourses[course];
-        console.log('semester', theObj.semester);
-        console.log('distanceToEnd', theObj.distanceToEnd);
-        if( theObj.distanceToNexts)
-        {
-            console.log('exists');
-        }
-    }
-    console.log(futureCourses);
-    */
+
     console.log(futureCourses);
 }
-testing();
-
-//[{ courseID: currentNode.courseID, semester: currentNode.semester, distance: distanceToTrue }]
-
-function checkDependencies(data) {
-    let missingCourses = [];
-
-    // Iterate through each course
-    for (let courseID in data) {
-        let course = data[courseID];
-
-        // Check prerequisites
-        if (course.prereqs && course.prereqs.length > 0) {
-            for (let prereqID of course.prereqs) {
-                if (!data[prereqID]) {
-                    missingCourses.push({ courseID: courseID, dependencyID: prereqID, type: 'prereq' });
-                }
-            }
-        }
-
-        // Check corequisites
-        if (course.coreqs && course.coreqs.length > 0) {
-            for (let coreqID of course.coreqs) {
-                if (!data[coreqID]) {
-                    missingCourses.push({ courseID: courseID, dependencyID: coreqID, type: 'coreq' });
-                }
-            }
-        }
-    }
-
-    // Log missing dependencies
-    if (missingCourses.length > 0) {
-        console.log("The following courses have missing dependencies:");
-        for (let missingCourse of missingCourses) {
-            console.log(`Course ${missingCourse.courseID} has a missing ${missingCourse.type}: ${missingCourse.dependencyID}`);
-        }
-    } else {
-        console.log("All courses have their dependencies listed.");
-    }
-}
+// testing();
 
 
 
