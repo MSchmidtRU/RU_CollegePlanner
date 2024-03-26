@@ -129,18 +129,18 @@ async function optimizePlan(req) {
                 semester: course.semester,
             };
         });
-       console.log(jsonArray);
-       /*
-    const seen = new Set(); // Set to keep track of unique property values
-    let nonRepetativeResult = jsonArray.filter(item => {
-        if (seen.has(item.courseID)) {
-            return false; // Skip the item if its courseID is already in the set
-        } else {
-            seen.add(item.courseID); // Add the courseID to the set
-            return true; // Include the item in the filtered array
-        }
-    });
-        return nonRepetativeResult;*/
+        console.log(jsonArray);
+        /*
+     const seen = new Set(); // Set to keep track of unique property values
+     let nonRepetativeResult = jsonArray.filter(item => {
+         if (seen.has(item.courseID)) {
+             return false; // Skip the item if its courseID is already in the set
+         } else {
+             seen.add(item.courseID); // Add the courseID to the set
+             return true; // Include the item in the filtered array
+         }
+     });
+         return nonRepetativeResult;*/
         return [JSON.stringify(jsonResult), 200];
     } catch (e) {
         throw e;
@@ -152,18 +152,18 @@ async function optimizePlan(req) {
 
 function flattenTree(nodes) {
     const flattenedNodes = [];
-    
+
     for (const node of nodes) {
         // Add the current node to the flattened array
         flattenedNodes.push(node);
-        
+
         // If the current node has children, recursively flatten them
         if (node.prereqsFor && node.prereqsFor.length > 0) {
             const children = flattenTree(node.prereqsFor);
             flattenedNodes.push(...children);
         }
     }
-    
+
     return flattenedNodes;
 }
 
@@ -202,7 +202,7 @@ async function isOptimizable(futureCourses) {
             futureCourse.prereqs = courseDetails.prereqs;
             futureCourse.coreqs = courseDetails.coreqs;
             futureCourse.credit = courseDetails.credits;//changed
-            futureCourse.load = courseDetails.credit + parseInt(futureCourse.course[7]);
+            futureCourse.load = courseDetails.credits + parseInt(futureCourse.course[7]);
         }
 
         let combinedCourses = [];
@@ -234,14 +234,11 @@ async function isOptimizable(futureCourses) {
                     if (combinedCourse.courseID === combinedCourseID) {
                         let newCourseCredit = combinedCourse.credit + course.credit;
                         let newLoad = combinedCourse.load + course.load;
-                        if(combinedCourse.semester !== course.semester)
-                        {
-                            if((combinedCourse.semester != -1) && (course.semester != -1))
-                            {
+                        if (combinedCourse.semester !== course.semester) {
+                            if ((combinedCourse.semester != -1) && (course.semester != -1)) {
                                 throw new Error('You placed fixed coreqs in different semesters.')
                             }
-                            else if(combinedCourse.semester == -1)
-                            {
+                            else if (combinedCourse.semester == -1) {
                                 combinedCourse.semester = course.semester; //if one of the semesters is defined, they are both set to that semester
                             }
                         }
@@ -249,7 +246,7 @@ async function isOptimizable(futureCourses) {
                     }
                     return combinedCourse;
                 });
-                
+
                 // combinedCourses.get(combinedCourseID).credit += course.credit;
                 // combinedCourses.get(combinedCourseID).load += course.load;
             }
@@ -281,7 +278,7 @@ async function isOptimizable(futureCourses) {
             // Dequeue a node from the front of the queue
             let node = queue.shift();
             if (!noRepeatsList.some(obj => obj.node.courseID === node.courseID)) {
-                noRepeatsList.push({node, assigned: false});
+                noRepeatsList.push({ node, assigned: false });
             }
             // Process the node (e.g., print its value)
             //console.log(node.courseID);
@@ -290,18 +287,16 @@ async function isOptimizable(futureCourses) {
                     throw new Error('You fixed more than 19 credits for a semester.')
                 }
                 let uniqueNode = noRepeatsList.find(item => item.node.courseID === node.courseID);
-                if(uniqueNode.assigned == false)
-                { 
+                if (uniqueNode.assigned == false) {
                     creditLoads[node.semester].credits += node.credit;
-                    rootLengths[node.courseID] = {semester: node.semester, distanceToEnd: findLengthOfPrereqChain(node), distancesToNexts: findClosestSetprereqFor(node)}; //distanceToNexts: [{ courseID: currentNode.courseID, semester: currentNode.semester, distance: distanceToTrue }]    
+                    rootLengths[node.courseID] = { semester: node.semester, distanceToEnd: findLengthOfPrereqChain(node), distancesToNexts: findClosestSetprereqFor(node) }; //distanceToNexts: [{ courseID: currentNode.courseID, semester: currentNode.semester, distance: distanceToTrue }]    
                     uniqueNode.assigned = true;
                 }
-               //console.log('find length', findLengthOfPrereqChain(node));
-               //console.log('child depth',findChildrenDepth(node));
+                //console.log('find length', findLengthOfPrereqChain(node));
+                //console.log('child depth',findChildrenDepth(node));
             }
-            if(node.prereqs.length == 0)
-            {
-                rootLengths[node.courseID] = {semester: node.semester, distanceToEnd: findLengthOfPrereqChain(node), distancesToNexts: findClosestSetprereqFor(node)}; //distanceToNexts: [{ courseID: currentNode.courseID, semester: currentNode.semester, distance: distanceToTrue }]
+            if (node.prereqs.length == 0) {
+                rootLengths[node.courseID] = { semester: node.semester, distanceToEnd: findLengthOfPrereqChain(node), distancesToNexts: findClosestSetprereqFor(node) }; //distanceToNexts: [{ courseID: currentNode.courseID, semester: currentNode.semester, distance: distanceToTrue }]
             }
 
             // Enqueue all the children of the node into the queue
@@ -310,12 +305,12 @@ async function isOptimizable(futureCourses) {
             }
         }
         //TO BE CLEAR: DistanceToEnd (no more children) includes the last node, while distanceToNext DOES NOT include that next
-        function insertFixedSemester(node, semester)
-        {
+        function insertFixedSemester(node, semester) {
             try {
                 if (node.credit + creditLoads[semester].credits <= 19) {
                     node.semester = semester;
                     creditLoads[semester].credits += node.credit;
+                    creditLoads[semester].load += node.load;
                 }
                 else {
                     throw new Error('Impossible to schedule bc filled semester based on constricted ability due to fixed courses');//reword
@@ -327,20 +322,16 @@ async function isOptimizable(futureCourses) {
         for (const rootLength in rootLengths) {
             let rootLengthObj = rootLengths[rootLength];
             let source = getCourseFromCombinedCourses(combinedCourses, rootLength);
-            if(rootLengthObj.semester == -1)
-            {
-                if(rootLengthObj.distanceToEnd > 7)
-                {
+            if (rootLengthObj.semester == -1) {
+                if (rootLengthObj.distanceToEnd > 7) {
                     throw new Error('There is a prereq chain that is longer than 8 semesters.');
                 }
             }
             else if ((7 - rootLengthObj.semester) < (rootLengthObj.distanceToEnd)) {
                 throw new Error('You fixed more a course such that there are not enough semesters for you to reach the ability to take a course that is dependant on it.');
             }
-            if(rootLengthObj.semester == -1)
-            {
-                if(rootLengthObj.distanceToEnd == 7)
-                {
+            if (rootLengthObj.semester == -1) {
+                if (rootLengthObj.distanceToEnd == 7) {
                     setCoursesBetweenCourseAndEnd(source, depth, insertFixedSemester)
                 }
             }
@@ -354,17 +345,17 @@ async function isOptimizable(futureCourses) {
             for (const node in rootLengthObj.distancesToNexts) {
                 let nodeObj = rootLengthObj.distancesToNexts[node];
                 //if ((nodeObj.semester - rootLengthObj.semester) < nodeObj.distance + 1) {
-                  //  throw new Error('You fixed more a course and its prereq without enough semesters in between to fulfill intermediary prereqs');
+                //  throw new Error('You fixed more a course and its prereq without enough semesters in between to fulfill intermediary prereqs');
                 //}
                 //if ((rootLengthObj.semester == -1) || ((nodeObj.semester - rootLengthObj.semester) == nodeObj.distance + 1)) {
-                    //there's no options for where the intermediary courses can go, so they're inserted at this level
-                    let target = getCourseFromCombinedCourses(combinedCourses, nodeObj.courseID);
+                //there's no options for where the intermediary courses can go, so they're inserted at this level
+                let target = getCourseFromCombinedCourses(combinedCourses, nodeObj.courseID);
 
-                    setCoursesBetweenPreandCourse(source, target, insertFixedSemester, nodeObj.distance);
-               // }
+                setCoursesBetweenPreandCourse(source, target, insertFixedSemester, nodeObj.distance);
+                // }
             }
         }
-        return { tree: combinedCourses, creditLoads: creditLoads };
+        return { tree: combinedCourses, creditLoads: creditLoads, futureCourses: futureCourses };
 
     } catch (e) {
         throw e;
@@ -511,18 +502,14 @@ function setCoursesBetweenPreandCourse(source, target, operation, distance) {
         // Array to store all found paths
         let allPaths = [];
 
-        if(source.semester != -1)
-        {
-            if(target.semester - source.semester > distance)
-            {
-               throw new Error('You fixed a course and its prereq without enough semesters in between to fulfill intermediary prereqs');
+        if (source.semester != -1) {
+            if (target.semester - source.semester > distance) {
+                throw new Error('You fixed a course and its prereq without enough semesters in between to fulfill intermediary prereqs');
             }
         }
-        else
-        {
-            operation(source, target.semester-distance)
-            if(source.semester < 0)
-            {
+        else {
+            operation(source, target.semester - distance)
+            if (source.semester < 0) {
                 throw new Error('You fixed a course too early in your plan such that there is not enough time to fulfill its prereqs');
             }
         }
@@ -826,11 +813,10 @@ async function fillInSemesterBalancedOptimize(futureCourses, creditLoads) {
     let assignedCourses = [];
     let totalLoad = getTotalLoad(futureCourses);
 
+    assignedCourses = [...new Set(getAssignedCourses(futureCourses))];
     //seperate assigned and unassigned courses
     for (const course of futureCourses) {
-        if (course.semester >= 0) {
-            assignedCourses.push(course);
-        } else {
+        if (course.semester == -1) {
             unassignedCourses.push(course);
         }
     }
@@ -841,6 +827,21 @@ async function fillInSemesterBalancedOptimize(futureCourses, creditLoads) {
 
     return assignedCourses
 
+}
+
+function getAssignedCourses(courses) {
+    let assignedCourses = [];
+
+    for (let course of courses) {
+        if (course.semester > -1) {
+            assignedCourses.push(course);
+        }
+        if (course.prereqsFor && course.prereqsFor.length > 0) {
+            assignedCourses.push(...getAssignedCourses(course.prereqsFor));
+        }
+    }
+
+    return assignedCourses;
 }
 
 function sortUnassignedCourses(unassignedCourses) {
@@ -952,14 +953,14 @@ function assignCourse(unassignedCourses, totalLoad, creditLoads, parentSemester)
                 if (creditLoads[i].full) {
                     continue;
                 }
-                if (creditLoads[i].credit + unassignedCourse.credit > 19) {
+                if (creditLoads[i].credits + unassignedCourse.credit > 19 || creditLoads[i].load + unassignedCourse.load > averageLoad) {
                     continue;
                 }
 
                 unassignedCourse.semester = i;
                 creditLoads[i].load += unassignedCourse.load;
-                creditLoads[i].credit += unassignedCourse.credit;
-                if (creditLoads[i].load > averageLoad || creditLoads[i].credit === 19) {
+                creditLoads[i].credits += unassignedCourse.credit;
+                if (creditLoads[i].load > averageLoad || creditLoads[i].credits === 19) {
                     creditLoads[i].full = true;
                 }
 
@@ -971,7 +972,7 @@ function assignCourse(unassignedCourses, totalLoad, creditLoads, parentSemester)
                 // Push the parent course after all children are assigned
                 assignedCourse.push(unassignedCourse);
 
-                break; // Break the loop after assigning the course
+                break;
             }
         }
     }
@@ -1018,7 +1019,7 @@ async function testing() {
     const req = {
         params: {
             netID: 'ach127',
-            method: 'quickest',
+            method: 'balanced',
         },
         body: {
             futureCourses: [
