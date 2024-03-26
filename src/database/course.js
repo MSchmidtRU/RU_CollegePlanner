@@ -116,6 +116,41 @@ async function deleteQueryBatch(db, query, resolve) {
     });
 }
 
+async function updateCourse(courseID, course) {
+    try {
+        if (!(course instanceof Course)) {
+            throw "course is not an instance of Course";
+        }
+
+        const courseData = {
+            name: course.name,
+            description: course.description,
+            credits: course.credits,
+            prereqs: Helper.createReference("courses", course.prereqs),
+            coreqs: Helper.createReference("courses", course.coreqs),
+            sections: Helper.createReference("sections", course.sections)
+        }
+
+
+        const ref = firestore.collection('courses').doc(courseID);
+        const res = await ref.update(courseData);
+    } catch (e) {
+        console.error('Error saving to Course document:', e);
+        throw e;
+    }
+}
+
+async function updateArrayofCourses(courses) {
+    for (const course in courses) {
+        if (Object.hasOwnProperty.call(courses, course)) {
+            const courseObj = courses[course];
+            console.log(courseObj);
+            courseInfo = new Course(courseObj.name, courseObj.description, courseObj.credits, courseObj.prereqs, courseObj.coreqs);
+            await updateCourse(course, courseInfo)
+        }
+    }
+}
+
 
 
 async function insertArrayofCourses(courses) {
