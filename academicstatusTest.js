@@ -1,7 +1,8 @@
 // Mock function to check if the student has grades for the specified courses
 function NetIDCourseIDsHasGrades(studentNetID, courseIDs) {
-    // For the sake of this example, assume the student has grades for all courses
-    return true;
+    // For this example, let's assume the student has grades for all courses except one
+    const missingGradeCourse = courseIDs.find(courseID => courseID === 'MATH202');
+    return missingGradeCourse ? false : true;
 }
 
 // Mock function to fetch prerequisites for the student's courses
@@ -39,12 +40,22 @@ function NetIDAcademicSummary(studentNetID) {
 // Mock function to check warning status for the student
 function NetIDisWarningStatus(studentNetID) {
     // Generate mock warning status (true or false)
-    // For this example, let's assume the student has no warnings
-    return false;
+    // For this example, let's assume the student has a warning if they are missing grades
+    return !NetIDCourseIDsHasGrades(studentNetID, ['CS101', 'MATH202', 'ENG301']);
+}
+
+// Function to validate input parameters
+function validateInputs(studentNetID, courseIDs) {
+    if (typeof studentNetID !== 'string' || !Array.isArray(courseIDs) || courseIDs.some(id => typeof id !== 'string')) {
+        throw new Error('Invalid input parameters');
+    }
 }
 
 // Function to generate test data for the student's academic progress
 function generateStudentTestData(studentNetID, courseIDs) {
+    // Validate input parameters
+    validateInputs(studentNetID, courseIDs);
+
     const testData = {
         studentNetID: studentNetID,
         courseIDs: courseIDs,
@@ -67,4 +78,6 @@ const courseIDs = ["CS101", "MATH202", "ENG301"];
 // Generate test data for the student
 const testData = generateStudentTestData(studentNetID, courseIDs);
 console.log(testData); // Display the generated test data
+
+
 
