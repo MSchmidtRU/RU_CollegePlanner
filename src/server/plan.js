@@ -151,7 +151,7 @@ async function optimizePlan(req) {
             }
         });
 
-        return [nonRepetitiveResult, 200];
+        return [JSON.stringify(nonRepetitiveResult), 200];
     } catch (e) {
         throw e;
     }
