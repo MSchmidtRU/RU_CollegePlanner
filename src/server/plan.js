@@ -129,17 +129,17 @@ async function optimizePlan(req) {
                 semester: course.semester,
             };
         });
-       console.log(jsonArray);
-       1
-    const seen = new Set(); // Set to keep track of unique property values
-    let nonRepetativeResult = jsonArray.filter(item => {
-        if (seen.has(item.course)) {
-            return false; // Skip the item if its courseID is already in the set
-        } else {
-            seen.add(item.course); // Add the courseID to the set
-            return true; // Include the item in the filtered array
-        }
-    });
+        console.log(jsonArray);
+        1
+        const seen = new Set(); // Set to keep track of unique property values
+        let nonRepetativeResult = jsonArray.filter(item => {
+            if (seen.has(item.course)) {
+                return false; // Skip the item if its courseID is already in the set
+            } else {
+                seen.add(item.course); // Add the courseID to the set
+                return true; // Include the item in the filtered array
+            }
+        });
         return [JSON.stringify(nonRepetativeResult), 200];
     } catch (e) {
         throw e;
@@ -644,10 +644,10 @@ async function fillInSemesterQuickestOptimize(futureCourses, creditLoads) {
     let assignedCourses = [];
 
     //seperate assigned and unassigned courses
+    assignedCourses = [...new Set(getAssignedCourses(futureCourses))];
+    //seperate assigned and unassigned courses
     for (const course of futureCourses) {
-        if (course.semester >= 0) {
-            assignedCourses.push(course);
-        } else {
+        if (course.semester == -1) {
             unassignedCourses.push(course);
         }
     }
@@ -907,14 +907,13 @@ function assignQuickestCourse(unassignedCourses, creditLoads, parentSemester) {
                 if (creditLoads[i].full) {
                     continue;
                 }
-                if (creditLoads[i].credit + unassignedCourse.credit > 19) {
+                if (creditLoads[i].credits + unassignedCourse.credit > 19) {
                     continue;
                 }
 
                 unassignedCourse.semester = i;
-                //creditLoads[i].load += unassignedCourse.load;
-                creditLoads[i].credit += unassignedCourse.credit;
-                if (/*creditLoads[i].load > averageLoad ||*/ creditLoads[i].credit === 19) {
+                creditLoads[i].credits += unassignedCourse.credit;
+                if (creditLoads[i].credit === 19) {
                     creditLoads[i].full = true;
                 }
 
@@ -1018,7 +1017,7 @@ async function testing() {
     const req = {
         params: {
             netID: 'ach127',
-            method: 'balanced',
+            method: 'quickest',
         },
         body: {
             futureCourses: [
