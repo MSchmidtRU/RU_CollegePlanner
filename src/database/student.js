@@ -116,8 +116,6 @@ async function getStudent(netID) {
                     courseObj.semester);
 
             } else {
-                //console.log(`Course document ${courseRef.id} does not exist.`);
-                //return null;
                 throw new Error('Student document not found');
             }
         }));
@@ -211,13 +209,11 @@ async function removeFutureCourse(netID, courseID) {
                 throw new Error([`course with ID: ${courseID} is not listed in future course of studentwith netID: ${netID}`, 400, "plain/text"]); //TODO include error code
             } else {
                 studentInfo.futureCourses.splice(indexToRemove, 1);
+                await firestore.collection('student').doc(netID).update({ future_courses: [] });
 
-                // await firestore.collection('student').doc(netID).update({ future_courses: Helper.createReference("course", studentInfo.futureCourses) });
-
-                for (const futureCourse of studentInfo.futureCourses) {
+                for (let futureCourse of studentInfo.futureCourses) {
                     addFutureCourse(netID, futureCourse);
                 }
-
 
                 // Update the student document with the modified future_courses array
                 return { "data": studentInfo.futureCourses };
