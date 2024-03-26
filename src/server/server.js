@@ -1,9 +1,13 @@
 const http = require('node:http');
 const { methods } = require("./endpoints");
+const {OAuth2Client} = require('google-auth-library');
+const fs = require('fs');
+const path = require('path');
 
 
 const hostname = '127.0.0.1';
 const port = 3000;
+const rutgersClient = new OAuth2Client("YOUR_CLIENT_ID")
 
 class Server {
     constructor() {
@@ -21,6 +25,17 @@ class Server {
                     this.router();
                 });
         });
+    }
+
+    displayContent(filePath, contentType = 'text/html') {
+        const fullPath = path.join(__dirname, '../public', filePath)
+        fs.readFile(fullPath, (error, content) => {
+            if(error) {
+                console.error(error)
+                return this.sendResponse('Page could not be displayed.')
+            }
+            this.sendResponse(content, 200, contentType);
+        })
     }
 
     async router() {

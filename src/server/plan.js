@@ -112,7 +112,7 @@ async function optimizePlan(req) {
         }
 
         let readyTogo = await isOptimizable(futureCourses);
-
+return;
         if (method == 'quickest') {
             result = await fillInSemesterQuickestOptimize(readyTogo.tree, readyTogo.creditLoads);
         }
@@ -156,7 +156,6 @@ async function savePlan(req) {
 }
 
 //THUS ENDS COURSES CALLED BY THE SERVER
-
 
 //isOptamizable and its minions
 async function isOptimizable(futureCourses) {
@@ -236,9 +235,13 @@ async function isOptimizable(futureCourses) {
                     throw new Error('You fixed more than 19 credits for a semester.')
                 }
                 creditLoads[node.semester].credits += node.credit;
-                rootLengths[node.courseID] = { semester: node.semester, distanceToEnd: findLengthOfPrereqChain(node), distancesToNexts: findClosestSetprereqFor(node) }; //distanceToNexts: [{ courseID: currentNode.courseID, semester: currentNode.semester, distance: distanceToTrue }]
-                console.log(findLengthOfPrereqChain(node));
-                console.log(findChildrenDepth(node));
+                rootLengths[node.courseID] = {semester: node.semester, distanceToEnd: findLengthOfPrereqChain(node), distancesToNexts: findClosestSetprereqFor(node)}; //distanceToNexts: [{ courseID: currentNode.courseID, semester: currentNode.semester, distance: distanceToTrue }]
+               //console.log('find length', findLengthOfPrereqChain(node));
+               //console.log('child depth',findChildrenDepth(node));
+            }
+            if(!node.prereqs)
+            {
+                
             }
 
             // Enqueue all the children of the node into the queue

@@ -31,11 +31,13 @@ async function getCourse(courseID) {
         const description = courseData.description;
         const name = courseData.name;
 
+        const prereqsArray = courseData.prereqs || [];
+        const prereqs = await Helper.getAssociatedIDs(prereqsArray);
+
         const coreqsArray = courseData.coreqs || [];
         const coreqs = await Helper.getAssociatedIDs(coreqsArray);
 
-        const prereqsArray = courseData.prereqs || [];
-        const prereqs = await Helper.getAssociatedIDs(prereqsArray);
+       
 
         const sectionsArray = courseData.sections || [];
         const sections = await Helper.getAssociatedIDs(sectionsArray);
