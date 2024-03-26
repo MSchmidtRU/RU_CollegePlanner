@@ -35,7 +35,9 @@ class Controller_AS1 {
         // Assuming getStudent already checks if the student exists and throws if not
         const academicProgress = {
             'GPA': student.gpa,
-            'completedCourses': student.completedCourses
+            'completedCourses': student.completedCourses,
+            'enrolledCourses': student.enrolledCourses, // Assuming these are already fetched by getStudent
+            'futureCourses': student.futureCourses      // Assuming these are already fetched by getStudent
         };
 
         // Verify the warning status of the student based on their GPA
@@ -67,27 +69,18 @@ class Controller_AS1 {
     }
 }
 function formatAcademicSummary(academicProgressSummary) {
-    // Extract data from the summary
-    const { GPA, completedCourses } = academicProgressSummary.progressDetails;
+    const { GPA, completedCourses, enrolledCourses, futureCourses } = academicProgressSummary.progressDetails;
     const { message } = academicProgressSummary.warnings;
 
-    // Begin formatting the summary string
-    let summary = `Student GPA: ${GPA}\nWarning Status: ${message}\n`;
+    // Create the summary object
+    const summary = {
+        GPA: `Student GPA: ${GPA}`,
+        WarningStatus: message,
+        CompletedCourses: completedCourses.filter(courseId => courseId) || ['No completed courses available.'],
+        EnrolledCourses: enrolledCourses.filter(courseId => courseId) || ['No enrolled courses available.'],
+        FutureCourses: futureCourses.map(course => course.course) || ['No future courses planned.'] // Assuming futureCourses is an array of objects with a 'course' field
+    };
 
-    // Filter out any null values from the completedCourses array
-    const validCompletedCourses = completedCourses.filter(course => course);
-
-    // Format the completed courses, if there are any
-    if (validCompletedCourses.length > 0) {
-        summary += 'Completed Courses:\n';
-        validCompletedCourses.forEach(courseId => {
-            summary += ` - ${courseId}\n`; // Append each course ID
-        });
-    } else {
-        summary += 'No completed courses available.\n'; // Handle the case of no valid courses
-    }
-
-    // Return the final summary string
     return summary;
 }
 
