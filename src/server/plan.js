@@ -52,7 +52,6 @@ async function removeCourse(req) {
     }
 }
 
-
 async function viewSample(req) {
     const sampleScheudule = await Concentration.getSample(req.params.concentrationID);
     return [JSON.stringify(sampleScheudule), 200];
@@ -106,25 +105,31 @@ async function optimizePlan(req) {
         let netID = req.params.netID;
         let method = req.params.method;
         let futureCourses = req.body.futureCourses;
+        let result;
 
         if ((netID == undefined) || (method == undefined)) {
             throw new Error("Undefined parameter");
         }
 
-        let readyToGo = await isOptimizable(futureCourses);
-        return readyToGo;
-
-
+        let readyTogo = await isOptimizable(futureCourses);
+return;
         if (method == 'quickest') {
-            let result = await fillInSemesterQuickestOptimize(futureCourses);
+            result = await fillInSemesterQuickestOptimize(readyTogo.tree, readyTogo.creditLoads);
         }
         if (method == 'balanced') {
-            let result = await fillInSemesterBalancedOptimize(futureCourses);
+            result = await fillInSemesterBalancedOptimize(readyTogo.tree, readyTogo.creditLoads);
         }
         else {
             throw new Error("Invalid method of optimization.");
         }
 
+        jsonResult = result.map(course => {
+            return {
+                course: course.course,
+                semester: course.semester,
+            };
+        });
+        return [JSON.stringify(jsonResult), 200];
     } catch (e) {
         throw e;
     }
@@ -151,7 +156,6 @@ async function savePlan(req) {
 }
 
 //THUS ENDS COURSES CALLED BY THE SERVER
-
 
 //isOptamizable and its minions
 async function isOptimizable(futureCourses) {
@@ -217,79 +221,75 @@ async function isOptimizable(futureCourses) {
         while (queue.length > 0) {
             // Dequeue a node from the front of the queue
             let node = queue.shift();
-            
+
             // Process the node (e.g., print its value)
-            console.log(node.courseID);
-            if(node.semester !== -1)
-            {
-                if((node.credit + creditLoads[node.semester].credits) > 19)
-                {
+            //console.log(node.courseID);
+            if (node.semester !== -1) {
+                if ((node.credit + creditLoads[node.semester].credits) > 19) {
                     throw new Error('You fixed more than 19 credits for a semester.')
                 }
                 creditLoads[node.semester].credits += node.credit;
                 rootLengths[node.courseID] = {semester: node.semester, distanceToEnd: findLengthOfPrereqChain(node), distancesToNexts: findClosestSetprereqFor(node)}; //distanceToNexts: [{ courseID: currentNode.courseID, semester: currentNode.semester, distance: distanceToTrue }]
+               //console.log('find length', findLengthOfPrereqChain(node));
+               //console.log('child depth',findChildrenDepth(node));
             }
-    
+            if(!node.prereqs)
+            {
+                
+            }
+
             // Enqueue all the children of the node into the queue
             if (node.prereqsFor) {
                 queue.push(...node.prereqsFor);
-              }
-        }
-        function insertFixedSemester(node, semester)//FIXME semester coming in as undefined
-            {
-                try{
-                    if(node.credit + creditLoads[semester].credits <= 19)
-                    {
-                        node.semester = semester;
-                        creditLoads[semester].credits += node.credit;
-                    }
-                    else
-                    {
-                        throw new Error('Impossible to schedule bc filled semester based on constricted ability due to fixed courses');//reword
-                    }
-                }catch(e){
-                    throw e;
-                }
             }
-        for(const rootLength in rootLengths)
+        }
+        //TO BE CLEAR: DistanceToEnd (no more children) includes the last node, while distanceToNext DOES NOT include that next
+        function insertFixedSemester(node, semester)//FIXME semester coming in as undefined
         {
+            try {
+                if (node.credit + creditLoads[semester].credits <= 19) {
+                    node.semester = semester;
+                    creditLoads[semester].credits += node.credit;
+                }
+                else {
+                    throw new Error('Impossible to schedule bc filled semester based on constricted ability due to fixed courses');//reword
+                }
+            } catch (e) {
+                throw e;
+            }
+        }
+        for (const rootLength in rootLengths) {
             let rootLengthObj = rootLengths[rootLength];
-            if((7-rootLengthObj.semester) < (rootLengthObj.distanceToEnd))
-            {
+            let source = getCourseFromCombinedCourses(combinedCourses, rootLength);
+            if ((7 - rootLengthObj.semester) < (rootLengthObj.distanceToEnd)) {
                 throw new Error('You fixed more a course such that there are not enough semesters for you to reach the ability to take a course that is dependant on it');
             }
-            if(7-rootLengthObj.semester == rootLengthObj.distanceToEnd)
-            {
+            if (7 - rootLengthObj.semester == rootLengthObj.distanceToEnd) {
                 //there's no options for where the intermediary courses can go, so they're inserted at this level
-                let source = getCourseFromCombinedCourses(combinedCourses, rootLength);
                 let depth = rootLengthObj.distanceToEnd;
-                setCoursesBetweenCourseAndEnd(source, depth, insertFixedSemester) 
+                setCoursesBetweenCourseAndEnd(source, depth, insertFixedSemester)
             }
-            for(const node in rootLengthObj.distancesToNexts)
-            {
+            //BH THINGS ARE WORKING AS PLANNED UNTIL HERE
+
+            for (const node in rootLengthObj.distancesToNexts) {
                 let nodeObj = rootLengthObj.distancesToNexts[node];
-                if((nodeObj.semester - rootLengthObj.semester) < nodeObj.distance+1)
-                {
+                if ((nodeObj.semester - rootLengthObj.semester) < nodeObj.distance + 1) {
                     throw new Error('You fixed more a course and its prereq without enough semesters in between to fulfill intermediary prereqs');
                 }
-                if((nodeObj.semester - rootLengthObj.semester) == nodeObj.distance+1)
-                {
-                //there's no options for where the intermediary courses can go, so they're inserted at this level
-                let source = getCourseFromCombinedCourses(combinedCourses, rootLength);
-                let target = getCourseFromCombinedCourses(combinedCourses, nodeObj.courseID);
-                setCoursesBetweenPreandCourse(source, target, insertFixedSemester);
+                if ((nodeObj.semester - rootLengthObj.semester) == nodeObj.distance + 1) {
+                    //there's no options for where the intermediary courses can go, so they're inserted at this level
+                    let target = getCourseFromCombinedCourses(combinedCourses, nodeObj.courseID);
 
+                    setCoursesBetweenPreandCourse(source, target, insertFixedSemester, rootLengthObj.distance);
                 }
-
             }
+            setPrereqSemesters(source);
         }
-        return {tree:combinedCourses, creditLoads: creditLoads};
-
+        return { tree: combinedCourses, creditLoads: creditLoads };
 
     } catch (e) {
         throw e;
     }
-
 }
 
 /*
@@ -305,27 +305,24 @@ function TAANITESTHER(combinedCourses) {
     return combinedCourses;
 }*/
 
-function getCourseFromCombinedCourses(combinedCourses, courseID)
-{
+function getCourseFromCombinedCourses(combinedCourses, courseID) {
     for (const obj of combinedCourses) {
-
         if (obj.courseID === courseID) {
             // If found, return the current object
             return obj;
         }
         // If the current object has a nested array, recursively search through it
-        if (obj.tested instanceof Array) {
-            const foundObject = getCourseFromCombinedCourses(obj.tested, courseID);
+        if (obj.prereqsFor instanceof Array) {
+            const foundObject = getCourseFromCombinedCourses(obj.prereqsFor, courseID);
             // If the object is found in the nested array, return it
             if (foundObject) {
                 return foundObject;
             }
         }
     }
-    // Return null if the object with the specified uniqueID is not found
+    // Return null if the object with the specified courseID is not found
     return null;
 }
-
 
 function getPrereqsFor(course, combinedCourses) {
     let courses = course.courseID.split('-');
@@ -392,6 +389,7 @@ function findClosestSetprereqFor(node) {
         // If the current node has a set semester and it's not the starting node,
         // add it to the result array
         if (currentNode.semester !== -1 && currentNode !== node) {
+            //console.log({ courseID: currentNode.courseID, semester: currentNode.semester, distance: distanceToTrue });
             result.push({ courseID: currentNode.courseID, semester: currentNode.semester, distance: distanceToTrue });
         }
     }
@@ -428,184 +426,155 @@ function findDistanceToNoPrereq(courseTree, givenCourseID) {
 */
 
 function setCoursesBetweenPreandCourse(source, target, operation) {
-    try{
-    // Array to store the path
-    let path = [];
-    let semester = source.semester;
-  
-    // DFS function to traverse the graph
-    function dfs(node) {
-      // Add the current node to the path
-      path.push(node);
-  
-      if(node.semester == -1)
-      {
-        semester++;
-        operation(node, semester);
-      }
-      else{
-        if((node.semester != semester+1) && (node !== source))//FIXME may need fixing
-        {
-            throw error('Inconsistency - you have a course that must be in two different locations in order for prereq lineup to be correct.')
-        }
-      }
+    try {
+        // Array to store the current path
+        let currentPath = [];
 
-      // If the current node is the target, stop traversal
-      if (node === target) {
-        return true; // Signal that the target is found
-      }
-  
-      // Continue DFS traversal to explore adjacent nodes
-      for (let neighbor of node.prereqsFor) {
-        if (!path.includes(neighbor)) { // Avoid cycles
-          if (dfs(neighbor)) { // If the target is found in the subtree rooted at 'neighbor'
-            return true; // Stop traversal
-          }
+        // Array to store all found paths
+        let allPaths = [];
+
+        // DFS function to traverse the graph and find paths between source and target
+        function dfs(node) {
+            // Add the current node to the current path
+            currentPath.push(node);
+
+            // If the current node is the target, add the current path to allPaths
+            if (node === target) {
+                allPaths.push(currentPath.slice()); // Use slice to create a shallow copy of the currentPath
+            }
+
+            // Continue DFS traversal to explore adjacent nodes
+            for (let neighbor of node.prereqsFor) {
+                if (!currentPath.includes(neighbor)) { // Avoid cycles
+                    dfs(neighbor);
+                }
+            }
+
+            // Backtrack: Remove the current node from the current path
+            currentPath.pop();
         }
-      }
-  
-      // Backtrack: Remove the current node from the path
-      path.pop();
-  
-      return false; // Signal that the target is not found in the subtree rooted at 'node'
-    }
-  
-    // Start DFS traversal from the source node
-    dfs(source);
-    }catch(e){
+
+        // Start DFS traversal from the source node
+        dfs(source);
+
+        // Execute the operation for each found path
+        for (let path of allPaths) {
+            let semester = source.semester;
+            for (let node of path) {
+                if (node.semester == -1) {
+                    semester++;
+                    operation(node, semester);
+                }
+            }
+        }
+    } catch (e) {
         throw e;
     }
-  }
-  
-  function setCoursesBetweenCourseAndEnd(source, depth, operation) {
+}
+
+/*
+function setCoursesBetweenPreandCourse(source, target, operation, pathLength) {
     try {
-      // Array to store the current path
-      let path = [];
-      let semester = source.semester;
-  
-      // DFS function to traverse the graph and find paths at the specified depth
-      function dfs(node, currentDepth) {
-        // Add the current node to the path
-        path.push(node);
-  
-        // If the current depth equals the desired depth and it's not the source node,
-        // execute the operation on each node in the path
-        if (currentDepth === depth){
-          for (let pathNode of path) {
-            if((pathNode !== source) &&(pathNode.semester == -1)) //TODO not sure that this works totally correctly
-            {
-                semester++;
-                operation(pathNode, semester);
+        // Array to store the current path
+        let currentPath = [];
+
+        // Array to store all found paths of length pathLength
+        let allPaths = [];
+
+        // DFS function to traverse the graph and find paths between source and target
+        function dfs(node, depth) {
+            // Add the current node to the current path
+            currentPath.push(node);
+
+            // If the current node is the target and the path length matches the desired length, add the current path to allPaths
+            if (node === target && currentPath.length === pathLength+1) {//+1 bc at the target it's 1 more than the dist btwn them
+                allPaths.push(currentPath.slice()); // Use slice to create a shallow copy of the currentPath
             }
-          }
+
+            // Continue DFS traversal to explore adjacent nodes
+            for (let neighbor of node.prereqsFor) {
+                if (!currentPath.includes(neighbor)) { // Avoid cycles
+                    dfs(neighbor, depth + 1);
+                }
+            }
+
+            // Backtrack: Remove the current node from the current path
+            currentPath.pop();
         }
-  
-        // Continue DFS traversal to explore adjacent nodes
-        for (let neighbor of node.prereqsFor) {
-          dfs(neighbor, currentDepth + 1);
+
+        // Start DFS traversal from the source node
+        dfs(source, 0);
+
+        // Execute the operation for each found path
+        for (let path of allPaths) {
+            let semester = source.semester;
+            for (let node of path) {
+                if (node.semester == -1) {
+                    semester++;
+                    operation(node, semester);
+                }
+            }
         }
-  
-        // Backtrack: Remove the current node from the path
-        path.pop();
-      }
-  
-      // Start DFS traversal from the source node with an initial depth of 0
-      dfs(source, 0);
     } catch (e) {
-      throw e;
+        throw e;
     }
-  }
-  
+}*/
+
+function setCoursesBetweenCourseAndEnd(source, depth, operation) {
+    try {
+        // Array to store the current path
+        let path = [];
+        let semester = source.semester;
+
+        // DFS function to traverse the graph and find paths at the specified depth
+        function dfs(node, currentDepth) {
+            // Add the current node to the path
+            path.push(node);
+
+            // If the current depth equals the desired depth and it's not the source node,
+            // execute the operation on each node in the path
+            if (currentDepth === depth) {
+                for (let pathNode of path) {
+                    if ((pathNode !== source) && (pathNode.semester == -1)) //TODO not sure that this works totally correctly
+                    {
+                        semester = semester + 1;
+                        operation(pathNode, semester);
+                    }
+                }
+            }
+
+            // Continue DFS traversal to explore adjacent nodes
+            for (let neighbor of node.prereqsFor) {
+                dfs(neighbor, currentDepth + 1);
+            }
+
+            // Backtrack: Remove the current node from the path
+            path.pop();
+        }
+
+        // Start DFS traversal from the source node with an initial depth of 0
+        dfs(source, 0);
+    } catch (e) {
+        throw e;
+    }
+}
 
 //Quickest and its minions
-async function fillInSemesterQuickestOptimize(futureCourses, creditloads) {
-    try {
-        //Given: {tree:futureCourses, creditloads: :[{}]}, where creditloads contains: [{ load: 0, credits: 0, full: false }, { load: 0, credits: 0, full: false }]
+async function fillInSemesterQuickestOptimize(futureCourses, creditLoads) {
+    let unassignedCourses = [];
+    let assignedCourses = [];
 
-        let queue = [...courseTree];
-        let level = 0;
-        let nextLevelStartIndex = queue.length;
-        let longestRoot = { level: 0, course: '', length: 0 };
-
-        while (queue.length > 0) {
-            let node = queue.shift();
-            let currentLevel = level;
-
-            // Check if we've moved to the next level
-            if (queue.length < nextLevelStartIndex) {
-                level++;
-                nextLevelStartIndex = queue.length;
-                console.log(`Longest root at level ${longestRoot.level}: ${longestRoot.course} with length ${longestRoot.length}`);
-                for (let semester of creditloads) {
-                    if ((!semester.full) && (semester.credits + longestRoot.course.credit) <= 19) {
-                        longestRoot.course.semester = indexOf(semester);
-                        semester.credits += longestRoot.course.credit;
-                    }
-                }
-                longestRoot = { level: level, course: '', length: 0 }; // Reset for the new level
-            }
-
-            // Process the node
-            if ((node.course.length > longestRoot.length) && (node.course.semester === undefined)) {
-                longestRoot.course = node.course;
-                longestRoot.length = node.course.length;
-            }
-
-            // Add children to the queue
-            if (node.prereqsFor) {
-                queue.push(...node.prereqsFor);
-            }
+    //seperate assigned and unassigned courses
+    for (const course of futureCourses) {
+        if (course.semester >= 0) {
+            assignedCourses.push(course);
+        } else {
+            unassignedCourses.push(course);
         }
-
-        //put all courses with pre-assigned semesters into the plan
-        for (let course of futureCourses) {
-            if (course.semester !== undefined) {
-
-                let finalDepth = findLengthOfPrereqChain(courseTree, course.courseID); //TODO may need an await //figures out how many courses in a chain of pre-req after pre-req depend on this course
-
-                if (finalDepth > (8 - course.semester)) //if the number of semesters left after you take this course is greater than the number of courses in a pre-req after pre-req chain depend on this course
-                {
-                    throw new Error(`The course(s) ${course.courseID} is/are placed late in your plan for you to complete all the courses listed.`)
-                }
-                else {
-                    let finalHeight = findDistanceToNoPrereq(courseTree, course.courseID); //TODO may need await
-                    if (finalHeight > course.semester) //if it's got more prereqs than you've allowed semesters before you plan to take it
-                    {
-                        throw new Error(`The course(s) ${course.courseID} is placed too early in the semester such that there is not enough time for you to complete the pre-reqs required to take this course`)
-                    }
-                    else {
-                        semesterCourses[course.semester].push(course);
-                        semesterCreditCounts[course.semester] += course.credit;
-                        if (finalDepth == (8 - course.semester)) {
-                            //for loop that inserts all the courses that come after this one, one per semester, assuming the semesters have space. if they don't have space then send error bc this schedule is impossible
-                        }
-
-                    }
-                }
-                //semesterCourses[course.semester].push(course);
-                //semesterCreditCounts[course.semester] += course.credit;
-            }
-        }
-        /*
-                  //assign semesters for unfixed courses. most of the time if the student was reasonable, courses will be placed before their prereqs
-                  for (let course of sortedCourses) {//FIXME
-                    if (course.semester === undefined) {
-                        let creditToFit = course.credit;
-                        const earlierstSemester = semesterCreditCounts.findIndex(number => (19-number-creditToFit) >= 0);
-                      if (earlierstSemester !== -1) {
-                        semesterCourses[earlierstSemester].push(course);
-                      }
-                      else{
-                        throw new Error('There is no way to fit all your courses into the schedule, given the courses you labeled as fixed.')
-                      }
-                    }
-                  }
-        */
-
-
-    } catch (e) {
-        throw e;
     }
+    unassignedCourses = sortUnassignedCourses(unassignedCourses);
+    assignedCourses.push(...assignQuickestCourse(unassignedCourses, creditLoads, -1));
+    return assignedCourses;
 }
 
 //validate minions
@@ -758,7 +727,6 @@ async function validateResidency(concentrationID, futureCourses) {
     return { isValidResReq: !(residencyCredits < residencyReq), numMissing: residencyReq - residencyCredits }
 }
 
-
 //balanced minions
 async function fillInSemesterBalancedOptimize(futureCourses, creditLoads) {
     let unassignedCourses = [];
@@ -775,8 +743,10 @@ async function fillInSemesterBalancedOptimize(futureCourses, creditLoads) {
     }
     unassignedCourses = sortUnassignedCourses(unassignedCourses);
     assignedCourses.push(...assignCourse(unassignedCourses, totalLoad, creditLoads, -1));
-    console.log(assignedCourses);
+    // console.log(assignedCourses);
 
+
+    return assignedCourses
 
 }
 
@@ -826,6 +796,50 @@ function getAverageLoad(totalLoad, semesterLoads) {
     return totalLoad / numAvailableSemesters;
 }
 
+function assignQuickestCourse(unassignedCourses, creditLoads, parentSemester) {
+    let assignedCourse = [];
+
+    for (let unassignedCourse of unassignedCourses) {
+        let nextSemester = parentSemester + 1; // Increment the parent's semester for the child
+        let numChildren = findChildrenDepth(unassignedCourse.prereqsFor);
+        //let averageLoad = getAverageLoad(totalLoad, creditLoads);
+        let numAvailableSemesters = creditLoads.filter(semester => !semester.full).length;
+
+        let numOptions = numAvailableSemesters - numChildren;
+
+        if (numOptions < 1) {
+            throw new Error("not possible") //TODO if recursion then maybe not throw
+        } else {
+            for (let i = nextSemester; i < creditLoads.length; i++) { // Start from next semester
+                if (creditLoads[i].full) {
+                    continue;
+                }
+                if (creditLoads[i].credit + unassignedCourse.credit > 19) {
+                    continue;
+                }
+
+                unassignedCourse.semester = i;
+                //creditLoads[i].load += unassignedCourse.load;
+                creditLoads[i].credit += unassignedCourse.credit;
+                if (/*creditLoads[i].load > averageLoad ||*/ creditLoads[i].credit === 19) {
+                    creditLoads[i].full = true;
+                }
+
+                // Recursively assign children courses
+                if (unassignedCourse.prereqsFor && unassignedCourse.prereqsFor.length > 0) {
+                    assignedCourse.push(...assignQuickestCourse(unassignedCourse.prereqsFor, creditLoads, unassignedCourse.semester));
+                }
+
+                // Push the parent course after all children are assigned
+                assignedCourse.push(unassignedCourse);
+
+                break; // Break the loop after assigning the course
+            }
+        }
+    }
+
+    return assignedCourse;
+}
 
 function assignCourse(unassignedCourses, totalLoad, creditLoads, parentSemester) {
     let assignedCourse = [];
@@ -896,18 +910,16 @@ function findChildrenDepth(courseArray) {
 
 
 
-//extras
-async function isValidPlan(netID, concentrationID) {
-    const req = {
-        params: {
-            netID: netID,
-            concentrationID: concentrationID
-        }
-    }
-    let [data, code] = await isValidPlan(req);
-
-    return data.validatePreCoReqs.isValidOrder && data.validateConcentrationCourses.isFulfilledConcentationCourses && data.validateResidency.isValidResReq;
-}
+//    331    111-112-----------
+//     |       / \      \      \
+//     -----121-125    123    233
+//                     / \    /
+//               --- 133  132
+//              /    / \
+//            135   122-134  
+//            /
+//          136
+//      
 
 async function testing() {
     const req = {
@@ -917,28 +929,44 @@ async function testing() {
         },
         body: {
             futureCourses: [
-            new Student.FutureCourse('01:640:151', 2),
-            new Student.FutureCourse('01:640:152', -1),
-            new Student.FutureCourse('01:750:124', -1),
-            new Student.FutureCourse('14:332:221', 4),
-            new Student.FutureCourse('14:332:222', -1),
-            new Student.FutureCourse('14:332:224', -1),
-            new Student.FutureCourse('01:640:251', -1),
-            new Student.FutureCourse('01:640:250', -1),
-            new Student.FutureCourse('01:750:229', -1),
-            new Student.FutureCourse('01:750:227', -1),
-            new Student.FutureCourse('03:267:101', -1)
+                new Student.FutureCourse("03:267:331", -1),
+                new Student.FutureCourse("03:267:111", 2),
+                new Student.FutureCourse("03:267:112", 2),
+                new Student.FutureCourse("03:267:121", -1),
+                new Student.FutureCourse("03:267:125", -1),
+                new Student.FutureCourse("03:267:123", -1),
+                new Student.FutureCourse("03:267:233", -1),
+                new Student.FutureCourse("03:267:132", 4),
+                new Student.FutureCourse("03:267:133", -1),
+                new Student.FutureCourse("03:267:122", -1),
+                new Student.FutureCourse("03:267:134", -1),
+                new Student.FutureCourse("03:267:135", -1),
+                new Student.FutureCourse("03:267:136", -1)
             ]
         }
     }
 
-    let creditLoads = [{ full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }];
-    let futureCourses = await isOptimizable(req.body.futureCourses);
-    let test = fillInSemesterBalancedOptimize(futureCourses, creditLoads);
-    console.log(test);
+    //let creditLoads = [{ full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }, { full: false, credit: 0, load: 0 }];
+    let futureCourses = await optimizePlan(req);
+    //let test = fillInSemesterBalancedOptimize(futureCourses, creditLoads);
+    /*
+    for(course in futureCourses)
+    {
+        let theObj = futureCourses[course];
+        console.log('semester', theObj.semester);
+        console.log('distanceToEnd', theObj.distanceToEnd);
+        if( theObj.distanceToNexts)
+        {
+            console.log('exists');
+        }
+    }
+    console.log(futureCourses);
+    */
+    console.log(futureCourses);
 }
 testing();
 
+//[{ courseID: currentNode.courseID, semester: currentNode.semester, distance: distanceToTrue }]
 
 function checkDependencies(data) {
     let missingCourses = [];
@@ -976,6 +1004,9 @@ function checkDependencies(data) {
         console.log("All courses have their dependencies listed.");
     }
 }
+
+
+
 
 
 module.exports = { viewPlan, viewStatus, addCourse, removeCourse, viewSample, validatePlan, optimizePlan, savePlan }

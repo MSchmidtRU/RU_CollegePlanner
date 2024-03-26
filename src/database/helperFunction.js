@@ -1,4 +1,4 @@
-const { firestore } =require('./firebase.js');
+const { firestore } = require('./firebase.js');
 
 async function getAssociatedIDs(courseArray) { //TODO add error handling
     const retrievedIDs = await Promise.all(courseArray.map(async courseObj => {
