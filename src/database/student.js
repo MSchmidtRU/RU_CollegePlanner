@@ -46,7 +46,7 @@ class FutureCourse {
             throw new Error("Semester must be a int.");
         }
 
-        if ((semester > 0) && (semester < 8) || semester == -1) {
+        if ((semester >= 0) && (semester < 8) || semester == -1) {
             return semester;
         } else {
             throw new Error("Invalid semester int from 0 to 7 or -1");
