@@ -33,7 +33,7 @@ function viewStatus(req) {
 
 async function addCourse(req) {
     try {
-        const body = parseJson(req.body);
+        const body = req.body;
         const futureCourse = new Student.FutureCourse(body.courseID, body.semester);
         let updatedPlan = await Student.addFutureCourse(req.params.netID, futureCourse);
         return [JSON.stringify(updatedPlan), 200, "plain/text"];
@@ -44,7 +44,7 @@ async function addCourse(req) {
 
 async function removeCourse(req) {
     try {
-        const body = parseJson(req.body);
+        const body = req.body;
         let updatedPlan = await Student.removeFutureCourse(req.params.netID, body.courseID);
         return [JSON.stringify(updatedPlan), 200, "plain/text"];
     } catch (e) {
@@ -267,12 +267,12 @@ async function isOptimizable(futureCourses) {
                 let uniqueNode = noRepeatsList.find(item => item.node.courseID === node.courseID);
                 if (uniqueNode.assigned == false) {
                     creditLoads[node.semester].credits += node.credit;
-                    rootLengths[node.courseID] = { semester: node.semester, distanceToEnd: findLengthOfPrereqChain(node), distancesToNexts: findClosestSetprereqFor(node) };   
+                    rootLengths[node.courseID] = { semester: node.semester, distanceToEnd: findLengthOfPrereqChain(node), distancesToNexts: findClosestSetprereqFor(node) };
                     uniqueNode.assigned = true;
                 }
             }
             if (node.prereqs.length == 0) {
-                rootLengths[node.courseID] = { semester: node.semester, distanceToEnd: findLengthOfPrereqChain(node), distancesToNexts: findClosestSetprereqFor(node) }; 
+                rootLengths[node.courseID] = { semester: node.semester, distanceToEnd: findLengthOfPrereqChain(node), distancesToNexts: findClosestSetprereqFor(node) };
             }
 
             if (node.prereqsFor) {

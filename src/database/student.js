@@ -212,7 +212,13 @@ async function removeFutureCourse(netID, courseID) {
             } else {
                 studentInfo.futureCourses.splice(indexToRemove, 1);
 
-                await firestore.collection('student').doc(netID).update({ future_courses: Helper.createReference("course", studentInfo.futureCourses) });
+                // await firestore.collection('student').doc(netID).update({ future_courses: Helper.createReference("course", studentInfo.futureCourses) });
+
+                for (const futureCourse of studentInfo.futureCourses) {
+                    addFutureCourse(netID, futureCourse);
+                }
+
+
                 // Update the student document with the modified future_courses array
                 return { "data": studentInfo.futureCourses };
             }
