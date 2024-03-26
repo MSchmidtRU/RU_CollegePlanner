@@ -28,13 +28,16 @@ async function checkAcademicProgress(studentNetID) {
 class Controller_AS1 {
     // Method to handle the incoming request for academic progress
     async handleRequest(studentNetID) {
+        
         // Obtain academic information from Firestore
         const student = await getStudent(studentNetID);
-
+        console.log('Completed Courses from getStudent:', student.completedCourses); // Log the courses
         // Assuming getStudent already checks if the student exists and throws if not
         const academicProgress = {
             'GPA': student.gpa,
-            'completedCourses': student.completedCourses
+            'completedCourses': student.completedCourses,
+            'enrolledCourses': student.enrolledCourses, // Assuming these are already fetched by getStudent
+            'futureCourses': student.futureCourses      // Assuming these are already fetched by getStudent
         };
 
         // Verify the warning status of the student based on their GPA
@@ -52,7 +55,7 @@ class Controller_AS1 {
         const isUnderThreshold = GPA < 2.0;
         return {
             'isUnderThreshold': isUnderThreshold,
-            'message': isUnderThreshold ? 'Warning: GPA is below the minimum required threshold.' : 'No warning.'
+            'message': isUnderThreshold ? 'Warning: GPA is below the minimum required threshold. Student currently placed on academic warning.' : 'Student is in good standing academically.'
         };
     }
 
@@ -66,33 +69,19 @@ class Controller_AS1 {
     }
 }
 function formatAcademicSummary(academicProgressSummary) {
-    const { GPA, completedCourses } = academicProgressSummary.progressDetails;
-    const { isUnderThreshold, message } = academicProgressSummary.warnings;
+    const { GPA, completedCourses, enrolledCourses, futureCourses } = academicProgressSummary.progressDetails;
+    const { message } = academicProgressSummary.warnings;
 
-    let summary = `Student GPA: ${GPA}\n`;
-    summary += `Warning Status: ${message}\n`;
-
-    // If there are completed courses, format them into the summary
-    if (completedCourses && completedCourses.length > 0) {
-        summary += 'Completed Courses:\n';
-        completedCourses.forEach(courseId => {
-            summary += ` - ${courseId}\n`; // Make sure courseId is a string
-        });
-    } else {
-        summary += 'No completed courses available.';
-    }
+    // Create the summary object
+    const summary = {
+        GPA: `Student GPA: ${GPA}`,
+        WarningStatus: message,
+        CompletedCourses: completedCourses.filter(courseId => courseId) || ['No completed courses available.'],
+        EnrolledCourses: enrolledCourses.filter(courseId => courseId) || ['No enrolled courses available.'],
+        FutureCourses: futureCourses.map(course => course.course) || ['No future courses planned.'] // Assuming futureCourses is an array of objects with a 'course' field
+    };
 
     return summary;
 }
-
-// function display(summary) {
-//     // Code to display the summary to the student
-//     console.log(summary);
-// }
-
-
-
-// Example usage:
-// checkAcademicProgress('ach127').catch(console.error);
 
 module.exports = { checkAcademicProgress };
