@@ -55,7 +55,7 @@ class Controller_AS1 {
         const isUnderThreshold = GPA < 2.0;
         return {
             'isUnderThreshold': isUnderThreshold,
-            'message': isUnderThreshold ? 'Warning: GPA is below the minimum required threshold.' : 'No warning.'
+            'message': isUnderThreshold ? 'Warning: GPA is below the minimum required threshold. Student currently placed on academic warning.' : 'Student is in good standing academically.'
         };
     }
 
