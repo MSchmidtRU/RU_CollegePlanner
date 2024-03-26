@@ -28,9 +28,10 @@ async function checkAcademicProgress(studentNetID) {
 class Controller_AS1 {
     // Method to handle the incoming request for academic progress
     async handleRequest(studentNetID) {
+        
         // Obtain academic information from Firestore
         const student = await getStudent(studentNetID);
-
+        console.log('Completed Courses from getStudent:', student.completedCourses); // Log the courses
         // Assuming getStudent already checks if the student exists and throws if not
         const academicProgress = {
             'GPA': student.gpa,
@@ -66,33 +67,28 @@ class Controller_AS1 {
     }
 }
 function formatAcademicSummary(academicProgressSummary) {
+    // Extract data from the summary
     const { GPA, completedCourses } = academicProgressSummary.progressDetails;
-    const { isUnderThreshold, message } = academicProgressSummary.warnings;
+    const { message } = academicProgressSummary.warnings;
 
-    let summary = `Student GPA: ${GPA}\n`;
-    summary += `Warning Status: ${message}\n`;
+    // Begin formatting the summary string
+    let summary = `Student GPA: ${GPA}\nWarning Status: ${message}\n`;
 
-    // If there are completed courses, format them into the summary
-    if (completedCourses && completedCourses.length > 0) {
+    // Filter out any null values from the completedCourses array
+    const validCompletedCourses = completedCourses.filter(course => course);
+
+    // Format the completed courses, if there are any
+    if (validCompletedCourses.length > 0) {
         summary += 'Completed Courses:\n';
-        completedCourses.forEach(courseId => {
-            summary += ` - ${courseId}\n`; // Make sure courseId is a string
+        validCompletedCourses.forEach(courseId => {
+            summary += ` - ${courseId}\n`; // Append each course ID
         });
     } else {
-        summary += 'No completed courses available.';
+        summary += 'No completed courses available.\n'; // Handle the case of no valid courses
     }
 
+    // Return the final summary string
     return summary;
 }
-
-// function display(summary) {
-//     // Code to display the summary to the student
-//     console.log(summary);
-// }
-
-
-
-// Example usage:
-// checkAcademicProgress('ach127').catch(console.error);
 
 module.exports = { checkAcademicProgress };
