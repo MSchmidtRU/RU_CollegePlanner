@@ -1,6 +1,8 @@
 
 const plan = require("./plan");
 const schedule=require("src/database/scheduling.js");
+const academicProgess = require('../database/academicProgess');
+const adminAcademicProgress = require('../database/adminAcademicProgress.js');
 
 
 const getEndpoints = {
@@ -16,6 +18,9 @@ const getEndpoints = {
 const postEndpoints = {
    "/4yrplan/~netID/course": plan.addCourse,
    "/UpcomingSchedule/~netID/addcoursetoschedule":schedule.addCourseToSchedule,
+   "/academicProgress/~netID": academicProgess.academicProgressHandler,
+   "/academic-progress/~adminNetID/~studentNetID": adminAcademicProgress.adminAcademicProgressHandler
+
 }
 
 
