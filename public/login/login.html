@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-signin-client_id" content="YOUR_CLIENT_ID.apps.googleusercontent.com">
     <script src="https://apis.google.com/js/platform.js" async defer></script>
-    
+    <script src="login.js"></script> <!-- Load the login.js script -->
 </head>
 <body>
 
@@ -23,6 +23,9 @@
             <button type="submit">Login</button>
         </div>
     </form>
+
+    <!-- Add the Google Sign-In button -->
+    <div class="g-signin2" data-onsuccess="onSignIn"></div>
 
 </body>
 </html>
