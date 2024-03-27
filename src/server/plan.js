@@ -333,7 +333,6 @@ async function isOptimizable(futureCourses) {
                 let nodeObj = rootLengthObj.distancesToNexts[node];
 
                 let target = getCourseFromCombinedCourses(combinedCourses, nodeObj.courseID);
-
                 setCoursesBetweenPreandCourse(source, target, insertFixedSemester, nodeObj.distance);
             }
         }
@@ -448,7 +447,7 @@ function setCoursesBetweenPreandCourse(source, target, operation, distance) {
         let allPaths = [];
 
         if (source.semester != -1) {
-            if (target.semester - source.semester > distance) {
+            if (target.semester - source.semester < distance) {
                 throw new Error('You locked in a course and its prereq without enough semesters in between to fulfill intermediary prereqs.');
             }
         }
