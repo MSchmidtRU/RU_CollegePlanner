@@ -21,15 +21,21 @@ async function checkAcademicProgress(studentNetID) {
         throw error;
     }
 }
-
 async function academicProgressHandler(req) {
-    const studentNetID = req.body.studentNetID; // Assuming that the request body will contain studentNetID
+    const studentNetID = req.params.studentNetID; // Extracted from URL by the custom server
+    const controller_AS1 = new Controller_AS1();  // Instantiate the controller
+    
     try {
-        const academicProgressSummary = await checkAcademicProgress(studentNetID);
-        // Format the summary into JSON and return a 200 status code
-        return [JSON.stringify({ summary: academicProgressSummary }), 200, 'application/json'];
+        // Request academic progress using the student's netID
+        const academicProgressSummary = await controller_AS1.handleRequest(studentNetID);
+        
+        // Format the summary into an object suitable for JSON response
+        const formattedSummary = formatAcademicSummary(academicProgressSummary);
+        
+        // Return a tuple of the response body, HTTP status code, and content type
+        return [JSON.stringify(formattedSummary), 200, 'application/json'];
     } catch (error) {
-        // In case of an error, log it and return a 500 status code with the error message
+        // Log and return any errors encountered
         console.error(error);
         return [JSON.stringify({ error: error.message }), 500, 'application/json'];
     }
