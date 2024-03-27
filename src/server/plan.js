@@ -19,7 +19,7 @@ async function viewPlan(req) {
             });
             return [JSON.stringify(jsonFutureCourses), 200];
         } else {
-            throw new Error("net id is not defined");
+            throw new Error("netID is not defined");
         }
 
     } catch (e) {
@@ -201,7 +201,7 @@ async function isOptimizable(futureCourses) {
         let isValidPreCoReq = await validatePreCoReqs(futureCourses, false);
 
         if (!isValidPreCoReq) {
-            throw new Error("Locked courses are not in a valid order");
+            throw new Error("Locked courses are not in a valid order.");
         }
 
         for (let futureCourse of futureCourses) {
@@ -316,7 +316,7 @@ async function isOptimizable(futureCourses) {
                 }
             }
             else if ((7 - rootLengthObj.semester) < (rootLengthObj.distanceToEnd)) {
-                throw new Error('You fixed more a course such that there are not enough semesters for you to reach the ability to take a course that is dependant on it.');
+                throw new Error('You locked in a course too close to the end of your plan for dependent courses to be taken after.');
             }
             if (rootLengthObj.semester == -1) {
                 if (rootLengthObj.distanceToEnd == 7) {
@@ -449,13 +449,13 @@ function setCoursesBetweenPreandCourse(source, target, operation, distance) {
 
         if (source.semester != -1) {
             if (target.semester - source.semester > distance) {
-                throw new Error('You fixed a course and its prereq without enough semesters in between to fulfill intermediary prereqs');
+                throw new Error('You locked in a course and its prereq without enough semesters in between to fulfill intermediary prereqs.');
             }
         }
         else {
             operation(source, target.semester - distance)
             if (source.semester < 0) {
-                throw new Error('You fixed a course too early in your plan such that there is not enough time to fulfill its prereqs');
+                throw new Error('You locked in a course too early in your plan such that there is not enough time to fulfill its prereqs.');
             }
         }
         // DFS function to traverse the graph and find paths between source and target
