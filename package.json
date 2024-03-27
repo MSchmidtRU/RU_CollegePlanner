@@ -1,23 +1,15 @@
 {
-  "name": "ru_collegeplanner",
+  "name": "concentration_search",
   "version": "1.0.0",
-  "description": "MAPS - my academic planning system",
+  "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "test",
-    "start": "node src/index"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/MSchmidtRU/RU_CollegePlanner.git"
-  },
+  "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "firebase": "^10.8.1",
-    "google-auth-library": "^9.7.0"
-  },
-  "devDependencies": {
     "firebase-admin": "^12.0.0"
   }
 }
