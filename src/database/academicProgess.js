@@ -18,12 +18,22 @@ async function checkAcademicProgress(studentNetID) {
         // Format and return the academic progress summary
         return formatAcademicSummary(academicProgressSummary);
     } catch (error) {
-        // Instead of console.log, throw the error to be caught by the Express error handler
         throw error;
     }
 }
 
-
+async function academicProgressHandler(req) {
+    const studentNetID = req.body.studentNetID; // Assuming that the request body will contain studentNetID
+    try {
+        const academicProgressSummary = await checkAcademicProgress(studentNetID);
+        // Format the summary into JSON and return a 200 status code
+        return [JSON.stringify({ summary: academicProgressSummary }), 200, 'application/json'];
+    } catch (error) {
+        // In case of an error, log it and return a 500 status code with the error message
+        console.error(error);
+        return [JSON.stringify({ error: error.message }), 500, 'application/json'];
+    }
+}
 // Controller class definition
 class Controller_AS1 {
     // Method to handle the incoming request for academic progress
@@ -31,7 +41,6 @@ class Controller_AS1 {
         
         // Obtain academic information from Firestore
         const student = await getStudent(studentNetID);
-        console.log('Completed Courses from getStudent:', student.completedCourses); // Log the courses
         // Assuming getStudent already checks if the student exists and throws if not
         const academicProgress = {
             'GPA': student.gpa,
@@ -76,12 +85,12 @@ function formatAcademicSummary(academicProgressSummary) {
     const summary = {
         GPA: `Student GPA: ${GPA}`,
         WarningStatus: message,
-        CompletedCourses: completedCourses.filter(courseId => courseId) || ['No completed courses available.'],
-        EnrolledCourses: enrolledCourses.filter(courseId => courseId) || ['No enrolled courses available.'],
+        CompletedCourses: completedCourses.map(courseId => courseId) || ['No completed courses available.'],
+        EnrolledCourses: enrolledCourses.map(courseId => courseId) || ['No enrolled courses available.'],
         FutureCourses: futureCourses.map(course => course.course) || ['No future courses planned.'] // Assuming futureCourses is an array of objects with a 'course' field
     };
 
     return summary;
 }
 
-module.exports = { checkAcademicProgress };
+module.exports = { checkAcademicProgress, academicProgressHandler };
