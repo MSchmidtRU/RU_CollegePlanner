@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concentration Details</title>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-firestore.js"></script>
+    
+</head>
+<body>
+    <div id="detailsContainer"></div>
+    <button onclick="history.back()">Back to Search Results</button>
+    <script>
+        // Initialize Firebase using the same configuration as in csearch.html
+        const firebaseConfig = {
+            apiKey: "AIzaSyAEUZTiKw2ojRvs6GRcM9bp827MTfxydkw",
+            authDomain: "maps-9ae32.firebaseapp.com",
+            projectId: "maps-9ae32",
+            storageBucket: "maps-9ae32.appspot.com",
+            messagingSenderId: "687862985843",
+            appId: "1:687862985843:web:221c76658501ea070fe606",
+            measurementId: "G-BH2DZ1N5CW"
+            };
+            firebase.initializeApp(firebaseConfig);
+            var firestore = firebase.firestore();
+        // Function to fetch and display concentration details
+        async function fetchAndDisplayConcentrationDetails() {
+          const urlParams = new URLSearchParams(window.location.search);
+          const docId = urlParams.get('docId');
+      
+          if (docId) {
+            try {
+              const docRef = firestore.collection("concentration").doc(docId);
+              const doc = await docRef.get();
+              if (doc.exists) {
+                const data = doc.data();
+                // Example of displaying the document data
+                // Modify this to format and display the data as needed
+                document.getElementById('detailsContainer').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+              } else {
+                document.getElementById('detailsContainer').textContent = 'No such document!';
+              }
+            } catch (error) {
+              console.error("Error retrieving document:", error);
+              document.getElementById('detailsContainer').textContent = 'Error retrieving document data';
+            }
+          } else {
+            document.getElementById('detailsContainer').textContent = 'Document ID not provided';
+          }
+        }
+      
+        // Call the function to fetch and display data when the page loads
+        window.onload = fetchAndDisplayConcentrationDetails;
+    </script>
+</body>
+</html>
