@@ -206,6 +206,18 @@ async function isOptimizable(futureCourses) {
 
         for (let futureCourse of futureCourses) {
             let courseDetails = await Course.getCourse(futureCourse.course);
+            for(let prereq of courseDetails.prereqs)
+            {
+                if (!(futureCourses.some(course => course.course === prereq))) {
+                    throw new Error('You have included a course in your plan without including all its prereqs');
+                }
+            }
+            for(let coreq of courseDetails.coreqs)
+            {
+                if (!(futureCourses.some(course => course.course === coreq))) {
+                    throw new Error('You have included a course in your plan without including all its coreqs');
+                }
+            }
             futureCourse.prereqs = courseDetails.prereqs;
             futureCourse.coreqs = courseDetails.coreqs;
             futureCourse.credit = courseDetails.credits;//changed

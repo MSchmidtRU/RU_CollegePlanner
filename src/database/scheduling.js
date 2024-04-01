@@ -1,4 +1,4 @@
-const { firestore } = require('./firebase.js');
+/*const { firestore } = require('./firebase.js');
 const Helper = require("./helperFunction.js");
 const { Course, getCourse } = require('./course.js');
 
@@ -108,3 +108,4 @@ try {
 }
 
 
+*/
