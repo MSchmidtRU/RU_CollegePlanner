@@ -313,7 +313,7 @@ async function isOptimizable(futureCourses) {
                     creditLoads[semester].load += node.load;
                 }
                 else {
-                    throw new Error('Impossible to schedule bc filled semester based on constricted ability due to fixed courses');//reword
+                    throw new Error('Impossible to schedule a course in its required location due to filled semester.');//reword
                 }
             } catch (e) {
                 throw e;
