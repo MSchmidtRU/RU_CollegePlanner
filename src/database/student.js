@@ -42,7 +42,7 @@ class FutureCourse {
     }
 
     setSemester(semester) {
-        if (typeof semester !== 'number') {
+       if (typeof semester !== 'number') {
             throw new Error("Semester must be a int.");
         }
 
@@ -62,10 +62,10 @@ async function checkStudentExists(netID) {
         const studentDoc = await studentRef.get();
 
         if (!studentDoc.exists) {
-            throw new Error('Student document not found');
+            throw new Error('Student document not found ~404');
         };
     } catch (e) {
-        throw new Error(e);
+        throw (e);
     }
 
 }
@@ -185,7 +185,7 @@ async function addFutureCourse(netID, futureCourse) {
             const updatedStudentInfo = await getStudent(netID);
             return { "data": updatedStudentInfo.futureCourses }; //TODO change to 4 year plan
     } catch (e) {
-        throw new Error(e);
+        throw (e);
 
     }
 
@@ -213,7 +213,7 @@ async function removeFutureCourse(netID, courseID) {
             }
 
     } catch (e) {
-        throw new Error(e);
+        throw (e);
     }
 }
 
@@ -223,7 +223,7 @@ async function getFutureCourses(netID) {
         let future_courses = student.futureCourses;
         return future_courses;
     } catch (e) {
-        throw new Error(e);
+        throw (e);
     }
 }
 

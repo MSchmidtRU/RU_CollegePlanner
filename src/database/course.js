@@ -21,7 +21,7 @@ async function getCourse(courseID) {
         // Retrieve the document data
         const doc = await courseInfo.get();
         if (!doc.exists) {
-            throw new Error('Course document not found');
+            throw new Error('Course document not found ~404');
         };
         // Document exists, access its data
         const courseData = doc.data();

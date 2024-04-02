@@ -27,7 +27,7 @@ async function getConcentration(concentrationID) {
         // Retrieve the document data
         const doc = await concentrationInfo.get();
         if (!doc.exists) {
-            throw new Error('Concentration document not found');
+            throw new Error('Concentration document not found ~404');
         };
 
         // Document exists, access its data
@@ -110,7 +110,7 @@ async function getSample(concentrationID) {
         const concentrationInfo = await getConcentration(concentrationID);
         return concentrationInfo.sampleSchedule;
     } catch (e) {
-        throw new Error(e);
+        throw (e);
     }
 }
 
@@ -131,7 +131,7 @@ async function getConcentrationResidency(concentrationID) {
 
     const doc = await concentrationInfo.get();
     if (!doc.exists) {
-        throw new Error('Concentration document not found');
+        throw new Error('Concentration document not found ~404');
     };
 
     return doc.data().residency;
