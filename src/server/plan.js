@@ -61,43 +61,38 @@ async function validatePlan(req) {
 
     let netID = req.params.netID;
     let concentrationID = req.params.concentrationID;
-    if (netID != undefined && concentrationID != undefined) {
-        let futureCourses = await Student.getFutureCourses(req.params.netID);
+    let futureCourses = await Student.getFutureCourses(req.params.netID);
 
-        let { isValidOrder, prereqErrors, coreqErrors } = await validatePreCoReqs(futureCourses);
+    let { isValidOrder, prereqErrors, coreqErrors } = await validatePreCoReqs(futureCourses);
 
-        let {
+    let {
+        isFulfilledConcentationCourses,
+        refinedMap,
+        unassignedCourses,
+        unusedIds,
+    } = await validateConcentrationCourses(concentrationID, futureCourses);
+
+    let { isValidResReq, numMissing } = await validateResidency(concentrationID, futureCourses)
+
+    let data = {
+        validatePreCoReqs: {
+            isValidOrder,
+            prereqErrors,
+            coreqErrors
+        },
+        validateConcentrationCourses: {
             isFulfilledConcentationCourses,
             refinedMap,
             unassignedCourses,
             unusedIds,
-        } = await validateConcentrationCourses(concentrationID, futureCourses);
-
-        let { isValidResReq, numMissing } = await validateResidency(concentrationID, futureCourses)
-
-        let data = {
-            validatePreCoReqs: {
-                isValidOrder,
-                prereqErrors,
-                coreqErrors
-            },
-            validateConcentrationCourses: {
-                isFulfilledConcentationCourses,
-                refinedMap,
-                unassignedCourses,
-                unusedIds,
-            },
-            validateResidency: {
-                isValidResReq,
-                numMissing
-            }
+        },
+        validateResidency: {
+            isValidResReq,
+            numMissing
         }
-
-        return [JSON.stringify(data), 200];
-    } else {
-        throw new Error("netID or concentration ID is not defined");
     }
 
+    return [JSON.stringify(data), 200];
 }
 
 async function optimizePlan(req) {
@@ -123,7 +118,7 @@ async function optimizePlan(req) {
             throw new Error("Invalid method of optimization.");
         }
 
-        
+
         let flattenedResult = flattenTree(result);
         let jsonArray = flattenedResult.map(courseID => {
             return {
@@ -206,14 +201,12 @@ async function isOptimizable(futureCourses) {
 
         for (let futureCourse of futureCourses) {
             let courseDetails = await Course.getCourse(futureCourse.course);
-            for(let prereq of courseDetails.prereqs)
-            {
+            for (let prereq of courseDetails.prereqs) {
                 if (!(futureCourses.some(course => course.course === prereq))) {
                     throw new Error('You have included a course in your plan without including all its prereqs');
                 }
             }
-            for(let coreq of courseDetails.coreqs)
-            {
+            for (let coreq of courseDetails.coreqs) {
                 if (!(futureCourses.some(course => course.course === coreq))) {
                     throw new Error('You have included a course in your plan without including all its coreqs');
                 }
@@ -803,7 +796,7 @@ function assignCourses(courses, totalLoad, creditLoads, parentSemester, isBalanc
                 }
 
                 // Push the parent course after all children are assigned
-                if(course.semester == -1) {
+                if (course.semester == -1) {
                     throw new Error("Not possible to schedule with current parameters");
                 }
                 assignedCourses.push(course);

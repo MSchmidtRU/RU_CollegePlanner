@@ -1,6 +1,6 @@
 const http = require('node:http');
 const { methods } = require("./endpoints");
-const {OAuth2Client} = require('google-auth-library');
+const { OAuth2Client } = require('google-auth-library');
 const fs = require('fs');
 const path = require('path');
 
@@ -30,7 +30,7 @@ class Server {
     displayContent(filePath, contentType = 'text/html') {
         const fullPath = path.join(__dirname, '../public', filePath)
         fs.readFile(fullPath, (error, content) => {
-            if(error) {
+            if (error) {
                 console.error(error)
                 return this.sendResponse('Page could not be displayed.')
             }
@@ -141,10 +141,11 @@ class Server {
     }
 
     sendError(e) {
-        if (e.length > 0) {
-            this.sendResponse(...e);
-        }
-        else {
+        let match = (e.message).match(/^(.*?) ~(-?\d+)$/);
+        if (match) {
+            this.sendResponse(match[1], parseInt(match[2]))
+        } else {
+
             this.sendResponse(e.message, 400);
         }
     }
