@@ -200,24 +200,12 @@ async function isOptimizable(futureCourses) {
     try {
         let isValidPreCoReq = await validatePreCoReqs(futureCourses, false);
 
-        if (!isValidPreCoReq) {
+        if (!(isValidPreCoReq.isValidOrder)) {
             throw new Error("Locked courses are not in a valid order.");
         }
 
         for (let futureCourse of futureCourses) {
             let courseDetails = await Course.getCourse(futureCourse.course);
-            for(let prereq of courseDetails.prereqs)
-            {
-                if (!(futureCourses.some(course => course.course === prereq))) {
-                    throw new Error('You have included a course in your plan without including all its prereqs');
-                }
-            }
-            for(let coreq of courseDetails.coreqs)
-            {
-                if (!(futureCourses.some(course => course.course === coreq))) {
-                    throw new Error('You have included a course in your plan without including all its coreqs');
-                }
-            }
             futureCourse.prereqs = courseDetails.prereqs;
             futureCourse.coreqs = courseDetails.coreqs;
             futureCourse.credit = courseDetails.credits;//changed
@@ -243,10 +231,7 @@ async function isOptimizable(futureCourses) {
                         let newCourseCredit = combinedCourse.credit + course.credit;
                         let newLoad = combinedCourse.load + course.load;
                         if (combinedCourse.semester !== course.semester) {
-                            if ((combinedCourse.semester != -1) && (course.semester != -1)) {
-                                throw new Error('You placed fixed coreqs in different semesters.')
-                            }
-                            else if (combinedCourse.semester == -1) {
+                            if (combinedCourse.semester == -1) {
                                 combinedCourse.semester = course.semester; //if one of the semesters is defined, they are both set to that semester
                             }
                         }
