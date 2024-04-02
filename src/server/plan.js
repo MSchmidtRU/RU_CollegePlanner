@@ -36,7 +36,7 @@ async function addCourse(req) {
         const body = req.body;
         const futureCourse = new Student.FutureCourse(body.courseID, body.semester);
         let updatedPlan = await Student.addFutureCourse(req.params.netID, futureCourse);
-        return [JSON.stringify(updatedPlan), 200, "plain/text"];
+        return [JSON.stringify(updatedPlan), 200];
     } catch (e) {
         throw new Error(e);
     }
@@ -46,7 +46,7 @@ async function removeCourse(req) {
     try {
         const body = req.body;
         let updatedPlan = await Student.removeFutureCourse(req.params.netID, body.courseID);
-        return [JSON.stringify(updatedPlan), 200, "plain/text"];
+        return [JSON.stringify(updatedPlan), 200];
     } catch (e) {
         throw new Error(e);
     }
@@ -101,10 +101,6 @@ async function optimizePlan(req) {
         let method = req.params.method;
         let futureCourses = req.body.futureCourses;
         let result;
-
-        if ((netID == undefined) || (method == undefined)) {
-            throw new Error("Undefined parameter");
-        }
 
         let readyTogo = await isOptimizable(futureCourses);
 
