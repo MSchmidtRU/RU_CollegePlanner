@@ -36,7 +36,7 @@ async function addCourse(req) {
         const body = req.body;
         const futureCourse = new Student.FutureCourse(body.courseID, body.semester);
         let updatedPlan = await Student.addFutureCourse(req.params.netID, futureCourse);
-        return [JSON.stringify(updatedPlan), 200];
+        return [JSON.stringify(updatedPlan), 201];
     } catch (e) {
         throw new Error(e);
     }
@@ -178,7 +178,7 @@ async function savePlan(req) {
             let courseSaving = new Student.FutureCourse(course.courseID, course.semester);
             await Student.addFutureCourse(netID, courseSaving);
         }
-        return ['Success saving new plan!', 200, "plain/text"];
+        return ['Success saving new plan!', 201, "plain/text"];
     } catch (e) {
         throw new Error(e);
     }
