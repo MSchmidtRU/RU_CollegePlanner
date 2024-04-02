@@ -9,7 +9,6 @@ async function viewPlan(req) {
     try {
         let netID = req.params.netID;
         let jsonFutureCourses;
-        if (netID != undefined) {
             let future_courses = await Student.getFutureCourses(netID);
             jsonFutureCourses = future_courses.map(course => {
                 return {
@@ -18,12 +17,8 @@ async function viewPlan(req) {
                 };
             });
             return [JSON.stringify(jsonFutureCourses), 200];
-        } else {
-            throw new Error("netID is not defined");
-        }
-
-    } catch (e) {
-        throw new Error(e);
+        } catch (e) {
+        throw (e);
     }
 }
 
@@ -38,7 +33,7 @@ async function addCourse(req) {
         let updatedPlan = await Student.addFutureCourse(req.params.netID, futureCourse);
         return [JSON.stringify(updatedPlan), 201];
     } catch (e) {
-        throw new Error(e);
+        throw (e);
     }
 }
 
@@ -48,7 +43,7 @@ async function removeCourse(req) {
         let updatedPlan = await Student.removeFutureCourse(req.params.netID, body.courseID);
         return [JSON.stringify(updatedPlan), 200];
     } catch (e) {
-        throw new Error(e);
+        throw (e);
     }
 }
 

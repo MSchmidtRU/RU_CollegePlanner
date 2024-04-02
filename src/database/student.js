@@ -29,7 +29,7 @@ class FutureCourse {
     setCourse(course) {
 
         if (typeof course !== 'string') {
-            throw new Error("course  must be a string.");
+            throw new Error("course must be a string.");
         }
         if (course.match(/^\d{2}\:\d{3}\:\d{3}$/)) {
             return course;
@@ -79,7 +79,7 @@ async function getStudent(netID) {
         // Retrieve the document data
         const doc = await studentInfo.get();
         if (!doc.exists) {
-            throw new Error('Student document not found');
+            throw new Error('Student document not found ~404');
         };
         // Document exists, access its data
         const studentData = doc.data();
@@ -116,7 +116,7 @@ async function getStudent(netID) {
                     courseObj.semester);
 
             } else {
-                throw new Error('Student document not found');
+                throw new Error('Student document not found ~404');
             }
         }));
 
@@ -170,11 +170,9 @@ async function addFutureCourse(netID, futureCourse) {
         var studentInfo = await getStudent(netID);
         var course = await getCourse(futureCourse.course);
 
-        if (studentInfo && course) {
-
             studentInfo.futureCourses.forEach(course => {
                 if (course.course == futureCourse.course) {
-                    throw new Error("can not add course that is already in plan");
+                    throw new Error("Can not add course that is already in plan");
                 }
             })
 
@@ -186,9 +184,6 @@ async function addFutureCourse(netID, futureCourse) {
             const res = await firestore.collection('student').doc(netID).update({ future_courses: FieldValue.arrayUnion(data) });
             const updatedStudentInfo = await getStudent(netID);
             return { "data": updatedStudentInfo.futureCourses }; //TODO change to 4 year plan
-        } else {
-            throw new Error("netID or course is not defined");//TODO good?
-        }
     } catch (e) {
         throw new Error(e);
 
@@ -201,12 +196,10 @@ async function removeFutureCourse(netID, courseID) {
         const studentInfo = await getStudent(netID);
         const course = await getCourse(courseID);
 
-        if (studentInfo && course) {
-
             const indexToRemove = studentInfo.futureCourses.findIndex(course => course.course === courseID);
 
             if (indexToRemove == -1) {
-                throw new Error([`course with ID: ${courseID} is not listed in future course of studentwith netID: ${netID}`, 400, "plain/text"]); //TODO include error code
+                throw new Error(`course with ID: ${courseID} is not listed in future course of student with netID: ${netID}`); //TODO include error code
             } else {
                 studentInfo.futureCourses.splice(indexToRemove, 1);
                 await firestore.collection('student').doc(netID).update({ future_courses: [] });
@@ -219,10 +212,6 @@ async function removeFutureCourse(netID, courseID) {
                 return { "data": studentInfo.futureCourses };
             }
 
-        } else {
-            throw new Error(["netID or course is not defined", 404, "plain/text"]); //TODO correct error code
-        }
-
     } catch (e) {
         throw new Error(e);
     }
@@ -231,12 +220,8 @@ async function removeFutureCourse(netID, courseID) {
 async function getFutureCourses(netID) {
     try {
         let student = await getStudent(netID);
-        if (student) {
-            let future_courses = student.futureCourses;
-            return future_courses;
-        } else {
-            throw new Error("not valid student");
-        }
+        let future_courses = student.futureCourses;
+        return future_courses;
     } catch (e) {
         throw new Error(e);
     }

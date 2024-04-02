@@ -68,9 +68,9 @@ class Server {
                         return this.sendResponse(...await handler(this.req));
                     }
                 }
-                return this.sendResponse("endpoint not found", 421);
+                return this.sendResponse("endpoint not found ~421");
             }
-            return this.sendResponse("unknown method", 400);
+            return this.sendResponse("unknown method ~400");
         } catch (e) {
             this.sendError(e);
         }
@@ -93,13 +93,13 @@ class Server {
 
     checkContentType(expected, received) {
         if (expected != received) {
-            throw ([`Expected ${expected} but received ${received} as the Content-Type`, 400]);
+            throw new Error(`Expected ${expected} but received ${received} as the Content-Type ~400`);
         }
     }
 
     checkMethod(expected, received) {
         if (expected != received) {
-            throw ([`Expected ${expected} but received ${received} as the method`, 405]);
+            throw new Error(`Expected ${expected} but received ${received} as the method ~405`);
         }
     }
 
@@ -108,14 +108,14 @@ class Server {
         try {
             return JSON.parse(this.body);
         } catch (e) {
-            throw (["Expected JSON object", 406]);
+            throw new Error("Expected JSON object ~406");
         }
 
     }
 
     checkEmptyBody() {
         if (this.body == "") {
-            throw (["Error - empty body", 404]);
+            throw new Error("Error - empty body ~404");
         }
     }
 
@@ -141,9 +141,9 @@ class Server {
     }
 
     sendError(e) {
-        let match = (e.message).match(/^(.*?) ~(-?\d+)$/);
-        if (match) {
-            this.sendResponse(match[1], parseInt(match[2]))
+        let theMatch = (e.message).match(/^(.*?) ~(-?\d+)$/);
+        if (theMatch) {
+            this.sendResponse(theMatch[1], parseInt(theMatch[2]))
         } else {
 
             this.sendResponse(e.message, 400);
