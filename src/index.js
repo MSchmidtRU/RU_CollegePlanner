@@ -6,4 +6,3 @@ const { firestore } = require("./database/firebase");
 const server = new Server();
 
 server.startServer();
-

@@ -3,6 +3,7 @@ const plan = require("./plan");
 //const schedule=require("src/database/scheduling.js");
 const academicProgess = require('../database/academicProgess');
 const adminAcademicProgress = require('../database/adminAcademicProgress.js');
+const login = require("./login.js");
 
 
 const getEndpoints = {
@@ -12,14 +13,16 @@ const getEndpoints = {
    "/4yrplan/~netID/validate": plan.validatePlan,
    "/4yrplan/~netID/optimize": plan.optimizePlan,
    //"/UpcomingSchedule/~netID/viewschedule":schedule.viewSchedule,
+   "/login/~idToken/~netID": login.verify,
 }
 
 
 const postEndpoints = {
    "/4yrplan/~netID/course": plan.addCourse,
-  // "/UpcomingSchedule/~netID/addcoursetoschedule":schedule.addCourseToSchedule,
+   // "/UpcomingSchedule/~netID/addcoursetoschedule":schedule.addCourseToSchedule,
    "/academicProgress/~netID": academicProgess.academicProgressHandler,
-   "/academic-progress/~adminNetID/~studentNetID": adminAcademicProgress.adminAcademicProgressHandler
+   "/academic-progress/~adminNetID/~studentNetID": adminAcademicProgress.adminAcademicProgressHandler,
+
 
 }
 
