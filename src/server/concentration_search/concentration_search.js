@@ -49,15 +49,9 @@ async function viewConcentration(request) {
     if(!(request.params.data.trim().length === 0)) {
         try {
             let inputdata = request.params.data
-            if(inputdata.includes("_")) {
-                inputdata = inputdata.replace("_", " ")
-            }
-            else if(inputdata.includes("%20")) {
-                inputdata = inputdata.replace("%20", " ") 
-            }
-            else if(inputdata.includes("+")) {
-                inputdata = inputdata.replace("+", " ") 
-            }
+            inputdata = inputdata.replace(/_/g, " ");
+            inputdata = inputdata.replace(/%20/g, " ");
+            inputdata = inputdata.replace(/\+/g, " ");
             console.log(inputdata)
             const concentrationList = await firestore.collection("concentration").get();
             let concentration = null
