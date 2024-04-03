@@ -14,6 +14,10 @@ const getEndpoints = {
    "/4yrplan/~netID/optimize": plan.optimizePlan,
    //"/UpcomingSchedule/~netID/viewschedule":schedule.viewSchedule,
    "/login/~idToken/~netID": login.verify,
+   "/csearch/~netID/concentrationSearch": csearch.concentrationSearch,
+   "/csearch/~netID/concentrationSearch-Filtered": csearch.filteredSearch,
+   "/csearch/~netID/viewConcentration": csearch.viewConcentration,
+   "/csearch/~netID/filteredSearch": csearch.filteredSearch,
 }
 
 
