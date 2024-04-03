@@ -1,6 +1,7 @@
 
 const plan = require("./plan");
 //const schedule=require("src/database/scheduling.js");
+const csearch = require("./concentration_search/concentration_search.js")
 const academicProgess = require('../database/academicProgess');
 const adminAcademicProgress = require('../database/adminAcademicProgress.js');
 
@@ -11,6 +12,10 @@ const getEndpoints = {
    "/4yrplan/~concentrationID/sample": plan.viewSample,
    "/4yrplan/~netID/validate": plan.validatePlan,
    "/4yrplan/~netID/optimize": plan.optimizePlan,
+   "/csearch/~netID/concentrationSearch": csearch.concentrationSearch,
+   "/csearch/~netID/concentrationSearch-Filtered": csearch.filteredSearch,
+   "/csearch/~netID/viewConcentration": csearch.viewConcentration,
+   "/csearch/~netID/filteredSearch": csearch.filteredSearch,
    //"/UpcomingSchedule/~netID/viewschedule":schedule.viewSchedule,
 }
 
