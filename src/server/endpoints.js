@@ -5,6 +5,7 @@ const academicProgess = require('../database/academicProgess');
 const adminAcademicProgress = require('../database/adminAcademicProgress.js');
 const csearch = require("./concentration_search/concentration_search.js");
 const login = require("./login.js");
+const courses = require("./catalog.js");
 
 
 const getEndpoints = {
@@ -19,6 +20,9 @@ const getEndpoints = {
    "/csearch/~netID/concentrationSearch-Filtered": csearch.filteredSearch,
    "/csearch/~netID/viewConcentration": csearch.viewConcentration,
    "/csearch/~netID/filteredSearch": csearch.filteredSearch,
+   "/courseCatalog/all" : courses.allCourses, 
+   "/courseCatalog/search/~query" : courses.searchCourses,
+   "/courseCatalog/~courseID" : courses.getCourse,
 }
 
 
