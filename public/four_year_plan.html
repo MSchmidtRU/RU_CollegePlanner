@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAPS - Four Year Plan</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        header {
+            background-color: #CC0033;
+            color: #fff;
+            padding: 20px 0;
+            text-align: center;
+        }
+        nav {
+            background-color: #f0f0f0;
+            padding: 10px 0;
+            text-align: center;
+        }
+        nav a {
+            text-decoration: none;
+            color: #CC0033;
+            margin: 0 15px;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        nav a:hover {
+            color: #fff;
+            background-color: #CC0033;
+            border-radius: 5px;
+        }
+        section {
+            padding: 50px 20px;
+            text-align: center;
+        }
+        footer {
+            background-color: #CC0033;
+            color: #fff;
+            text-align: center;
+            padding: 10px 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        button {
+            background-color: #CC0033;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background-color: #990022;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>MAPS - Four Year Plan</h1>
+</header>
+
+<nav>
+    <a href="index.html">Home</a>
+    <a href="course_catalog.html">Course Catalog</a>
+    <a href="student_status.html">Student Status</a>
+    <a href="four_year_plan.html">4 Year Plan</a>
+    <a href="schedule_semester.html">Schedule Semester</a>
+    <a href="search_majors_minors.html">Search Majors and Minors</a>
+    <a href="request_major_switch.html">Request Major Switch or Declaration</a>
+</nav>
+
+<section>
+    <h2>Your Four Year Plan</h2>
+    <!-- Content for Four Year Plan section -->
+    <div id="plan">
+        <!-- Courses will be dynamically loaded here -->
+    </div>
+    <button id="optimizeBtn">Optimize</button>
+    <button id="validateBtn">Validate</button>
+</section>
+
+<footer>
+    <p>&copy; 2024 MAPS - My Academic Planning System. All rights reserved.</p>
+</footer>
+
+<script>
+    // Function to send HTTP request when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Define the URL for the request
+        const url = 'http://127.0.0.1:3000/4yrplan/nss170'; // Replace ~netID with the actual netID
+        
+        // Make the HTTP GET request
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Process the response data here
+                displayFourYearPlan(data);
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+            });
+    });
+
+    // Function to display the retrieved four year plan on the page
+    function displayFourYearPlan(fourYearPlan) {
+        // Clear existing plan
+        document.getElementById('plan').innerHTML = '';
+
+        // Loop through the plan and display courses organized by semester
+        for (let semester = 0; semester <= 7; semester++) {
+            const semesterCourses = fourYearPlan[semester];
+            if (semesterCourses) {
+                const semesterHeader = document.createElement('h3');
+                semesterHeader.textContent = `Semester ${semester}`;
+                document.getElementById('plan').appendChild(semesterHeader);
+
+                const courseList = document.createElement('ul');
+                semesterCourses.forEach(course => {
+                    const courseItem = document.createElement('li');
+                    courseItem.textContent = course.name;
+                    courseList.appendChild(courseItem);
+                });
+                document.getElementById('plan').appendChild(courseList);
+            }
+        }
+    }
+
+    // Function to send request to optimize the four year plan
+    function optimize() {
+        // Send request to server for optimization
+        console.log('Optimizing the four year plan...');
+    }
+
+    // Function to send request to validate the four year plan
+    function validate() {
+        // Send request to server for validation
+        console.log('Validating the four year plan...');
+    }
+
+    // Add event listeners to the buttons
+    document.getElementById('optimizeBtn').addEventListener('click', optimize);
+    document.getElementById('validateBtn').addEventListener('click', validate);
+</script>
+
+</body>
+</html>
