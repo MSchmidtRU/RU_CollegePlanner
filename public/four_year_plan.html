@@ -154,7 +154,7 @@
         }
 
         .selected-course {
-            background-color: red;
+            background-color: #CC0033;
             color: white;
         }
 
@@ -268,6 +268,16 @@
             </div>
         </div>
 
+        <div id="validationModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeValidationModal()">&times;</span>
+                <h2>Validation Information</h2>
+                <div id="validationInfoContent">
+                    <!-- Validation information will be displayed here -->
+                </div>
+            </div>
+        </div>
+
         <div id="plan-heading">
             <h2>Your Four Year Plan</h2>
             <!-- Alert and success icons will be appended here -->
@@ -280,6 +290,8 @@
         <button id="optimizeBtn">Optimize</button>
         <button id="keepOldBtn" style="display: none;">Keep Old Plan</button>
         <button id="saveBtn" style="display: none;">Save</button>
+        <button id="viewValidateInfo" style="display: none;">View Validation Info</button>
+        <button id="clearValidationInfo" style="display: none;">Clear</button>
 
     </section>
 
@@ -289,6 +301,10 @@
 
     <script>
         var fourYearPlan;
+        var validationData;
+        var stableCourses = [];
+        var optimizedPlan = [];
+        var optimizedClicked = false;
 
         function showSpinner() {
             document.getElementById('spinner').style.display = 'block';
@@ -393,12 +409,12 @@
         // Function to send request to validate the four year plan
         async function validate() {
             var userInput = prompt("Enter a concentration ID for validation:");
-            var validatationData = await sendRequest("GET", "http://127.0.0.1:3000/4yrplan/ach127/validate?concentrationID=" + userInput);
-            validationResponse(validatationData);
+            validationData = JSON.parse(await sendRequest("GET", "http://127.0.0.1:3000/4yrplan/ach127/validate?concentrationID=" + userInput));
+            validationResponse(validationData);
         }
 
         function validationResponse(res) {
-            var responseData = JSON.parse(res);
+            var responseData = res;
 
             // Check if any prerequisite errors or corequisite errors exist
             var hasPrereqErrors = Object.keys(responseData.validatePreCoReqs.prereqErrors).length > 0;
@@ -413,35 +429,6 @@
             // Get unassigned courses and number of missing residency requirements
             var unassignedCourses = responseData.validateConcentrationCourses.unassignedCourses;
             var numMissingResReq = responseData.validateResidency.numMissing;
-
-            // Display validation status
-            if (hasPrereqErrors || hasCoreqErrors || !isConcentrationFulfilled || !isValidResidency) {
-                // Display alert icon with tooltip indicating validation errors
-                var alertIcon = document.createElement('div');
-                alertIcon.classList.add('alert-icon');
-                alertIcon.textContent = '⚠️';
-                alertIcon.title = 'Validation Errors:';
-                if (hasPrereqErrors) {
-                    alertIcon.title += '\n- Prerequisite errors exist';
-                }
-                if (hasCoreqErrors) {
-                    alertIcon.title += '\n- Corequisite errors exist';
-                }
-                if (!isConcentrationFulfilled) {
-                    alertIcon.title += '\n- Concentration courses not fulfilled';
-                }
-                if (!isValidResidency) {
-                    alertIcon.title += '\n- Residency requirements not met';
-                }
-                document.getElementById('plan-heading').appendChild(alertIcon); // Append alert icon to the body
-            } else {
-                // Display green alert icon with tooltip indicating validation success
-                var successIcon = document.createElement('div');
-                successIcon.classList.add('alert-icon');
-                successIcon.textContent = '✅';
-                successIcon.title = 'Validation Success: All requirements are fulfilled';
-                document.getElementById('plan-heading').appendChild(successIcon); // Append success icon to the body
-            }
 
             // Highlight unused course IDs in red with tooltip
             var unusedCourseIDs = responseData.validateConcentrationCourses.unusedIds;
@@ -470,11 +457,9 @@
                     });
                 }
             }
+            showValidateInfoButtons();
         }
 
-        var stableCourses = [];
-        var optimizedPlan = [];
-        var optimizedClicked = false;
 
         function showModal() {
             document.getElementById('myModal').style.display = 'block';
@@ -611,11 +596,144 @@
             document.getElementById('optimizeBtn').style.display = 'inline-block';
         }
 
+        function showValidateInfoButtons() {
+            // Hide the Validate and Optimize buttons
+            document.getElementById('validateBtn').style.display = 'none';
+            document.getElementById('optimizeBtn').style.display = 'none';
+
+            document.getElementById('viewValidateInfo').style.display = 'inline-block';
+            document.getElementById('clearValidationInfo').style.display = 'inline-block';
+        }
+
+        function showValidationInfo() {
+            var validationInfoContent = document.getElementById('validationInfoContent');
+            // Clear previous content
+            validationInfoContent.innerHTML = '';
+
+            // Add overall validation status
+            var overallStatus = document.createElement('h3');
+            overallStatus.textContent = 'Overall Validation Status:';
+            validationInfoContent.appendChild(overallStatus);
+
+            var overallStatusText = document.createElement('p');
+            overallStatusText.textContent = validationData.validatePreCoReqs.isValidOrder &&
+                validationData.validateConcentrationCourses.isFulfilledConcentationCourses &&
+                validationData.validateResidency.isValidResReq ? 'Validated' : 'Invalid';
+            overallStatusText.style.color = validationData.validatePreCoReqs.isValidOrder &&
+                validationData.validateConcentrationCourses.isFulfilledConcentationCourses &&
+                validationData.validateResidency.isValidResReq ? 'green' : '#CC0033';
+            validationInfoContent.appendChild(overallStatusText);
+
+            // Add section for prerequisites and corequisites
+            var prereqCoreqStatus = document.createElement('h3');
+            prereqCoreqStatus.textContent = 'Prerequisites and Corequisites:';
+            validationInfoContent.appendChild(prereqCoreqStatus);
+
+            // Add status for prerequisites and corequisites
+            var prereqCoreqStatusText = document.createElement('p');
+            prereqCoreqStatusText.textContent = validationData.validatePreCoReqs.isValidOrder ? 'Validated' : 'Invalid';
+            prereqCoreqStatusText.style.color = validationData.validatePreCoReqs.isValidOrder ? 'green' : '#CC0033';
+            validationInfoContent.appendChild(prereqCoreqStatusText);
+
+            // Add section for concentration requirements
+            var concentrationStatus = document.createElement('h3');
+            concentrationStatus.textContent = 'Concentration Requirements:';
+            validationInfoContent.appendChild(concentrationStatus);
+
+            // Add status for concentration requirements
+            var concentrationStatusText = document.createElement('p');
+            concentrationStatusText.textContent = validationData.validateConcentrationCourses.isFulfilledConcentationCourses ? 'Fulfilled' : 'Missing';
+            concentrationStatusText.style.color = validationData.validateConcentrationCourses.isFulfilledConcentationCourses ? 'green' : '#CC0033';
+            validationInfoContent.appendChild(concentrationStatusText);
+
+            // Add section for residency requirements
+            var residencyStatus = document.createElement('h3');
+            residencyStatus.textContent = 'Residency Requirements:';
+            validationInfoContent.appendChild(residencyStatus);
+
+            // Add status for residency requirements
+            var residencyStatusText = document.createElement('p');
+            residencyStatusText.textContent = validationData.validateResidency.isValidResReq ? 'Met' : 'Not Met';
+            residencyStatusText.style.color = validationData.validateResidency.isValidResReq ? 'green' : '#CC0033';
+            validationInfoContent.appendChild(residencyStatusText);
+
+            // Add missing prerequisites and corequisites, if any
+            if (Object.keys(validationData.validatePreCoReqs.prereqErrors).length > 0 || Object.keys(validationData.validatePreCoReqs.coreqErrors).length > 0) {
+                var prereqCoreqList = document.createElement('div');
+                prereqCoreqList.innerHTML = '<h4>Missing Prerequisites and Corequisites:</h4>';
+                var missingPrereqs = validationData.validatePreCoReqs.prereqErrors;
+                for (var prereq in missingPrereqs) {
+                    if (missingPrereqs.hasOwnProperty(prereq)) {
+                        var prereqItem = document.createElement('p');
+                        prereqItem.textContent = 'Prerequisite: ' + prereq + ', Missing: ' + missingPrereqs[prereq].join(', ');
+                        prereqCoreqList.appendChild(prereqItem);
+                    }
+                }
+                var missingCoreqs = validationData.validatePreCoReqs.coreqErrors;
+                for (var coreq in missingCoreqs) {
+                    if (missingCoreqs.hasOwnProperty(coreq)) {
+                        var coreqItem = document.createElement('p');
+                        coreqItem.textContent = 'Corequisite: ' + coreq + ', Missing: ' + missingCoreqs[coreq].join(', ');
+                        prereqCoreqList.appendChild(coreqItem);
+                    }
+                }
+                validationInfoContent.appendChild(prereqCoreqList);
+            }
+
+            // Add missing concentration requirements, if any
+            if (validationData.validateConcentrationCourses.unassignedCourses.length > 0 || validationData.validateConcentrationCourses.unusedIds.length > 0) {
+                var concentrationList = document.createElement('div');
+                concentrationList.innerHTML = '<h4>Missing Concentration Requirements:</h4>';
+                if (validationData.validateConcentrationCourses.unassignedCourses.length > 0) {
+                    var unassignedCourses = document.createElement('p');
+                    unassignedCourses.textContent = 'Missing Requirement Courses: ' + validationData.validateConcentrationCourses.unassignedCourses.join(', ');
+                    concentrationList.appendChild(unassignedCourses);
+                }
+                if (validationData.validateConcentrationCourses.unusedIds.length > 0) {
+                    var unusedIds = document.createElement('p');
+                    unusedIds.textContent = 'Unused IDs: ' + validationData.validateConcentrationCourses.unusedIds.join(', ');
+                    concentrationList.appendChild(unusedIds);
+                }
+                validationInfoContent.appendChild(concentrationList);
+            }
+
+            // Add missing residency requirements, if any
+            if (!validationData.validateResidency.isValidResReq) {
+                var residencyList = document.createElement('div');
+                residencyList.innerHTML = '<h4>Missing Residency Requirements:</h4>';
+                var numMissing = document.createElement('p');
+                numMissing.textContent = 'Number of Missing Requirements: ' + validationData.validateResidency.numMissing;
+                residencyList.appendChild(numMissing);
+                validationInfoContent.appendChild(residencyList);
+            }
+
+            // Open the modal
+            document.getElementById('validationModal').style.display = 'block';
+        }
+
+        // Function to close the modal
+        function closeValidationModal() {
+            document.getElementById('validationModal').style.display = 'none';
+        }
+
+        // Function to clear validation and revert to original plan
+        function clearValidation() {
+            displayFourYearPlan(fourYearPlan);
+            document.getElementById('viewValidateInfo').style.display = 'none';
+            document.getElementById('clearValidationInfo').style.display = 'none';
+
+            // Show the "Validate" and "Optimize" buttons
+            document.getElementById('validateBtn').style.display = 'inline-block';
+            document.getElementById('optimizeBtn').style.display = 'inline-block';
+        }
+
+
         document.getElementById('optimizeBtn').addEventListener('click', optimize);
         document.getElementById('validateBtn').addEventListener('click', validate);
         document.getElementById('saveBtn').addEventListener('click', saveSchedule);
         document.getElementById('keepOldBtn').addEventListener('click', keepOldSchedule);
-
+        document.getElementById('viewValidateInfo').addEventListener('click', showValidationInfo);
+        document.getElementById('clearValidationInfo').addEventListener('click', clearValidation);
     </script>
 
 </body>
