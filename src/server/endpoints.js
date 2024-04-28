@@ -9,7 +9,7 @@ const courses = require("./catalog.js");
 
 
 const getEndpoints = {
-   "/4yrplan/~netID": plan.viewPlan,
+   "/4yrplan": plan.viewPlan,
    "/4yrplan/~netID/status": plan.viewStatus,
    "/4yrplan/~concentrationID/sample": plan.viewSample,
    "/4yrplan/~netID/validate": plan.validatePlan,
