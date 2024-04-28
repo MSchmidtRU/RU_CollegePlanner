@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,17 +12,33 @@
             padding: 0;
             background-color: #f0f0f0;
         }
+
         header {
             background-color: #CC0033;
             color: #fff;
             padding: 20px 0;
             text-align: center;
         }
+
+        .header-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header-content img {
+            height: 50px;
+            /* Adjust height as needed */
+            margin-right: 10px;
+        }
+
         nav {
             background-color: #f0f0f0;
             padding: 10px 0;
             text-align: center;
         }
+
         nav a {
             text-decoration: none;
             color: #CC0033;
@@ -29,15 +46,18 @@
             font-size: 18px;
             transition: all 0.3s ease;
         }
+
         nav a:hover {
             color: #fff;
             background-color: #CC0033;
             border-radius: 5px;
         }
+
         section {
             padding: 50px 20px;
             text-align: center;
         }
+
         footer {
             background-color: #CC0033;
             color: #fff;
@@ -47,6 +67,7 @@
             bottom: 0;
             width: 100%;
         }
+
         button {
             background-color: #CC0033;
             color: #fff;
@@ -57,104 +78,546 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
+
         button:hover {
             background-color: #990022;
         }
-    </style>
-</head>
-<body>
 
-<header>
-    <h1>MAPS - Four Year Plan</h1>
-</header>
+        .semester-box {
+            width: 200px;
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+            position: relative;
+            /* Added for positioning tooltip */
+        }
 
-<nav>
-    <a href="index.html">Home</a>
-    <a href="course_catalog.html">Course Catalog</a>
-    <a href="student_status.html">Student Status</a>
-    <a href="four_year_plan.html">4 Year Plan</a>
-    <a href="schedule_semester.html">Schedule Semester</a>
-    <a href="search_majors_minors.html">Search Majors and Minors</a>
-    <a href="request_major_switch.html">Request Major Switch or Declaration</a>
-</nav>
+        .semester-title {
+            background-color: #CC0033;
+            /* Rutgers University red */
+            color: white;
+            padding: 5px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
 
-<section>
-    <h2>Your Four Year Plan</h2>
-    <!-- Content for Four Year Plan section -->
-    <div id="plan">
-        <!-- Courses will be dynamically loaded here -->
-    </div>
-    <button id="optimizeBtn">Optimize</button>
-    <button id="validateBtn">Validate</button>
-</section>
+        .courses-list {
+            padding: 10px;
+            list-style-type: none;
+            /* Remove bullet points */
+            margin: 0;
+            /* Remove default margin */
+        }
 
-<footer>
-    <p>&copy; 2024 MAPS - My Academic Planning System. All rights reserved.</p>
-</footer>
+        .courses-list li {
+            margin-bottom: 5px;
+            /* Add some spacing between course names */
+        }
 
-<script>
-    // Function to send HTTP request when the page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        // Define the URL for the request
-        const url = 'http://127.0.0.1:3000/4yrplan/nss170'; // Replace ~netID with the actual netID
-        
-        // Make the HTTP GET request
-        fetch(url)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Process the response data here
-                displayFourYearPlan(data);
-            })
-            .catch(error => {
-                console.error('There was a problem with the fetch operation:', error);
-            });
-    });
+        .unused-course {
+            color: red;
+            /* Highlight unused courses in red */
+            cursor: help;
+            /* Change cursor to indicate tooltip */
+        }
 
-    // Function to display the retrieved four year plan on the page
-    function displayFourYearPlan(fourYearPlan) {
-        // Clear existing plan
-        document.getElementById('plan').innerHTML = '';
+        .fulfilled-course {
+            color: green;
+            /* Highlight fulfilled courses in green */
+            cursor: help;
+            /* Change cursor to indicate tooltip */
+        }
 
-        // Loop through the plan and display courses organized by semester
-        for (let semester = 0; semester <= 7; semester++) {
-            const semesterCourses = fourYearPlan[semester];
-            if (semesterCourses) {
-                const semesterHeader = document.createElement('h3');
-                semesterHeader.textContent = `Semester ${semester}`;
-                document.getElementById('plan').appendChild(semesterHeader);
+        .tooltip {
+            position: absolute;
+            background-color: #333;
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            z-index: 1;
+            visibility: hidden;
+        }
 
-                const courseList = document.createElement('ul');
-                semesterCourses.forEach(course => {
-                    const courseItem = document.createElement('li');
-                    courseItem.textContent = course.name;
-                    courseList.appendChild(courseItem);
-                });
-                document.getElementById('plan').appendChild(courseList);
+        .semester-box:hover .tooltip {
+            visibility: visible;
+        }
+
+        .alert-icon {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 18px;
+            cursor: help;
+            /* Change cursor to indicate tooltip */
+        }
+
+        .selected-course {
+            background-color: red;
+            color: white;
+        }
+
+        .courses-list li:hover {
+            background-color: lightgray;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        .modal-content label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .modal-content input[type="radio"] {
+            margin-right: 5px;
+        }
+
+        .modal-content input[type="submit"] {
+            background-color: #CC0033;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #CC0033;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
             }
         }
-    }
+    </style>
+</head>
 
-    // Function to send request to optimize the four year plan
-    function optimize() {
-        // Send request to server for optimization
-        console.log('Optimizing the four year plan...');
-    }
+<body>
 
-    // Function to send request to validate the four year plan
-    function validate() {
-        // Send request to server for validation
-        console.log('Validating the four year plan...');
-    }
+    <header>
+        <h1>MAPS - Four Year Plan</h1>
+    </header>
 
-    // Add event listeners to the buttons
-    document.getElementById('optimizeBtn').addEventListener('click', optimize);
-    document.getElementById('validateBtn').addEventListener('click', validate);
-</script>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="course_catalog.html">Course Catalog</a>
+        <a href="student_status.html">Student Status</a>
+        <a href="four_year_plan.html">4 Year Plan</a>
+        <a href="schedule_semester.html">Schedule Semester</a>
+        <a href="search_majors_minors.html">Search Majors and Minors</a>
+        <a href="request_major_switch.html">Request Major Switch or Declaration</a>
+    </nav>
+
+    <div class="spinner" id="spinner"></div>
+    <section id="plan-section">
+        <div id="myModal" class="modal">
+            <div class="modal-content">
+                <h2>Select Stable Courses</h2>
+                <!-- Radio options for optimization strategy -->
+                <label>
+                    <input type="radio" id="quickestRadio" name="optimizationStrategy" value="quickest" checked>
+                    Quickest
+                </label>
+                <label>
+                    <input type="radio" id="balancedRadio" name="optimizationStrategy" value="balanced">
+                    Balanced
+                </label>
+                <!-- Course boxes -->
+                <div id="course-boxes" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
+                <input type="submit" id="submitStableCourses" value="OK">
+            </div>
+        </div>
+
+        <div id="plan-heading">
+            <h2>Your Four Year Plan</h2>
+            <!-- Alert and success icons will be appended here -->
+        </div>
+
+        <!-- Content for Four Year Plan section -->
+        <div id="plan" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
+
+        <button id="validateBtn">Validate</button>
+        <button id="optimizeBtn">Optimize</button>
+        <button id="keepOldBtn" style="display: none;">Keep Old Plan</button>
+        <button id="saveBtn" style="display: none;">Save</button>
+
+    </section>
+
+    <footer>
+        <p>&copy; 2024 MAPS - My Academic Planning System. All rights reserved.</p>
+    </footer>
+
+    <script>
+        var fourYearPlan;
+
+        function showSpinner() {
+            document.getElementById('spinner').style.display = 'block';
+            document.getElementById('plan-section').style.display = 'none';
+        }
+
+        // Function to hide the spinner
+        function hideSpinner() {
+            document.getElementById('spinner').style.display = 'none';
+            document.getElementById('plan-section').style.display = 'block';
+
+        }
+        function sendRequest(method, url, data = undefined) {
+            showSpinner();
+            return new Promise(function (resolve, reject) {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4) {
+                        if (this.status == 200) {
+                            var response = this.responseText;
+                            console.log(response);
+                            resolve(response); // Resolve with the response
+                            hideSpinner();
+                        } else {
+                            reject(new Error('Request failed')); // Reject with an error
+                            hideSpinner();
+                        }
+                    }
+                };
+
+                xhttp.open(method, url, true);
+                if (data != undefined) {
+                    xhttp.setRequestHeader('Content-Type', 'application/json');
+                }
+                data == undefined ? xhttp.send() : xhttp.send(data);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            plan = await sendRequest("GET", "http://127.0.0.1:3000/4yrplan/ach127");
+            fourYearPlan = JSON.parse(plan);
+            displayFourYearPlan(fourYearPlan)
+        });
+
+        // Function to display the retrieved four year plan on the page
+        function displayFourYearPlan(res) {
+            plan = res;
+            var schedule = {
+                0: [], // Freshman Fall
+                1: [], // Freshman Spring
+                2: [], // Sophomore Fall
+                3: [], // Sophomore Spring
+                4: [], // Junior Fall
+                5: [], // Junior Spring
+                6: [], // Senior Fall
+                7: []  // Senior Spring
+            };
+            plan.forEach(function (course) {
+                schedule[course.semester].push(course.course);
+            });
+
+            // Display schedule in HTML
+            var scheduleContainer = document.getElementById('plan');
+            scheduleContainer.innerHTML = '';
+
+            for (var semester = 0; semester <= 7; semester++) {
+                var semesterBox = document.createElement('div');
+                semesterBox.classList.add('semester-box');
+
+                var semesterTitle = document.createElement('div');
+                semesterTitle.classList.add('semester-title');
+                semesterTitle.textContent = getSemesterName(semester);
+                semesterBox.appendChild(semesterTitle);
+
+                var coursesList = document.createElement('ul');
+                coursesList.classList.add('courses-list');
+                schedule[semester].forEach(function (course) {
+                    var courseItem = document.createElement('li');
+                    courseItem.textContent = course;
+                    coursesList.appendChild(courseItem);
+                });
+                semesterBox.appendChild(coursesList);
+
+                scheduleContainer.appendChild(semesterBox);
+            }
+        }
+
+        function getSemesterName(semester) {
+            switch (semester) {
+                case 0: return 'Freshman Fall';
+                case 1: return 'Freshman Spring';
+                case 2: return 'Sophomore Fall';
+                case 3: return 'Sophomore Spring';
+                case 4: return 'Junior Fall';
+                case 5: return 'Junior Spring';
+                case 6: return 'Senior Fall';
+                case 7: return 'Senior Spring';
+                default: return 'Unknown';
+            }
+        }
+
+        // Function to send request to validate the four year plan
+        async function validate() {
+            var userInput = prompt("Enter a concentration ID for validation:");
+            var validatationData = await sendRequest("GET", "http://127.0.0.1:3000/4yrplan/ach127/validate?concentrationID=" + userInput);
+            validationResponse(validatationData);
+        }
+
+        function validationResponse(res) {
+            var responseData = JSON.parse(res);
+
+            // Check if any prerequisite errors or corequisite errors exist
+            var hasPrereqErrors = Object.keys(responseData.validatePreCoReqs.prereqErrors).length > 0;
+            var hasCoreqErrors = Object.keys(responseData.validatePreCoReqs.coreqErrors).length > 0;
+
+            // Check if concentration courses are fulfilled
+            var isConcentrationFulfilled = responseData.validateConcentrationCourses.isFulfilledConcentationCourses;
+
+            // Check if residency requirements are met
+            var isValidResidency = responseData.validateResidency.isValidResReq;
+
+            // Get unassigned courses and number of missing residency requirements
+            var unassignedCourses = responseData.validateConcentrationCourses.unassignedCourses;
+            var numMissingResReq = responseData.validateResidency.numMissing;
+
+            // Display validation status
+            if (hasPrereqErrors || hasCoreqErrors || !isConcentrationFulfilled || !isValidResidency) {
+                // Display alert icon with tooltip indicating validation errors
+                var alertIcon = document.createElement('div');
+                alertIcon.classList.add('alert-icon');
+                alertIcon.textContent = '⚠️';
+                alertIcon.title = 'Validation Errors:';
+                if (hasPrereqErrors) {
+                    alertIcon.title += '\n- Prerequisite errors exist';
+                }
+                if (hasCoreqErrors) {
+                    alertIcon.title += '\n- Corequisite errors exist';
+                }
+                if (!isConcentrationFulfilled) {
+                    alertIcon.title += '\n- Concentration courses not fulfilled';
+                }
+                if (!isValidResidency) {
+                    alertIcon.title += '\n- Residency requirements not met';
+                }
+                document.getElementById('plan-heading').appendChild(alertIcon); // Append alert icon to the body
+            } else {
+                // Display green alert icon with tooltip indicating validation success
+                var successIcon = document.createElement('div');
+                successIcon.classList.add('alert-icon');
+                successIcon.textContent = '✅';
+                successIcon.title = 'Validation Success: All requirements are fulfilled';
+                document.getElementById('plan-heading').appendChild(successIcon); // Append success icon to the body
+            }
+
+            // Highlight unused course IDs in red with tooltip
+            var unusedCourseIDs = responseData.validateConcentrationCourses.unusedIds;
+            unusedCourseIDs.forEach(function (courseID) {
+                var courseElements = document.querySelectorAll('.courses-list li');
+                courseElements.forEach(function (element) {
+                    if (element.textContent === courseID) {
+                        element.classList.add('unused-course');
+                        element.title = 'Course not being used';
+                    }
+                });
+            });
+
+            // Highlight fulfilled concentration courses in green with tooltip
+            var refinedMap = responseData.validateConcentrationCourses.refinedMap;
+            for (var key in refinedMap) {
+                if (refinedMap.hasOwnProperty(key)) {
+                    var fulfilledCourseID = refinedMap[key].course;
+                    var semester = refinedMap[key].semester;
+                    var courseElements = document.querySelectorAll('.courses-list li');
+                    courseElements.forEach(function (element) {
+                        if (element.textContent === fulfilledCourseID) {
+                            element.classList.add('fulfilled-course');
+                            element.title = 'Fulfills requirement: ' + key;
+                        }
+                    });
+                }
+            }
+        }
+
+        var stableCourses = [];
+        var optimizedPlan = [];
+        var optimizedClicked = false;
+
+        function showModal() {
+            document.getElementById('myModal').style.display = 'block';
+        }
+
+        // Function to close the modal
+        function closeModal() {
+            document.getElementById('myModal').style.display = 'none';
+        }
+
+        async function optimize() {
+            stableCourses = [];
+            var { courses, strategy } = await getOptimizeSettings();
+            var coursesWithStableSemesters = JSON.parse(JSON.stringify(fourYearPlan));
+
+            coursesWithStableSemesters.forEach(function (course) {
+                if (!courses.includes(course.course)) {
+                    course.semester = -1;
+                }
+            });
+            optimizedPlan = JSON.parse(await sendRequest("POST", "http://127.0.0.1:3000/4yrplan/ach127/optimize?method=" + strategy, JSON.stringify({ "futureCourses": coursesWithStableSemesters })));
+
+            modifiedPlan = [];
+            for (var key in optimizedPlan) {
+                if (optimizedPlan.hasOwnProperty(key)) {
+                    modifiedPlan.push({ course: optimizedPlan[key].courseID, semester: optimizedPlan[key].semester });
+                }
+            }
+
+            displayFourYearPlan(modifiedPlan);
+            handleButtonDisplay(); // Handle button display after optimization
+        }
+
+        async function getOptimizeSettings() {
+            showModal(); // Show the modal
+
+            optimizedClicked = true;
+
+            // Retrieve the course boxes and populate them
+            var courseBoxesContainer = document.getElementById('course-boxes');
+            courseBoxesContainer.innerHTML = ''; // Clear existing content
+
+            // Iterate over the four-year plan and create course boxes
+            for (var semester = 0; semester <= 7; semester++) {
+                var semesterBox = document.createElement('div');
+                semesterBox.classList.add('semester-box');
+
+                var semesterTitle = document.createElement('div');
+                semesterTitle.classList.add('semester-title');
+                semesterTitle.textContent = getSemesterName(semester); // Get semester name
+                semesterBox.appendChild(semesterTitle);
+
+                // Create a list for courses in the semester
+                var coursesList = document.createElement('ul');
+                coursesList.classList.add('courses-list');
+                fourYearPlan.forEach(function (course) {
+                    if (course.semester === semester) {
+                        var courseItem = document.createElement('li');
+                        courseItem.textContent = course.course;
+                        // Add click event to select the course
+                        courseItem.addEventListener('click', function () {
+                            handleCourseClick(courseItem);
+                        });
+                        coursesList.appendChild(courseItem);
+                    }
+                });
+                semesterBox.appendChild(coursesList);
+
+                courseBoxesContainer.appendChild(semesterBox);
+            }
+
+            // Return a promise to handle the "OK" button click
+            return new Promise(function (resolve, reject) {
+                document.getElementById('submitStableCourses').addEventListener('click', function () {
+                    // Resolve with the stable courses array
+                    var strategy = document.querySelector('input[name="optimizationStrategy"]:checked').value;
+
+                    resolve({ courses: stableCourses, strategy: strategy });
+                    closeModal(); // Close the modal
+                });
+            });
+        }
+
+        function handleCourseClick(courseItem) {
+            var courseName = courseItem.textContent.trim();
+            var semesterName = courseItem.closest('.semester-box').querySelector('.semester-title').textContent.trim();
+            var index = stableCourses.findIndex(function (c) {
+                return c.course === courseName;
+            });
+            if (index === -1) {
+                // Add the course to the stable courses array
+                stableCourses.push(courseName);
+                // Highlight the selected course in red
+                courseItem.classList.add('selected-course');
+            } else {
+                // Remove the course from the stable courses array
+                stableCourses.splice(index, 1);
+                // Remove the red highlight from the course
+                courseItem.classList.remove('selected-course');
+            }
+        }
+
+        async function saveSchedule() {
+            var response = await sendRequest("PUT", "http://127.0.0.1:3000/4yrplan/ach127/save", JSON.stringify(optimizedPlan));
+
+            console.log(response); // Log the server response
+            // Hide the Save and Keep Old buttons
+            document.getElementById('saveBtn').style.display = 'none';
+            document.getElementById('keepOldBtn').style.display = 'none';
+            // Show the Validate and Optimize buttons
+            document.getElementById('validateBtn').style.display = 'inline-block';
+            document.getElementById('optimizeBtn').style.display = 'inline-block';
+        }
+
+
+        function handleButtonDisplay() {
+            // Hide the Validate and Optimize buttons
+            document.getElementById('validateBtn').style.display = 'none';
+            document.getElementById('optimizeBtn').style.display = 'none';
+
+            document.getElementById('keepOldBtn').style.display = 'inline-block';
+            document.getElementById('saveBtn').style.display = 'inline-block';
+        }
+
+        // Function to handle the revert to original schedule
+        function keepOldSchedule() {
+            displayFourYearPlan(fourYearPlan); // Revert to original schedule
+            // Hide the Save and Keep Old buttons
+            document.getElementById('keepOldBtn').style.display = 'none';
+            document.getElementById('saveBtn').style.display = 'none';
+
+            // Show the Validate and Optimize buttons
+            document.getElementById('validateBtn').style.display = 'inline-block';
+            document.getElementById('optimizeBtn').style.display = 'inline-block';
+        }
+
+        document.getElementById('optimizeBtn').addEventListener('click', optimize);
+        document.getElementById('validateBtn').addEventListener('click', validate);
+        document.getElementById('saveBtn').addEventListener('click', saveSchedule);
+        document.getElementById('keepOldBtn').addEventListener('click', keepOldSchedule);
+
+    </script>
 
 </body>
+
 </html>

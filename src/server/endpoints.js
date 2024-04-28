@@ -13,8 +13,7 @@ const getEndpoints = {
    "/4yrplan/~netID/status": plan.viewStatus,
    "/4yrplan/~concentrationID/sample": plan.viewSample,
    "/4yrplan/~netID/validate": plan.validatePlan,
-   "/4yrplan/~netID/optimize": plan.optimizePlan,
-   //"/UpcomingSchedule/~netID/viewschedule":schedule.viewSchedule,
+      //"/UpcomingSchedule/~netID/viewschedule":schedule.viewSchedule,
    "/login/~idToken/~netID": login.verify,
    "/csearch/~netID/concentrationSearch": csearch.concentrationSearch,
    "/csearch/~netID/concentrationSearch-Filtered": csearch.filteredSearch,
@@ -28,6 +27,7 @@ const getEndpoints = {
 
 const postEndpoints = {
    "/4yrplan/~netID/course": plan.addCourse,
+   "/4yrplan/~netID/optimize": plan.optimizePlan,
    // "/UpcomingSchedule/~netID/addcoursetoschedule":schedule.addCourseToSchedule,
    "/academicProgress/~netID": academicProgess.academicProgressHandler,
    "/academic-progress/~adminNetID/~studentNetID": adminAcademicProgress.adminAcademicProgressHandler,

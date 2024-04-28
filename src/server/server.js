@@ -45,6 +45,12 @@ class Server {
             let url = this.req.url.split("?")[0];
             let params = this.req.url.split("?")[1];
 
+            if (method == 'OPTIONS') {
+                // Respond to OPTIONS requests with a 200 OK statu
+                this.sendResponse(null, 200, null)
+                return;
+            }
+
             let endpoints = methods[method];
             if (endpoints) {
 
@@ -137,6 +143,10 @@ class Server {
     sendResponse(response, code, contentType = "application/json") {
         this.res.statusCode = code;
         this.res.setHeader("Content-Type", contentType);
+        this.res.setHeader('Access-Control-Allow-Origin', '*');
+        this.res.setHeader('Access-Control-Allow-Methods', '*');
+        this.res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
         this.res.end(response);
     }
 
