@@ -9,15 +9,22 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/MSchmidtRU/RU_CollegePlanner.git"
+    "url": "git+https://github.com/MSchmidtRU/RU_CollegePlanner.git"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.19.2",
     "firebase": "^10.8.1",
     "google-auth-library": "^9.7.0"
   },
   "devDependencies": {
     "firebase-admin": "^12.0.0"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/MSchmidtRU/RU_CollegePlanner/issues"
+  },
+  "homepage": "https://github.com/MSchmidtRU/RU_CollegePlanner#readme",
+  "keywords": []
 }

@@ -1,4 +1,4 @@
-/*const { firestore } = require('./firebase.js');
+const { firestore } = require('./firebase.js');
 const Helper = require("./helperFunction.js");
 const { Course, getCourse } = require('./course.js');
 
@@ -10,6 +10,9 @@ class ScheduleManager {
     }
 
     async getFutureCourseInfo(courseId, netId) {
+        if (!this.isValidNetId(netId) || !this.isValidCourseId(courseId)) {
+            throw new Error("Invalid netId or courseId");
+        }
         const course = await getCourse(courseId);
         return {
             courseId: course.id,
@@ -72,13 +75,22 @@ class ScheduleManager {
 
     handleError(error) {
         console.error("Error:", error.message);
+        throw new Error(error.message);  // Modified to throw an error to be caught by caller
+    }
+
+    isValidNetId(netId) {
+        return typeof netId === 'string' && netId.trim() !== '';
+    }
+    
+    isValidCourseId(courseId) {
+        return typeof courseId === 'string' && courseId.trim() !== '';
     }
 }
 
 // Example usage with additional functionalities
 const scheduleManager = new ScheduleManager();
-const netId = "student123";
-const courseId = "CS101";
+const netId = "ach127";
+const courseId = "03:267:331";
 const semester = "Fall 2024";
 const concentration = "Computer Science"; // Example concentration
 
@@ -101,11 +113,8 @@ try {
             console.log("Is Saved:", isSaved);
         })
         .catch(error => {
-            scheduleManager.handleError(error);
+            console.error("Caught an error in promises:", error.message);
         });
 } catch (error) {
-    scheduleManager.handleError(error);
+    console.error("Caught an error:", error.message);
 }
-
-
-*/
