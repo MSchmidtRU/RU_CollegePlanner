@@ -1,6 +1,6 @@
 
 const plan = require("./plan");
-const schedule=require("src/database/scheduling.js");
+const schedule=require("../database/scheduling.js");
 const academicProgess = require('../database/academicProgess');
 const adminAcademicProgress = require('../database/adminAcademicProgress.js');
 const csearch = require("./concentration_search/concentration_search.js");
