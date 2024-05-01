@@ -113,10 +113,10 @@
                             var response = this.responseText;
                             console.log(response);
                             resolve(response); // Resolve with the response
-                            hideSpinner();
+                           
                         } else {
                             reject(new Error('Request failed')); // Reject with an error
-                            hideSpinner();
+                       
                         }
                     }
                 };
