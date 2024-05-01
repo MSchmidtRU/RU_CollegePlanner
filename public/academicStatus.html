@@ -105,7 +105,6 @@
     </style>
     <script>
          function sendRequest(method, url, data = undefined) {
-            showSpinner();
             return new Promise(function (resolve, reject) {
                 var xhttp = new XMLHttpRequest();
                 xhttp.onreadystatechange = function () {
