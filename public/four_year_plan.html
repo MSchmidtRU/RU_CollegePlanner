@@ -394,6 +394,7 @@
         <button id="keepOldBtn" style="display: none;">Keep Old Plan</button>
         <button id="saveBtn" style="display: none;">Save</button>
         <button id="viewValidateInfo" style="display: none;">View Validation Info</button>
+        <button id="revalidate" style="display: none;">Revalidate</button>
         <button id="clearValidationInfo" style="display: none;">Clear</button>
 
 
@@ -409,9 +410,6 @@
         var stableCourses = [];
         var optimizedPlan = [];
         var optimizedClicked = false;
-
-        var mockToken = "eyJhbGciOiJSUzI1NiIsImtpZCI6ImUxYjkzYzY0MDE0NGI4NGJkMDViZjI5NmQ2NzI2MmI2YmM2MWE0ODciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI2ODc4NjI5ODU4NDMtYjlybTA3OWxhYnFwbTNja3UxOGN2NXFiZDdnMjEyY28uYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI2ODc4NjI5ODU4NDMtYjlybTA3OWxhYnFwbTNja3UxOGN2NXFiZDdnMjEyY28uYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDI4MDE0ODIxMzcxNDc3MjM2NzAiLCJlbWFpbCI6Im15YWNhZGVtaWNwbGFubmluZ3N5c3RlbUBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6IkE0UHpwV055MDQtUy1FaTdGWUNPR2ciLCJpYXQiOjE3MTQzMjcxOTAsImV4cCI6MTcxNDMzMDc5MH0.MmpDQtUeyUalr61R6TEZ8alwna10IVu1H1FJbHnXNqHc8KNv56v4w1b2sm2BiQefUmOt5tKGPZFjo_TbArPUz1-WgK9lFfkiUMzYF1wyIHhmc5o2lBiXpNz2WMVoMXxW3zsrSSbZILedm2b24XcyHLrwxRZFxUY5DTd6FMMWZKlhH0LRePCOszWdq9H5xtelq-mOyEh2ouR6tUHGY71hD4G5PoRaruouGdd06ZeCx32ycHD5OyvVgNwECnR-_H761SVwLlskkYwRNNpkeBpADNlm_6RPj90hJqXYgSonb3W9JeqKcQfN_L6ALpbY-HYJpDitXa5lm01tED2y1J070g";
-
 
         function showSpinner() {
             document.getElementById('spinner').style.display = 'block';
@@ -458,7 +456,6 @@
                 };
 
                 xhttp.open(method, url, true);
-                xhttp.setRequestHeader('Authorization', `Bearer ${mockToken}`)
                 if (data != undefined) {
                     xhttp.setRequestHeader('Content-Type', 'application/json');
                 }
@@ -721,6 +718,7 @@
             hideMainMenuButtons();
 
             document.getElementById('viewValidateInfo').style.display = 'inline-block';
+            document.getElementById('revalidate').style.display = 'inline-block';
             document.getElementById('clearValidationInfo').style.display = 'inline-block';
         }
 
@@ -927,6 +925,7 @@
         function clearValidation() {
             displayFourYearPlan(fourYearPlan);
             document.getElementById('viewValidateInfo').style.display = 'none';
+            document.getElementById('revalidate').style.display = 'none';
             document.getElementById('clearValidationInfo').style.display = 'none';
 
             showMainMenuButtons()
@@ -1030,6 +1029,7 @@
         document.getElementById('saveBtn').addEventListener('click', saveSchedule);
         document.getElementById('keepOldBtn').addEventListener('click', keepOldSchedule);
         document.getElementById('viewValidateInfo').addEventListener('click', showValidationInfo);
+        document.getElementById('revalidate').addEventListener('click', validate);
         document.getElementById('clearValidationInfo').addEventListener('click', clearValidation);
     </script>
 
