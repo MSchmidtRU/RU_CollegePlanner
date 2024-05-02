@@ -42,7 +42,7 @@ class FutureCourse {
     }
 
     setSemester(semester) {
-       if (typeof semester !== 'number') {
+        if (typeof semester !== 'number') {
             throw new Error("Semester must be a int.");
         }
 
@@ -170,23 +170,22 @@ async function addFutureCourse(netID, futureCourse) {
         var studentInfo = await getStudent(netID);
         var course = await getCourse(futureCourse.course);
 
-            studentInfo.futureCourses.forEach(course => {
-                if (course.course == futureCourse.course) {
-                    throw new Error("Can not add course that is already in plan");
-                }
-            })
-
-            const data = {
-                course: Helper.createReference("courses", futureCourse.course),
-                semester: futureCourse.semester
+        studentInfo.futureCourses.forEach(course => {
+            if (course.course == futureCourse.course) {
+                throw new Error("Can not add course that is already in plan");
             }
+        })
 
-            const res = await firestore.collection('student').doc(netID).update({ future_courses: FieldValue.arrayUnion(data) });
-            const updatedStudentInfo = await getStudent(netID);
-            return { "data": updatedStudentInfo.futureCourses }; //TODO change to 4 year plan
+        const data = {
+            course: Helper.createReference("courses", futureCourse.course),
+            semester: futureCourse.semester
+        }
+
+        const res = await firestore.collection('student').doc(netID).update({ future_courses: FieldValue.arrayUnion(data) });
+        const updatedStudentInfo = await getStudent(netID);
+        return updatedStudentInfo.futureCourses; //TODO change to 4 year plan
     } catch (e) {
         throw (e);
-
     }
 
 }
@@ -196,21 +195,21 @@ async function removeFutureCourse(netID, courseID) {
         const studentInfo = await getStudent(netID);
         const course = await getCourse(courseID);
 
-            const indexToRemove = studentInfo.futureCourses.findIndex(course => course.course === courseID);
+        const indexToRemove = studentInfo.futureCourses.findIndex(course => course.course === courseID);
 
-            if (indexToRemove == -1) {
-                throw new Error(`course with ID: ${courseID} is not listed in future course of student with netID: ${netID}`); //TODO include error code
-            } else {
-                studentInfo.futureCourses.splice(indexToRemove, 1);
-                await firestore.collection('student').doc(netID).update({ future_courses: [] });
+        if (indexToRemove == -1) {
+            throw new Error(`course with ID: ${courseID} is not listed in future course of student with netID: ${netID}`); //TODO include error code
+        } else {
+            studentInfo.futureCourses.splice(indexToRemove, 1);
+            await firestore.collection('student').doc(netID).update({ future_courses: [] });
 
-                for (let futureCourse of studentInfo.futureCourses) {
-                    addFutureCourse(netID, futureCourse);
-                }
-
-                // Update the student document with the modified future_courses array
-                return { "data": studentInfo.futureCourses };
+            for (let futureCourse of studentInfo.futureCourses) {
+                addFutureCourse(netID, futureCourse);
             }
+
+            // Update the student document with the modified future_courses array
+            return studentInfo.futureCourses;
+        }
 
     } catch (e) {
         throw (e);

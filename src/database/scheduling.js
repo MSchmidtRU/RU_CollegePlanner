@@ -87,34 +87,34 @@ class ScheduleManager {
     }
 }
 
-// Example usage with additional functionalities
-const scheduleManager = new ScheduleManager();
-const netId = "ach127";
-const courseId = "03:267:331";
-const semester = "Fall 2024";
-const concentration = "Computer Science"; // Example concentration
+// // Example usage with additional functionalities
+// const scheduleManager = new ScheduleManager();
+// const netId = "ach127";
+// const courseId = "03:267:331";
+// const semester = "Fall 2024";
+// const concentration = "Computer Science"; // Example concentration
 
-try {
-    // Add course to schedule
-    scheduleManager.addCourseToSchedule(netId, courseId, semester)
-        .then(updatedSchedule => {
-            console.log("Updated Schedule:", updatedSchedule);
+// try {
+//     // Add course to schedule
+//     scheduleManager.addCourseToSchedule(netId, courseId, semester)
+//         .then(updatedSchedule => {
+//             console.log("Updated Schedule:", updatedSchedule);
 
-            // View schedule
-            const schedule = scheduleManager.viewSchedule(netId, semester);
-            console.log("View Schedule:", schedule);
+//             // View schedule
+//             const schedule = scheduleManager.viewSchedule(netId, semester);
+//             console.log("View Schedule:", schedule);
 
-            // Filter schedule by concentration
-            const filteredSchedule = scheduleManager.filterScheduleByConcentration(schedule, concentration);
-            console.log("Filtered Schedule:", filteredSchedule);
+//             // Filter schedule by concentration
+//             const filteredSchedule = scheduleManager.filterScheduleByConcentration(schedule, concentration);
+//             console.log("Filtered Schedule:", filteredSchedule);
 
-            // Save schedule
-            const isSaved = scheduleManager.saveSchedule(netId, semester, schedule);
-            console.log("Is Saved:", isSaved);
-        })
-        .catch(error => {
-            console.error("Caught an error in promises:", error.message);
-        });
-} catch (error) {
-    console.error("Caught an error:", error.message);
-}
+//             // Save schedule
+//             const isSaved = scheduleManager.saveSchedule(netId, semester, schedule);
+//             console.log("Is Saved:", isSaved);
+//         })
+//         .catch(error => {
+//             console.error("Caught an error in promises:", error.message);
+//         });
+// } catch (error) {
+//     console.error("Caught an error:", error.message);
+// }

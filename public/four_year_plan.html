@@ -91,12 +91,10 @@
             border-radius: 5px;
             background-color: white;
             position: relative;
-            /* Added for positioning tooltip */
         }
 
         .semester-title {
             background-color: #CC0033;
-            /* Rutgers University red */
             color: white;
             padding: 5px;
             text-align: center;
@@ -106,28 +104,21 @@
         .courses-list {
             padding: 10px;
             list-style-type: none;
-            /* Remove bullet points */
             margin: 0;
-            /* Remove default margin */
         }
 
         .courses-list li {
             margin-bottom: 5px;
-            /* Add some spacing between course names */
         }
 
         .unused-course {
-            color: red;
-            /* Highlight unused courses in red */
-            cursor: help;
-            /* Change cursor to indicate tooltip */
+            color: #CC0033;
+            cursor: Pointer;
         }
 
         .fulfilled-course {
             color: green;
-            /* Highlight fulfilled courses in green */
-            cursor: help;
-            /* Change cursor to indicate tooltip */
+            cursor: Pointer;
         }
 
         .tooltip {
@@ -142,15 +133,6 @@
 
         .semester-box:hover .tooltip {
             visibility: visible;
-        }
-
-        .alert-icon {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            font-size: 18px;
-            cursor: help;
-            /* Change cursor to indicate tooltip */
         }
 
         .selected-course {
@@ -178,10 +160,13 @@
 
         .modal-content {
             background-color: #fefefe;
-            margin: 5% auto;
+            /* margin: 5% auto; */
             padding: 20px;
             border: 1px solid #888;
             width: 80%;
+
+            max-width: 80%;
+            margin: 0 auto;
         }
 
         .modal-content label {
@@ -229,6 +214,85 @@
                 transform: rotate(360deg);
             }
         }
+
+        .sections-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .info-section {
+            width: 33.33%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+            position: relative;
+        }
+
+
+        /* Style for the overall validation status */
+        .info-section h3 {
+            font-size: 1.2em;
+            /* Adjust font size as needed */
+            margin-bottom: 10px;
+            /* Adjust spacing between heading and text as needed */
+        }
+
+        /* Style for the status text */
+        .info-section p {
+            font-size: 1em;
+            /* Adjust font size as needed */
+            margin: 0;
+            /* Remove default margin */
+        }
+
+        /* Style for the missing requirements lists */
+        .info-section div {
+            margin-top: 10px;
+            /* Adjust spacing between heading and list as needed */
+        }
+
+        /* Style for individual list items */
+        .info-section div p {
+            margin: 5px 0;
+            /* Adjust spacing between list items as needed */
+        }
+
+        .context-menu {
+            display: none;
+            position: absolute;
+            background-color: #ccc;
+            border: 1px solid #ccc;
+            padding: 5px;
+            z-index: 1000;
+        }
+
+        .context-menu ul {
+            list-style: none;
+            /* Remove bullet points */
+            padding: 0;
+            margin: 0;
+        }
+
+        .context-menu li {
+            margin-bottom: 5px;
+        }
+
+        .context-menu li a {
+            display: block;
+            text-decoration: none;
+            color: #333;
+            padding: 8px 15px;
+            background-color: #ccc;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .context-menu li a:hover {
+            background-color: #cc0033;
+            /* Rutgers red */
+            color: #fff;
+        }
     </style>
 </head>
 
@@ -274,6 +338,20 @@
                 <h2>Validation Information</h2>
                 <div id="validationInfoContent">
                     <!-- Validation information will be displayed here -->
+                    <div class="sections-container">
+                        <div class="info-section">
+                            <h3>Prerequisites and Corequisites:</h3>
+                            <p id="prereqCoreqStatus"></p>
+                        </div>
+                        <div class="info-section">
+                            <h3>Concentration Requirements:</h3>
+                            <p id="concentrationStatus"></p>
+                        </div>
+                        <div class="info-section">
+                            <h3>Residency Requirements:</h3>
+                            <p id="residencyStatus"></p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -286,12 +364,21 @@
         <!-- Content for Four Year Plan section -->
         <div id="plan" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
 
+        <div id="contextMenu" class="context-menu">
+            <ul>
+                <li><a href="#" onclick="removeCourseFromMenu()">Remove Course</a></li>
+                <li><a href="#" onclick="changeSemester()">Change Semester</a></li>
+            </ul>
+        </div>
+
         <button id="validateBtn">Validate</button>
         <button id="optimizeBtn">Optimize</button>
+        <button id="addCourse">Add Course</button>
         <button id="keepOldBtn" style="display: none;">Keep Old Plan</button>
         <button id="saveBtn" style="display: none;">Save</button>
         <button id="viewValidateInfo" style="display: none;">View Validation Info</button>
         <button id="clearValidationInfo" style="display: none;">Clear</button>
+
 
     </section>
 
@@ -305,6 +392,9 @@
         var stableCourses = [];
         var optimizedPlan = [];
         var optimizedClicked = false;
+
+        var mockToken = "eyJhbGciOiJSUzI1NiIsImtpZCI6ImUxYjkzYzY0MDE0NGI4NGJkMDViZjI5NmQ2NzI2MmI2YmM2MWE0ODciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI2ODc4NjI5ODU4NDMtYjlybTA3OWxhYnFwbTNja3UxOGN2NXFiZDdnMjEyY28uYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI2ODc4NjI5ODU4NDMtYjlybTA3OWxhYnFwbTNja3UxOGN2NXFiZDdnMjEyY28uYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDI4MDE0ODIxMzcxNDc3MjM2NzAiLCJlbWFpbCI6Im15YWNhZGVtaWNwbGFubmluZ3N5c3RlbUBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6IkE0UHpwV055MDQtUy1FaTdGWUNPR2ciLCJpYXQiOjE3MTQzMjcxOTAsImV4cCI6MTcxNDMzMDc5MH0.MmpDQtUeyUalr61R6TEZ8alwna10IVu1H1FJbHnXNqHc8KNv56v4w1b2sm2BiQefUmOt5tKGPZFjo_TbArPUz1-WgK9lFfkiUMzYF1wyIHhmc5o2lBiXpNz2WMVoMXxW3zsrSSbZILedm2b24XcyHLrwxRZFxUY5DTd6FMMWZKlhH0LRePCOszWdq9H5xtelq-mOyEh2ouR6tUHGY71hD4G5PoRaruouGdd06ZeCx32ycHD5OyvVgNwECnR-_H761SVwLlskkYwRNNpkeBpADNlm_6RPj90hJqXYgSonb3W9JeqKcQfN_L6ALpbY-HYJpDitXa5lm01tED2y1J070g";
+
 
         function showSpinner() {
             document.getElementById('spinner').style.display = 'block';
@@ -323,19 +413,35 @@
                 var xhttp = new XMLHttpRequest();
                 xhttp.onreadystatechange = function () {
                     if (this.readyState == 4) {
-                        if (this.status == 200) {
+                        if (this.status == 200 || this.status == 201) {
                             var response = this.responseText;
                             console.log(response);
                             resolve(response); // Resolve with the response
                             hideSpinner();
                         } else {
-                            reject(new Error('Request failed')); // Reject with an error
-                            hideSpinner();
+                            // Parse the error message from the server
+                            var errorMessage = '';
+                            if (this.responseText) {
+                                try {
+                                    var errorResponse = JSON.parse(this.responseText);
+                                    errorMessage = errorResponse.message || 'Request failed';
+                                } catch (error) {
+                                    errorMessage = 'Request failed';
+                                }
+                            } else {
+                                errorMessage = 'Request failed';
+                            }
+                            errorMessage += ' (Status code: ' + this.status + ')';
+
+                            hideSpinner(); // Hide the spinner before showing the alert
+                            reject(new Error(errorMessage)); // Reject with an error containing the error message
+                            alert(errorMessage); // Display the error message in an alert
                         }
                     }
                 };
 
                 xhttp.open(method, url, true);
+                xhttp.setRequestHeader('Authorization', `Bearer ${mockToken}`)
                 if (data != undefined) {
                     xhttp.setRequestHeader('Content-Type', 'application/json');
                 }
@@ -384,6 +490,10 @@
                 schedule[semester].forEach(function (course) {
                     var courseItem = document.createElement('li');
                     courseItem.textContent = course;
+                    courseItem.addEventListener('contextmenu', function (event) {
+                        event.preventDefault();
+                        showContextMenu(event, course);
+                    });
                     coursesList.appendChild(courseItem);
                 });
                 semesterBox.appendChild(coursesList);
@@ -432,10 +542,10 @@
 
             // Highlight unused course IDs in red with tooltip
             var unusedCourseIDs = responseData.validateConcentrationCourses.unusedIds;
-            unusedCourseIDs.forEach(function (courseID) {
+            unusedCourseIDs.forEach(function (course) {
                 var courseElements = document.querySelectorAll('.courses-list li');
                 courseElements.forEach(function (element) {
-                    if (element.textContent === courseID) {
+                    if (element.textContent === course.course) {
                         element.classList.add('unused-course');
                         element.title = 'Course not being used';
                     }
@@ -565,20 +675,15 @@
         async function saveSchedule() {
             var response = await sendRequest("PUT", "http://127.0.0.1:3000/4yrplan/ach127/save", JSON.stringify(optimizedPlan));
 
-            console.log(response); // Log the server response
-            // Hide the Save and Keep Old buttons
             document.getElementById('saveBtn').style.display = 'none';
             document.getElementById('keepOldBtn').style.display = 'none';
-            // Show the Validate and Optimize buttons
-            document.getElementById('validateBtn').style.display = 'inline-block';
-            document.getElementById('optimizeBtn').style.display = 'inline-block';
+
+            showMainMenuButtons();
         }
 
 
         function handleButtonDisplay() {
-            // Hide the Validate and Optimize buttons
-            document.getElementById('validateBtn').style.display = 'none';
-            document.getElementById('optimizeBtn').style.display = 'none';
+            hideMainMenuButtons();
 
             document.getElementById('keepOldBtn').style.display = 'inline-block';
             document.getElementById('saveBtn').style.display = 'inline-block';
@@ -591,127 +696,173 @@
             document.getElementById('keepOldBtn').style.display = 'none';
             document.getElementById('saveBtn').style.display = 'none';
 
-            // Show the Validate and Optimize buttons
-            document.getElementById('validateBtn').style.display = 'inline-block';
-            document.getElementById('optimizeBtn').style.display = 'inline-block';
+            showMainMenuButtons();
         }
 
         function showValidateInfoButtons() {
-            // Hide the Validate and Optimize buttons
-            document.getElementById('validateBtn').style.display = 'none';
-            document.getElementById('optimizeBtn').style.display = 'none';
+            hideMainMenuButtons();
 
             document.getElementById('viewValidateInfo').style.display = 'inline-block';
             document.getElementById('clearValidationInfo').style.display = 'inline-block';
         }
 
+
         function showValidationInfo() {
             var validationInfoContent = document.getElementById('validationInfoContent');
-            // Clear previous content
+            // // Clear previous content
             validationInfoContent.innerHTML = '';
 
-            // Add overall validation status
-            var overallStatus = document.createElement('h3');
-            overallStatus.textContent = 'Overall Validation Status:';
-            validationInfoContent.appendChild(overallStatus);
+            var precoreqStatus = validationData.validatePreCoReqs.isValidOrder;
 
-            var overallStatusText = document.createElement('p');
-            overallStatusText.textContent = validationData.validatePreCoReqs.isValidOrder &&
+            var concentrationStatus = validationData.validateConcentrationCourses.isFulfilledConcentationCourses;
+
+            var residencyStatus = validationData.validateResidency.isValidResReq;
+
+            var overallStatusText = document.createElement('h3');
+            overallStatusText.textContent = `Overall Validation Status: ${validationData.validatePreCoReqs.isValidOrder &&
                 validationData.validateConcentrationCourses.isFulfilledConcentationCourses &&
-                validationData.validateResidency.isValidResReq ? 'Validated' : 'Invalid';
+                validationData.validateResidency.isValidResReq ? 'Validated' : 'Invalid'}`;
             overallStatusText.style.color = validationData.validatePreCoReqs.isValidOrder &&
                 validationData.validateConcentrationCourses.isFulfilledConcentationCourses &&
                 validationData.validateResidency.isValidResReq ? 'green' : '#CC0033';
+
             validationInfoContent.appendChild(overallStatusText);
 
-            // Add section for prerequisites and corequisites
-            var prereqCoreqStatus = document.createElement('h3');
+            var section = document.createElement('div');
+            section.classList.add('sections-container');
+            validationInfoContent.appendChild(section);
+
+            //PRECOREQ SECTION
+            var prereqCoreqContainer = document.createElement('div');
+            prereqCoreqContainer.classList.add('info-section');
+            section.appendChild(prereqCoreqContainer);
+
+            var prereqCoreqStatus = document.createElement('h4');
             prereqCoreqStatus.textContent = 'Prerequisites and Corequisites:';
-            validationInfoContent.appendChild(prereqCoreqStatus);
+            prereqCoreqContainer.appendChild(prereqCoreqStatus);
 
-            // Add status for prerequisites and corequisites
-            var prereqCoreqStatusText = document.createElement('p');
-            prereqCoreqStatusText.textContent = validationData.validatePreCoReqs.isValidOrder ? 'Validated' : 'Invalid';
-            prereqCoreqStatusText.style.color = validationData.validatePreCoReqs.isValidOrder ? 'green' : '#CC0033';
-            validationInfoContent.appendChild(prereqCoreqStatusText);
+            var prereqCoreqStatusText = document.createElement('h4');
+            prereqCoreqStatusText.textContent = `Status: ${precoreqStatus ? 'Valid' : 'Invalid'}`;
+            prereqCoreqStatusText.style.color = precoreqStatus ? 'green' : '#CC0033';
+            prereqCoreqContainer.appendChild(prereqCoreqStatusText);
 
-            // Add section for concentration requirements
-            var concentrationStatus = document.createElement('h3');
-            concentrationStatus.textContent = 'Concentration Requirements:';
-            validationInfoContent.appendChild(concentrationStatus);
-
-            // Add status for concentration requirements
-            var concentrationStatusText = document.createElement('p');
-            concentrationStatusText.textContent = validationData.validateConcentrationCourses.isFulfilledConcentationCourses ? 'Fulfilled' : 'Missing';
-            concentrationStatusText.style.color = validationData.validateConcentrationCourses.isFulfilledConcentationCourses ? 'green' : '#CC0033';
-            validationInfoContent.appendChild(concentrationStatusText);
-
-            // Add section for residency requirements
-            var residencyStatus = document.createElement('h3');
-            residencyStatus.textContent = 'Residency Requirements:';
-            validationInfoContent.appendChild(residencyStatus);
-
-            // Add status for residency requirements
-            var residencyStatusText = document.createElement('p');
-            residencyStatusText.textContent = validationData.validateResidency.isValidResReq ? 'Met' : 'Not Met';
-            residencyStatusText.style.color = validationData.validateResidency.isValidResReq ? 'green' : '#CC0033';
-            validationInfoContent.appendChild(residencyStatusText);
-
-            // Add missing prerequisites and corequisites, if any
-            if (Object.keys(validationData.validatePreCoReqs.prereqErrors).length > 0 || Object.keys(validationData.validatePreCoReqs.coreqErrors).length > 0) {
-                var prereqCoreqList = document.createElement('div');
-                prereqCoreqList.innerHTML = '<h4>Missing Prerequisites and Corequisites:</h4>';
+            if (!precoreqStatus) {
+                var prereqList = document.createElement('div');
+                prereqList.innerHTML = '<h4>Missing Prerequisites</h4>';
                 var missingPrereqs = validationData.validatePreCoReqs.prereqErrors;
                 for (var prereq in missingPrereqs) {
                     if (missingPrereqs.hasOwnProperty(prereq)) {
                         var prereqItem = document.createElement('p');
-                        prereqItem.textContent = 'Prerequisite: ' + prereq + ', Missing: ' + missingPrereqs[prereq].join(', ');
-                        prereqCoreqList.appendChild(prereqItem);
+                        prereqItem.textContent = prereq + ', Missing: ' + missingPrereqs[prereq].join(', ');
+                        prereqList.appendChild(prereqItem);
                     }
                 }
+                var coreqList = document.createElement('div');
+                coreqList.innerHTML = '<h4>Missing corequisites</h4>';
                 var missingCoreqs = validationData.validatePreCoReqs.coreqErrors;
                 for (var coreq in missingCoreqs) {
                     if (missingCoreqs.hasOwnProperty(coreq)) {
                         var coreqItem = document.createElement('p');
-                        coreqItem.textContent = 'Corequisite: ' + coreq + ', Missing: ' + missingCoreqs[coreq].join(', ');
-                        prereqCoreqList.appendChild(coreqItem);
+                        coreqItem.textContent = coreq + ', Missing: ' + missingCoreqs[coreq].join(', ');
+                        coreqList.appendChild(coreqItem);
                     }
                 }
-                validationInfoContent.appendChild(prereqCoreqList);
+                prereqCoreqContainer.appendChild(prereqList);
+                prereqCoreqContainer.appendChild(coreqList);
+            } else {
+                var noIssue = document.createElement('h4');
+                noIssue.textContent = "All Corequisites and Prerequiests comply with buisness policies";
+                prereqCoreqContainer.appendChild(spacer);
+                prereqCoreqContainer.appendChild(noIssue);
             }
+
+
+            //CONCENTRATION SECTION
+            var concentrationContainer = document.createElement('div');
+            concentrationContainer.classList.add('info-section');
+            section.appendChild(concentrationContainer);
+
+            var concentrationStatusElement = document.createElement('h4');
+            concentrationStatusElement.textContent = 'Concentration Requirements:';
+            concentrationContainer.appendChild(concentrationStatusElement);
+
+            var concentrationStatusText = document.createElement('p');
+            concentrationStatusText.textContent = `Status: ${concentrationStatus ? 'Fulfilled' : 'Missing'}`;
+            concentrationStatusText.style.color = concentrationStatus ? 'green' : '#CC0033';
+            concentrationContainer.appendChild(concentrationStatusText);
 
             // Add missing concentration requirements, if any
-            if (validationData.validateConcentrationCourses.unassignedCourses.length > 0 || validationData.validateConcentrationCourses.unusedIds.length > 0) {
-                var concentrationList = document.createElement('div');
-                concentrationList.innerHTML = '<h4>Missing Concentration Requirements:</h4>';
+            if (!concentrationStatus) {
                 if (validationData.validateConcentrationCourses.unassignedCourses.length > 0) {
-                    var unassignedCourses = document.createElement('p');
-                    unassignedCourses.textContent = 'Missing Requirement Courses: ' + validationData.validateConcentrationCourses.unassignedCourses.join(', ');
-                    concentrationList.appendChild(unassignedCourses);
+                    var concentrationList = document.createElement('div');
+                    concentrationList.innerHTML = '<h4>Missing Concentration Requirements:</h4>';
+                    for (var course of validationData.validateConcentrationCourses.unassignedCourses) {
+                        var unassignedCourse = document.createElement('p');
+                        unassignedCourse.textContent = course;
+                        unassignedCourse.style.color = '#CC0033';
+                        concentrationList.appendChild(unassignedCourse);
+                    }
                 }
+
                 if (validationData.validateConcentrationCourses.unusedIds.length > 0) {
-                    var unusedIds = document.createElement('p');
-                    unusedIds.textContent = 'Unused IDs: ' + validationData.validateConcentrationCourses.unusedIds.join(', ');
-                    concentrationList.appendChild(unusedIds);
+                    var unusedIdsList = document.createElement('div');
+                    unusedIdsList.innerHTML = '<h4>Unused IDs:</h4>';
+                    for (var course of validationData.validateConcentrationCourses.unusedIds) {
+                        var unusedID = document.createElement('p');
+                        var button = document.createElement('button');
+                        button.textContent = 'Remove';
+                        button.style.padding = '5px 10px';
+                        button.style.borderRadius = '5px';
+                        button.style.fontSize = '12px';
+                        button.style.margin = 'auto';
+                        button.onclick = function () { removeCourse(course.course); };
+                        var space = document.createElement('span');
+                        space.textContent = ' ';
+                        unusedID.textContent = course.course;
+                        unusedID.style.color = '#CC0033';
+                        unusedID.style.cursor = 'context-menu';
+
+                        unusedIdsList.appendChild(unusedID);
+                        unusedIdsList.appendChild(space);
+                        unusedIdsList.appendChild(button);
+                    }
                 }
-                validationInfoContent.appendChild(concentrationList);
+
+                if (concentrationList) {
+                    concentrationContainer.appendChild(concentrationList);
+                } else {
+
+                }
+                if (unusedIdsList) {
+                    concentrationContainer.appendChild(unusedIdsList);
+                }
             }
 
-            // Add missing residency requirements, if any
-            if (!validationData.validateResidency.isValidResReq) {
-                var residencyList = document.createElement('div');
-                residencyList.innerHTML = '<h4>Missing Residency Requirements:</h4>';
-                var numMissing = document.createElement('p');
-                numMissing.textContent = 'Number of Missing Requirements: ' + validationData.validateResidency.numMissing;
-                residencyList.appendChild(numMissing);
-                validationInfoContent.appendChild(residencyList);
-            }
+
+            //RESIDENCY SECTION
+            var residencyContainer = document.createElement('div');
+            residencyContainer.classList.add('info-section');
+            section.appendChild(residencyContainer);
+
+            var residencyStatus = document.createElement('h4');
+            residencyStatus.textContent = 'Residency Requirements:';
+            residencyContainer.appendChild(residencyStatus);
+
+            var residencyStatusText = document.createElement('p');
+            residencyStatusText.textContent = `Status: ${residencyStatus ? 'Fullfilled' : 'Missing'}`;
+            residencyStatusText.style.color = residencyStatus ? 'green' : '#CC0033';
+            residencyContainer.appendChild(residencyStatusText);
+
+            var spacer = document.createElement('div');
+            residencyContainer.appendChild(spacer);
+            var numMissing = document.createElement('p');
+            numMissing.textContent = 'Number of Missing Credits: ' + validationData.validateResidency.numMissing;
+            residencyContainer.appendChild(numMissing);
 
             // Open the modal
             document.getElementById('validationModal').style.display = 'block';
         }
 
-        // Function to close the modal
         function closeValidationModal() {
             document.getElementById('validationModal').style.display = 'none';
         }
@@ -722,14 +873,81 @@
             document.getElementById('viewValidateInfo').style.display = 'none';
             document.getElementById('clearValidationInfo').style.display = 'none';
 
-            // Show the "Validate" and "Optimize" buttons
-            document.getElementById('validateBtn').style.display = 'inline-block';
-            document.getElementById('optimizeBtn').style.display = 'inline-block';
+            showMainMenuButtons()
+        }
+        async function removeCourseFromMenu() {
+            var courseId = document.getElementById('contextMenu').getAttribute('data-course-id');
+            await removeCourse(courseId);
         }
 
+        async function removeCourse(courseId) {
+            updated4YearPlan = JSON.parse(await sendRequest("DELETE", "http://127.0.0.1:3000/4yrplan/ach127/course", JSON.stringify({ 'courseID': courseId })));
+            fourYearPlan = updated4YearPlan;
+            displayFourYearPlan(updated4YearPlan);
+        }
+
+        function showContextMenu(event, courseId) {
+            var contextMenu = document.getElementById('contextMenu');
+            contextMenu.style.left = event.pageX + 'px';
+            contextMenu.style.top = event.pageY + 'px';
+            contextMenu.style.display = 'block';
+
+            // Store the courseId in a data attribute for later use
+            contextMenu.setAttribute('data-course-id', courseId);
+
+            document.addEventListener('click', function hideContextMenu() {
+                contextMenu.style.display = 'none';
+                document.removeEventListener('click', hideContextMenu);
+            });
+        }
+
+        async function changeSemester() {
+            showSpinner();
+            var semester = prompt('Enter the semester (0-7):');
+            var courseId = document.getElementById('contextMenu').getAttribute('data-course-id');
+
+            await removeCourse(courseId);
+            showSpinner();
+            await addCourse(courseId, semester);
+        }
+
+        function promptAddCourse() {
+            var courseId = prompt('Enter the course ID:');
+            if (courseId !== null) {
+                courseId = courseId.trim(); // Trim any leading/trailing whitespaces
+                var semesterIndex = prompt('Enter the semester (0-7):');
+                if (semesterIndex !== null) {
+                    semesterIndex = parseInt(semesterIndex);
+                    if (!isNaN(semesterIndex) && semesterIndex >= 0 && semesterIndex <= 7) {
+                        addCourse(courseId, semesterIndex);
+                    } else {
+                        alert("Invalid semester index. Please enter a number between 0 and 7.");
+                    }
+                }
+            }
+        }
+
+        async function addCourse(courseId, semester) {
+            updated4YearPlan = JSON.parse(await sendRequest("POST", "http://127.0.0.1:3000/4yrplan/ach127/course", JSON.stringify({ 'courseID': courseId, "semester": parseInt(semester) })));
+            fourYearPlan = updated4YearPlan;
+            displayFourYearPlan(updated4YearPlan);
+        }
+
+        function hideMainMenuButtons() {
+            document.getElementById('validateBtn').style.display = 'none';
+            document.getElementById('optimizeBtn').style.display = 'none';
+            document.getElementById('addCourse').style.display = 'none';
+        }
+
+        function showMainMenuButtons() {
+            document.getElementById('validateBtn').style.display = 'inline-block';
+            document.getElementById('optimizeBtn').style.display = 'inline-block';
+            document.getElementById('addCourse').style.display = 'inline-block';
+        }
 
         document.getElementById('optimizeBtn').addEventListener('click', optimize);
         document.getElementById('validateBtn').addEventListener('click', validate);
+        document.getElementById('addCourse').addEventListener('click', promptAddCourse);
         document.getElementById('saveBtn').addEventListener('click', saveSchedule);
         document.getElementById('keepOldBtn').addEventListener('click', keepOldSchedule);
         document.getElementById('viewValidateInfo').addEventListener('click', showValidationInfo);
