@@ -1,9 +1,58 @@
+<!DOCTYPE html>
 <html>
 <head>
   <meta name="google-signin-client_id" content="687862985843-b9rm079labqpm3cku18cv5qbd7g212co.apps.googleusercontent.com">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+    }
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50px;
+      background-color: #cc0033; /* Rutgers red */
+      color: white; /* Text color */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .top-bar img {
+      height: 30px;
+      margin-right: 10px;
+    }
+    #my-signin2 {
+      margin-bottom: 20px;
+    }
+    #guestButton {
+      font-size: 20px;
+      padding: 10px 20px;
+    }
+    .disclaimer {
+      position: fixed;
+      bottom: 5%; /* Adjust this value to raise the disclaimer */
+      width: 100%;
+      text-align: center;
+      font-family: 'Roboto', sans-serif;
+      color: black;
+    }
+  </style>
 </head>
 <body>
+  <div class="top-bar"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROD4shOpNB4AUxX0dEf37ubd4DV6ythnS-glJez-P4&s" alt="Rutgers Logo"> MAPS</div>
   <div id="my-signin2"></div>
+  <button id="guestButton">Continue as Guest</button>
+  <div class="disclaimer">Signing in as guest provides access with limited functionality</div>
   <script>
     function onSuccess(googleUser) {
       console.log('Logged in as: ' + googleUser.getBasicProfile().getName());
@@ -31,6 +80,10 @@
     }
     // Call loadGoogleApi when the page has finished loading
     window.onload = loadGoogleApi;
+
+    document.getElementById('guestButton').onclick = function() {
+      window.location.href = 'http://localhost:3000/guest';
+    };
   </script>
 </body>
 </html>
