@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAPS - Academic Progress Check</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        header {
+            background-color: #CC0033;
+            color: #fff;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        nav {
+            background-color: #f0f0f0;
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #CC0033;
+            margin: 0 15px;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        nav a:hover {
+            color: #fff;
+            background-color: #CC0033;
+            border-radius: 5px;
+        }
+
+        section {
+            padding: 50px 20px;
+            /* Larger padding for the main section */
+            text-align: center;
+        }
+
+        input[type="text"],
+        button {
+            font-size: 18px;
+            padding: 10px;
+            margin: 5px 0;
+            /* Added bottom margin for spacing */
+        }
+
+        footer {
+            background-color: #CC0033;
+            color: #fff;
+            text-align: center;
+            padding: 10px 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        #result {
+            margin: 20px auto;
+            font-size: 16px;
+            color: #333;
+            max-width: 800px;
+            /* Limit the width for better readability */
+            text-align: left;
+            /* Align text to the left for clarity */
+        }
+
+        .section {
+            margin-bottom: 30px;
+            /* Increased margin between sections */
+            padding: 20px;
+            background-color: #fff;
+            /* White background for each section */
+            border: 1px solid #ccc;
+            /* Subtle border */
+            border-radius: 5px;
+            /* Rounded corners for aesthetics */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            /* Soft shadow for 3D effect */
+        }
+
+        .section h2 {
+            color: #CC0033;
+            /* Match header color */
+            margin-bottom: 10px;
+            /* More space below headings */
+        }
+
+        .section p {
+            font-size: 16px;
+            color: #333;
+            /* Standard text color for readability */
+            margin-bottom: 5px;
+            /* Spacing between paragraphs for clarity */
+        }
+    </style>
+    <script>
+         function sendRequest(method, url, data = undefined) {
+            return new Promise(function (resolve, reject) {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4) {
+                        if (this.status == 200) {
+                            var response = this.responseText;
+                            console.log(response);
+                            resolve(response); // Resolve with the response
+                           
+                        } else {
+                            reject(new Error('Request failed')); // Reject with an error
+                       
+                        }
+                    }
+                };
+
+                xhttp.open(method, url, true);
+                if (data != undefined) {
+                    xhttp.setRequestHeader('Content-Type', 'application/json');
+                }
+                data == undefined ? xhttp.send() : xhttp.send(data);
+            });
+        }
+
+        function checkProgress() {
+            console.log("Function called");  // Debug log to check if function is triggered
+            const studentNetID = document.getElementById('studentNetID').value;
+            fetch('/check-academic-progress', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ studentNetID: studentNetID })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);  // Log the data to see what is received from the server
+                    updatePageWithData(data);  // Call updatePageWithData to render the results
+                })
+                .catch(error => {
+                    console.log(error);  // Log any errors that occur during the fetch operation
+                    document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+                });
+        }
+        function updatePageWithData(data) {
+            if (data.summary) {
+                const { GPA, WarningStatus, CompletedCourses, EnrolledCourses, FutureCourses } = data.summary;
+                let htmlContent = `
+            <div class="section">
+                <h2>GPA</h2>
+                <p>${GPA}</p>
+            </div>
+            <div class="section">
+                <h2>Warning Status</h2>
+                <p>${WarningStatus}</p>
+            </div>
+            <div class="section">
+                <h2>Completed Courses</h2>
+                <p>${CompletedCourses.join(', ')}</p>
+            </div>
+            <div class="section">
+                <h2>Enrolled Courses</h2>
+                <p>${EnrolledCourses}</p>
+            </div>
+            <div class="section">
+                <h2>Future Courses</h2>
+                <p>${FutureCourses.join(', ')}</p>
+            </div>
+        `;
+                document.getElementById('result').innerHTML = htmlContent;
+            } else {
+                document.getElementById('result').innerHTML = '<p>Error: No data available</p>';
+            }
+        }
+    </script>
+</head>
+
+<body>
+
+    <header>
+        <h1>MAPS - Check Academic Progress</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="course_catalog.html">Course Catalog</a>
+        <a href="student_status.html">Student Status</a>
+        <a href="four_year_plan.html">4 Year Plan</a>
+        <a href="schedule_semester.html">Schedule Semester</a>
+        <a href="search_majors_minors.html">Search Majors and Minors</a>
+        <a href="request_major_switch.html">Request Major Switch or Declaration</a>
+        <a href="academicStatus.html"> View Academic Status</a>
+    </nav>
+
+    <section>
+        <h2>Enter Student NetID to Check Progress</h2>
+        <input type="text" id="studentNetID" placeholder="Enter NetID">
+        <button onclick="checkProgress()">Check Progress</button>
+        <div id="result"></div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 MAPS - My Academic Planning System. All rights reserved.</p>
+    </footer>
+
+</body>
+
+</html>
