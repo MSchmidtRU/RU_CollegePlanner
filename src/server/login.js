@@ -28,9 +28,6 @@ app.post('/tokensignin', express.json(), async (req, res) => {
     }
 });
 
-app.get('/guest', (req, res) => {
-    res.send('Welcome, guest!');
-});
 
 app.listen(3000, () => {
     console.log('Server started on port 3000');

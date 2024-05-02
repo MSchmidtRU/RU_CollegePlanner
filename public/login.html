@@ -51,8 +51,7 @@
 <body>
   <div class="top-bar"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROD4shOpNB4AUxX0dEf37ubd4DV6ythnS-glJez-P4&s" alt="Rutgers Logo"> MAPS</div>
   <div id="my-signin2"></div>
-  <button id="guestButton">Continue as Guest</button>
-  <div class="disclaimer">Signing in as guest provides access with limited functionality</div>
+
   <script>
     function onSuccess(googleUser) {
       console.log('Logged in as: ' + googleUser.getBasicProfile().getName());
@@ -80,10 +79,6 @@
     }
     // Call loadGoogleApi when the page has finished loading
     window.onload = loadGoogleApi;
-
-    document.getElementById('guestButton').onclick = function() {
-      window.location.href = 'http://localhost:3000/guest';
-    };
   </script>
 </body>
 </html>
