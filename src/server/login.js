@@ -1,32 +1,52 @@
+const express = require('express');
+const { OAuth2Client } = require('google-auth-library');
+const app = express();
 
-async function verify(req) {
-    if (req.params.idToken === 'mock_id_token' && req.params.netID === 'mock_netid') {
-        return [JSON.stringify({ verified: true }), 200];
-    } else {
-        throw new Error("invalid credientials ~400")
-    }
+const CLIENT_ID = '687862985843-b9rm079labqpm3cku18cv5qbd7g212co.apps.googleusercontent.com';
+const client = new OAuth2Client(CLIENT_ID);
+
+async function verify(idToken) {
+    const ticket = await client.verifyIdToken({
+        idToken: idToken,
+        audience: CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    return payload; // This contains user information
 }
 
+app.post('/tokensignin', express.json(), async (req, res) => {
+    const { idtoken } = req.body;
+    try {
+        const result = await verify(idtoken);
+        if (result) {
+            res.send('success');
+        } else {
+            res.status(401).send('Authentication failed');
+        }
+    } catch (error) {
+        res.status(401).send('Authentication failed: ' + error);
+    }
+});
 
-// function onSignIn(googleUser) {
-//     // Get the Google ID token
-//     var id_token = googleUser.getAuthResponse().id_token;
+app.get('/guest', (req, res) => {
+    res.send('Welcome, guest!');
+});
 
-//     // Send the ID token to your server with the user's NetID
-//     var netid = document.getElementsByName('netid')[0].value;
-//     var xhr = new XMLHttpRequest();
-//     xhr.open('POST', 'http://localhost:3000/mock-google-auth'); // Point to the mock endpoint
-//     xhr.setRequestHeader('Content-Type', 'application/json');
-//     xhr.onload = function () {
-//         if (xhr.responseText === 'success') {
-//             // If authentication is successful, redirect to the 4-year plan page
-//             window.location.href = '../4yrplan.html';
-//         } else {
-//             // Handle the error if authentication fails
-//             alert('Authentication failed. Please check your NetID and try again.');
-//         }
-//     };
-//     xhr.send(JSON.stringify({ idtoken: id_token, netid: netid }));
-// }
+app.listen(3000, () => {
+    console.log('Server started on port 3000');
+});
 
-module.exports = { verify }
+function onSignIn(googleUser) {
+    var id_token = googleUser.getAuthResponse().id_token;
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'http://localhost:3000/tokensignin');
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onload = function() {
+        if (xhr.responseText === 'success') {
+            window.location.href = '../4yrplan.html';
+        } else {
+            alert('Authentication failed. Please check your NetID and try again.');
+        }
+    };
+    xhr.send(JSON.stringify({ idtoken: id_token }));
+}
