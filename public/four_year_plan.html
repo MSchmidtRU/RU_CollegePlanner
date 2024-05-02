@@ -267,6 +267,22 @@
             z-index: 1000;
         }
 
+        .close {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            color: #fff;
+            font-size: 25px;
+            font-weight: bold;
+            padding: 5px;
+            background-color: #000;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            line-height: 30px;
+        }
+
         .context-menu ul {
             list-style: none;
             /* Remove bullet points */
@@ -317,6 +333,7 @@
     <section id="plan-section">
         <div id="myModal" class="modal">
             <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
                 <h2>Select Stable Courses</h2>
                 <!-- Radio options for optimization strategy -->
                 <label>
@@ -336,7 +353,6 @@
         <div id="validationModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeValidationModal()">&times;</span>
-                <h2>Validation Information</h2>
                 <div id="validationInfoContent">
                     <!-- Validation information will be displayed here -->
                     <div class="sections-container">
@@ -502,6 +518,7 @@
                 scheduleContainer.appendChild(semesterBox);
             }
         }
+
 
         function getSemesterName(semester) {
             switch (semester) {
@@ -753,8 +770,8 @@
                 var missingPrereqs = validationData.validatePreCoReqs.prereqErrors;
                 for (var prereq in missingPrereqs) {
                     if (missingPrereqs.hasOwnProperty(prereq)) {
-                        var prereqItem = document.createElement('p');
-                        prereqItem.textContent = prereq + ', Missing: ' + missingPrereqs[prereq].join(', ');
+                        var prereqItem = document.createElement('div');
+                        prereqItem.innerHTML = '<strong>' + prereq + ':</strong> ' + missingPrereqs[prereq].join(', ');
                         prereqList.appendChild(prereqItem);
                     }
                 }
@@ -764,7 +781,7 @@
                 for (var coreq in missingCoreqs) {
                     if (missingCoreqs.hasOwnProperty(coreq)) {
                         var coreqItem = document.createElement('p');
-                        coreqItem.textContent = coreq + ', Missing: ' + missingCoreqs[coreq].join(', ');
+                        coreqItem.innerHTML = '<strong>' + coreq + ':</strong> ' + missingCoreqs[coreq].join(', ');
                         coreqList.appendChild(coreqItem);
                     }
                 }
@@ -772,6 +789,7 @@
                 prereqCoreqContainer.appendChild(coreqList);
             } else {
                 var noIssue = document.createElement('h4');
+                var spacer = document.createElement('div');
                 noIssue.textContent = "All Corequisites and Prerequiests comply with buisness policies";
                 prereqCoreqContainer.appendChild(spacer);
                 prereqCoreqContainer.appendChild(noIssue);
@@ -798,10 +816,27 @@
                     var concentrationList = document.createElement('div');
                     concentrationList.innerHTML = '<h4>Missing Concentration Requirements:</h4>';
                     for (var course of validationData.validateConcentrationCourses.unassignedCourses) {
-                        var unassignedCourse = document.createElement('p');
+                        var unassignedCourse = document.createElement('div');
+                        var button = document.createElement('button');
+                        button.textContent = 'Add';
+                        button.style.padding = '5px 10px';
+                        button.style.borderRadius = '5px';
+                        button.style.fontSize = '12px';
+                        button.style.margin = 'auto';
+                        button.addEventListener('click', (function (courseCopy) {
+                            return function () {
+                                addCourseAfterValidation(courseCopy);
+                            }
+                        })(course));
+                        var space = document.createElement('span');
+                        space.textContent = ' ';
                         unassignedCourse.textContent = course;
                         unassignedCourse.style.color = '#CC0033';
+                        unassignedCourse.appendChild(space);
+                        unassignedCourse.appendChild(button);
+
                         concentrationList.appendChild(unassignedCourse);
+
                     }
                 }
 
@@ -816,7 +851,11 @@
                         button.style.borderRadius = '5px';
                         button.style.fontSize = '12px';
                         button.style.margin = 'auto';
-                        button.onclick = function () { removeCourse(course.course); };
+                        button.addEventListener('click', (function (courseCopy) {
+                            return function () {
+                                removeCourse(courseCopy);
+                            }
+                        })(course.course));
                         var space = document.createElement('span');
                         space.textContent = ' ';
                         unusedID.textContent = course.course;
@@ -832,10 +871,26 @@
                 if (concentrationList) {
                     concentrationContainer.appendChild(concentrationList);
                 } else {
-
+                    var concentraionFulfilled = document.createElement('p');
+                    var spacer = document.createElement('div');
+                    var text = document.createElement('p');
+                    concentraionFulfilled.innerHTML = '<h4>Missing Concentration Requirements:</h4>';
+                    text.textContent = "all concentration requirments fulfilled";
+                    concentraionFulfilled.appendChild(text);
+                    concentrationContainer.appendChild(spacer);
+                    concentrationContainer.appendChild(concentraionFulfilled);
                 }
                 if (unusedIdsList) {
                     concentrationContainer.appendChild(unusedIdsList);
+                } else {
+                    var noUnusedIDs = document.createElement('p');
+                    var spacer = document.createElement('div');
+                    noUnusedIDs.innerHTML = '<h4>Unused IDs:</h4>';
+                    var text = document.createElement('p');
+                    text.textContent = "no extra courses";
+                    noUnusedIDs.appendChild(text);
+                    concentrationContainer.appendChild(spacer);
+                    concentrationContainer.appendChild(noUnusedIDs)
                 }
             }
 
@@ -876,6 +931,7 @@
 
             showMainMenuButtons()
         }
+
         async function removeCourseFromMenu() {
             var courseId = document.getElementById('contextMenu').getAttribute('data-course-id');
             await removeCourse(courseId);
@@ -928,7 +984,24 @@
             }
         }
 
+        async function addCourseAfterValidation(courseId) {
+            var semesterIndex = prompt('Enter the semester (0-7):');
+            if (semesterIndex !== null) {
+                semesterIndex = parseInt(semesterIndex);
+                if (!isNaN(semesterIndex) && semesterIndex >= 0 && semesterIndex <= 7) {
+                    await addCourse(courseId, semesterIndex);
+                    alert(`${courseId} successfully added to plan`);
+                } else {
+                    alert("Invalid semester index. Please enter a number between 0 and 7.");
+                }
+            }
+        }
+
         async function addCourse(courseId, semester) {
+            if (semester < 0 || semester > 7) {
+                alert("no way to add course to a valid semester");
+                return;
+            }
             updated4YearPlan = JSON.parse(await sendRequest("POST", "http://127.0.0.1:3000/4yrplan/ach127/course", JSON.stringify({ 'courseID': courseId, "semester": parseInt(semester) })));
             fourYearPlan = updated4YearPlan;
             displayFourYearPlan(updated4YearPlan);
@@ -944,6 +1017,11 @@
             document.getElementById('validateBtn').style.display = 'inline-block';
             document.getElementById('optimizeBtn').style.display = 'inline-block';
             document.getElementById('addCourse').style.display = 'inline-block';
+        }
+
+        function getCourseSemester(course) {
+            const courseObj = fourYearPlan.find(c => c.course === course);
+            return courseObj ? parseInt(courseObj.semester) : -1;
         }
 
         document.getElementById('optimizeBtn').addEventListener('click', optimize);
