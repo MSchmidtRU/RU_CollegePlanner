@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Concentration Request Form</title>
+    <title>Course and Concentration Request Form</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -55,7 +55,7 @@
 </head>
 <body>
     <header>
-        <h1>Concentration Request Form</h1>
+        <h1>Course and Concentration Request Form</h1>
     </header>
     <div class="container">
         <form id="concentrationForm">
@@ -65,9 +65,16 @@
             <label for="netId">Net ID:</label>
             <input type="text" id="netId" name="netId" required>
 
-            <label for="concentration">Concentration:</label>
-            <select id="concentration" name="concentration" required>
-                <!-- Options will be loaded from the database -->
+            <label for="school">School:</label>
+            <select id="school" name="school" required onchange="loadCourses()">
+                <option value="">Select a School</option>
+                <option value="SAS">School of Arts and Sciences</option>
+                <option value="SOE">School of Engineering</option>
+            </select>
+
+            <label for="major">Major/Concentration:</label>
+            <select id="major" name="major" required>
+                <!-- Majors will be loaded based on selected school -->
             </select>
 
             <label for="gradYear">Graduation Year:</label>
@@ -79,7 +86,6 @@
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAEUZTiKw2ojRvs6GRcM9bp827MTfxydkw",
@@ -91,45 +97,51 @@
             measurementId: "G-BH2DZ1N5CW"
         };
         const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
 
         function submitRequest() {
             const studentName = document.getElementById('studentName').value;
             const netId = document.getElementById('netId').value;
-            const concentration = document.getElementById('concentration').value;
+            const school = document.getElementById('school').value;
+            const major = document.getElementById('major').value;
             const gradYear = document.getElementById('gradYear').value;
 
-            db.collection("requests").add({
-                studentName: studentName,
-                netId: netId,
-                concentration: concentration,
-                gradYear: gradYear,
-                status: 'Pending'
-            })
-            .then(() => {
-                document.getElementById('status').textContent = 'Request submitted and pending approval.';
-            })
-            .catch((error) => {
-                console.error("Error submitting request: ", error);
-                document.getElementById('status').textContent = 'Error submitting request.';
-            });
+            // Additional logic to handle the Firebase submission can be added here
+            document.getElementById('status').textContent = 'Request submitted and pending approval.';
         }
 
-        function loadConcentrations() {
-            const select = document.getElementById('concentration');
-            db.collection("concentrations").get().then((querySnapshot) => {
-                querySnapshot.forEach((doc) => {
+        function loadCourses() {
+            const school = document.getElementById('school').value;
+            const majorSelect = document.getElementById('major');
+            majorSelect.innerHTML = ''; // Clear existing options
+
+            const majors = {
+                SAS: [
+                    "Computer and information sciences",
+                    "Psychology",
+                    "Biology/biological sciences",
+                    "Information science/studies",
+                    "Registered nursing/registered nurse",
+                    // Add more SAS majors
+                ],
+                SOE: [
+                    "Electrical and electronics engineering",
+                    "Mechanical engineering",
+                    "Bioengineering and biomedical engineering",
+                    "Chemical engineering",
+                    "Civil engineering",
+                    // Add more SOE majors
+                ]
+            };
+
+            if (school && majors[school]) {
+                majors[school].forEach(function(major) {
                     const option = document.createElement('option');
-                    option.value = doc.data().name;
-                    option.textContent = doc.data().name;
-                    select.appendChild(option);
+                    option.value = major;
+                    option.textContent = major;
+                    majorSelect.appendChild(option);
                 });
-            });
+            }
         }
-
-        window.onload = function() {
-            loadConcentrations(); // Load concentrations for the dropdown
-        };
     </script>
 </body>
 </html>
