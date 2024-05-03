@@ -99,7 +99,7 @@ function generateMockToken() {
     }
   }
 
-  generateMockToken()
+  //generateMockToken()
 
  function verifyMockToken(mockToken) {
     try {
