@@ -29,14 +29,14 @@ app.post('/tokensignin', express.json(), async (req, res) => {
 });
 
 
-app.listen(3000, () => {
-    console.log('Server started on port 3000');
-});
+// app.listen(8080, () => {
+//     console.log('Server started on port 8080');
+// });
 
 function onSignIn(googleUser) {
     var id_token = googleUser.getAuthResponse().id_token;
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'http://localhost:3000/tokensignin');
+    xhr.open('POST', 'http://localhost:8080/tokensignin');
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.onload = function() {
         if (xhr.responseText === 'success') {
