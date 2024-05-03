@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concentration and Course Request</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        header {
+            background-color: #a41e34;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .container {
+            padding: 20px;
+            margin: auto;
+            max-width: 800px; /* Adjust width as necessary */
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-top: 20px;
+        }
+        input, textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .course {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px #ccc;
+            margin-top: 20px;
+        }
+        .course-title {
+            font-size: 20px;
+            color: #333;
+        }
+        .course-description {
+            font-size: 16px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Concentration and Course Request Form</h1>
+    </header>
+    <div class="container">
+        <form id="concentrationForm">
+            <label for="concentrationName">Concentration Name:</label>
+            <input type="text" id="concentrationName" name="concentrationName" required>
+
+            <label for="department">Department:</label>
+            <input type="text" id="department" name="department" required>
+
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" required></textarea>
+
+            <button type="button" onclick="submitConcentration()">Submit</button>
+        </form>
+
+        <div id="coursesList">
+            <h2>Available Courses</h2>
+            <!-- Courses will be dynamically loaded here -->
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAEUZTiKw2ojRvs6GRcM9bp827MTfxydkw",
+            authDomain: "maps-9ae32.firebaseapp.com",
+            projectId: "maps-9ae32",
+            storageBucket: "maps-9ae32.appspot.com",
+            messagingSenderId: "687862985843",
+            appId: "1:687862985843:web:221c76658501ea070fe606",
+            measurementId: "G-BH2DZ1N5CW"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function submitConcentration() {
+            const concentrationName = document.getElementById('concentrationName').value;
+            const department = document.getElementById('department').value;
+            const description = document.getElementById('description').value;
+
+            db.collection("concentrations").add({
+                name: concentrationName,
+                department: department,
+                description: description
+            })
+            .then(() => {
+                alert('Concentration added successfully!');
+                loadCourses(); // Reload courses to reflect any changes
+            })
+            .catch((error) => {
+                console.error("Error adding concentration: ", error);
+                alert('Error adding concentration.');
+            });
+        }
+
+        function loadCourses() {
+            const coursesList = document.getElementById('coursesList');
+            coursesList.innerHTML = '<h2>Available Courses</h2>'; // Clear existing courses
+            db.collection("courses").get().then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    const course = doc.data();
+                    const courseElement = document.createElement('div');
+                    courseElement.className = 'course';
+                    courseElement.innerHTML = `
+                        <h5 class="course-title">${course.name}</h5>
+                        <p class="course-description">${course.description || "No description available."}</p>
+                    `;
+                    coursesList.appendChild(courseElement);
+                });
+            }).catch((error) => {
+                console.error("Error loading courses: ", error);
+                coursesList.innerHTML += '<p>Error loading courses.</p>';
+            });
+        }
+
+        window.onload = function() {
+            loadCourses(); // Initial load of courses
+        };
+    </script>
+</body>
+</html>
