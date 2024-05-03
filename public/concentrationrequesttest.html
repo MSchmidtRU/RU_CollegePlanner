@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrator Page - Major Requests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        header {
+            background-color: #a41e34;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .container {
+            padding: 20px;
+            margin: auto;
+            max-width: 800px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .request {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+        }
+        .request:last-child {
+            border-bottom: none;
+        }
+        .request-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .request-buttons {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .approve {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .deny {
+            background-color: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Administrator Page - Major Requests</h1>
+    </header>
+    <div class="container">
+        <div class="request">
+            <div class="request-details">
+                <div>
+                    <strong>Name:</strong> Amar Abualhassan<br>
+                    <strong>Net ID:</strong> ata82<br>
+                    <strong>School:</strong> School of Engineering<br>
+                    <strong>Major:</strong> Electrical and Computer Engineering<br>
+                    <strong>Grad Year:</strong> 2025
+                </div>
+                <div class="request-buttons">
+                    <button class="approve">Approve</button>
+                    <button class="deny">Deny</button>
+                </div>
+            </div>
+        </div>
+        <!-- More requests can be added here -->
+    </div>
+</body>
+</html>
