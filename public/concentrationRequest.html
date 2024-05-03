@@ -23,6 +23,9 @@
             max-width: 800px;
             background-color: white;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         label {
             display: block;
@@ -50,6 +53,11 @@
         .status {
             margin-top: 20px;
             font-weight: bold;
+            text-align: center;
+            display: none;
+            flex: 1;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
@@ -67,11 +75,15 @@
 
             <label for="school">School:</label>
             <select id="school" name="school" required onchange="loadMajors()">
-                <option value="">Select a School</option>
-                <option value="SAS">School of Arts and Sciences</option>
-                <option value="SOE">School of Engineering</option>
-                <option value="SEBS">School of Environmental and Biological Sciences</option>
-            </select>
+                    <option value="">Select a School</option>
+                    <option value="SAS">School of Arts and Sciences</option>
+                    <option value="SOE">School of Engineering</option>
+                    <option value="SEBS">School of Environmental and Biological Sciences</option>
+                    <option value="SCI">School of Communication and Information</option>
+                    <option value="SSW">School of Social Work</option>
+                    <option value="SMLR">School of Management and Labor Relations</option>
+                    <option value="RBS">Rutgers Business School</option>
+                </select>
 
             <label for="major">Major/Concentration:</label>
             <select id="major" name="major" required>
@@ -254,14 +266,20 @@
         }
 
         function submitRequest() {
+            const form = document.getElementById('concentrationForm');
+            const statusDiv = document.getElementById('status');
             const studentName = document.getElementById('studentName').value;
             const netId = document.getElementById('netId').value;
             const school = document.getElementById('school').value;
             const major = document.getElementById('major').value;
             const gradYear = document.getElementById('gradYear').value;
 
-            // Simulate form submission output for demonstration
-            document.getElementById('status').textContent = `Request submitted: ${studentName}, ${netId}, ${school}, ${major}, ${gradYear}, pending approval.`;
+            // Hide form
+            form.style.display = 'none';
+
+            // Display status message
+            statusDiv.style.display = 'flex';
+            statusDiv.textContent = `Request submitted: ${studentName}, ${netId}, ${school}, ${major}, ${gradYear}, pending approval.`;
         }
     </script>
 </body>
