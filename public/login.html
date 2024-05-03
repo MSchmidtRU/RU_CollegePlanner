@@ -39,7 +39,7 @@
       margin-right: 10px;
     }
 
-    #my-signin2 {
+    #g_id_onload {
       margin-bottom: 20px;
     }
 
@@ -61,54 +61,44 @@
 </head>
 
 <body>
+
   <div class="top-bar"><img
       src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROD4shOpNB4AUxX0dEf37ubd4DV6ythnS-glJez-P4&s"
       alt="Rutgers Logo"> MAPS</div>
-  <div id="my-signin2"></div>
 
+  <div id="g_id_onload" data-client_id="687862985843-b9rm079labqpm3cku18cv5qbd7g212co.apps.googleusercontent.com"
+    data-context="signin" data-ux_mode="popup" data-callback="onSignIn" data-auto_prompt="false" data-noscript="true">
+  </div>
+  <script src="https://accounts.google.com/gsi/client"></script>
   <script>
-    function onSuccess(googleUser) {
-      console.log('Logged in as: ' + googleUser.getBasicProfile().getName());
-      onSignIn(googleUser);
+
+    function onSignIn(googleUser) {
+      console.log("wooooo");
+      onSignInGIS(googleUser);
     }
+
     function onFailure(error) {
+      console.log("cry");
       console.log(error);
     }
-    function renderButton() {
-      gapi.signin2.render('my-signin2', {
-        'scope': 'profile email',
-        'width': 240,
-        'height': 50,
-        'longtitle': true,
-        'theme': 'dark',
-        'onsuccess': onSuccess,
-        'onfailure': onFailure
-      });
+
+    function onSignInGIS(googleUser) {
+      console.log("HIIII");
+      var id_token = googleUser.credential;
+      localStorage.setItem('token', id_token);
+      window.location.href = "index.html";
     }
-    // Load Google API library asynchronously
-    function loadGoogleApi() {
-      var script = document.createElement('script');
-      script.src = 'https://apis.google.com/js/platform.js';
-      script.onload = renderButton;
-      script.setAttribute('crossorigin', 'anonymous'); // Add crossorigin attribute
-      document.head.appendChild(script);
-    }
-    function onSignIn(googleUser) {
-      var id_token = googleUser.getAuthResponse().id_token;
-      var xhr = new XMLHttpRequest();
-      xhr.open('POST', 'http://localhost:8080/tokensignin');
-      xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.onload = function () {
-        if (xhr.responseText === 'success') {
-          window.location.href = './index.html';
-        } else {
-          alert('Authentication failed. Please check your NetID and try again.');
-        }
-      };
-      xhr.send(JSON.stringify({ idtoken: id_token }));
-    }
-    // Call loadGoogleApi when the page has finished loading
-    window.onload = loadGoogleApi;
+
+    google.accounts.id.initialize({
+      client_id: "687862985843-b9rm079labqpm3cku18cv5qbd7g212co.apps.googleusercontent.com",
+      callback: onSignInGIS,
+      ux_mode: "popup",
+      auto_prompt: false
+    });
+    google.accounts.id.renderButton(
+      document.getElementById("g_id_onload"),
+      { theme: "outline", size: "large" }
+    );
   </script>
 </body>
 
