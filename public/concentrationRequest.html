@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Concentration and Course Request</title>
+    <title>Concentration Request Form</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -20,7 +20,7 @@
         .container {
             padding: 20px;
             margin: auto;
-            max-width: 800px; /* Adjust width as necessary */
+            max-width: 800px;
             background-color: white;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
@@ -28,7 +28,7 @@
             display: block;
             margin-top: 20px;
         }
-        input, textarea {
+        input, select, textarea {
             width: calc(100% - 20px);
             padding: 10px;
             margin-top: 5px;
@@ -47,49 +47,38 @@
         button:hover {
             background-color: #45a049;
         }
-        .course {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px #ccc;
+        .status {
             margin-top: 20px;
-        }
-        .course-title {
-            font-size: 20px;
-            color: #333;
-        }
-        .course-description {
-            font-size: 16px;
-            color: #666;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>Concentration and Course Request Form</h1>
+        <h1>Concentration Request Form</h1>
     </header>
     <div class="container">
         <form id="concentrationForm">
-            <label for="concentrationName">Concentration Name:</label>
-            <input type="text" id="concentrationName" name="concentrationName" required>
+            <label for="studentName">Name:</label>
+            <input type="text" id="studentName" name="studentName" required>
 
-            <label for="department">Department:</label>
-            <input type="text" id="department" name="department" required>
+            <label for="netId">Net ID:</label>
+            <input type="text" id="netId" name="netId" required>
 
-            <label for="description">Description:</label>
-            <textarea id="description" name="description" required></textarea>
+            <label for="concentration">Concentration:</label>
+            <select id="concentration" name="concentration" required>
+                <!-- Options will be loaded from the database -->
+            </select>
 
-            <button type="button" onclick="submitConcentration()">Submit</button>
+            <label for="gradYear">Graduation Year:</label>
+            <input type="text" id="gradYear" name="gradYear" required>
+
+            <button type="button" onclick="submitRequest()">Submit</button>
         </form>
-
-        <div id="coursesList">
-            <h2>Available Courses</h2>
-            <!-- Courses will be dynamically loaded here -->
-        </div>
+        <div class="status" id="status"></div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-analytics.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
     <script>
         const firebaseConfig = {
@@ -104,48 +93,42 @@
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        function submitConcentration() {
-            const concentrationName = document.getElementById('concentrationName').value;
-            const department = document.getElementById('department').value;
-            const description = document.getElementById('description').value;
+        function submitRequest() {
+            const studentName = document.getElementById('studentName').value;
+            const netId = document.getElementById('netId').value;
+            const concentration = document.getElementById('concentration').value;
+            const gradYear = document.getElementById('gradYear').value;
 
-            db.collection("concentrations").add({
-                name: concentrationName,
-                department: department,
-                description: description
+            db.collection("requests").add({
+                studentName: studentName,
+                netId: netId,
+                concentration: concentration,
+                gradYear: gradYear,
+                status: 'Pending'
             })
             .then(() => {
-                alert('Concentration added successfully!');
-                loadCourses(); // Reload courses to reflect any changes
+                document.getElementById('status').textContent = 'Request submitted and pending approval.';
             })
             .catch((error) => {
-                console.error("Error adding concentration: ", error);
-                alert('Error adding concentration.');
+                console.error("Error submitting request: ", error);
+                document.getElementById('status').textContent = 'Error submitting request.';
             });
         }
 
-        function loadCourses() {
-            const coursesList = document.getElementById('coursesList');
-            coursesList.innerHTML = '<h2>Available Courses</h2>'; // Clear existing courses
-            db.collection("courses").get().then((querySnapshot) => {
+        function loadConcentrations() {
+            const select = document.getElementById('concentration');
+            db.collection("concentrations").get().then((querySnapshot) => {
                 querySnapshot.forEach((doc) => {
-                    const course = doc.data();
-                    const courseElement = document.createElement('div');
-                    courseElement.className = 'course';
-                    courseElement.innerHTML = `
-                        <h5 class="course-title">${course.name}</h5>
-                        <p class="course-description">${course.description || "No description available."}</p>
-                    `;
-                    coursesList.appendChild(courseElement);
+                    const option = document.createElement('option');
+                    option.value = doc.data().name;
+                    option.textContent = doc.data().name;
+                    select.appendChild(option);
                 });
-            }).catch((error) => {
-                console.error("Error loading courses: ", error);
-                coursesList.innerHTML += '<p>Error loading courses.</p>';
             });
         }
 
         window.onload = function() {
-            loadCourses(); // Initial load of courses
+            loadConcentrations(); // Load concentrations for the dropdown
         };
     </script>
 </body>
