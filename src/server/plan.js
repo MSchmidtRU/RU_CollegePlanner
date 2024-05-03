@@ -3,13 +3,13 @@ const Student = require('../database/student.js');
 const Concentration = require("../database/concentration.js");
 const Course = require("../database/course.js");
 const { firestore } = require("../database/firebase.js");
-const { verifyTokenOfStudent } = require('../server/tokenAuthentication.js')
+const { verifyTokenOfStudent, verifyMockToken } = require('../server/tokenAuthentication.js')
 
 async function viewPlan(req) {
     try {
         // let netID = await verifyTokenOfStudent(req.headers['authorization']);//= req.params.netID;
-        let netID = req.params.netID;
-        // console.log("graduated");
+        //let netID = await verifyMockToken(req.headers['authorization']);;
+        let netID = await verifyMockToken(req.headers['authorization']);
         let jsonFutureCourses;
         let future_courses = await Student.getFutureCourses(netID);
         jsonFutureCourses = future_courses.map(course => {
@@ -31,7 +31,8 @@ function viewStatus(req) {
 async function addCourse(req) {
     try {
         // let netID = await verifyTokenOfStudent(req.headers['authorization']);//= req.params.netID;; //req.params.netID
-        let netID = req.params.netID
+        //let netID = await verifyMockToken(req.headers['authorization']);
+        let netID = await verifyMockToken(req.headers['authorization']);
         const body = req.body;
         const futureCourse = new Student.FutureCourse(body.courseID, body.semester);
         let updatedPlan = await Student.addFutureCourse(netID, futureCourse);
@@ -44,7 +45,7 @@ async function addCourse(req) {
 async function removeCourse(req) {
     try {
         // let netID = await verifyTokenOfStudent(req.headers['authorization']);//= req.params.netID;; //req.params.netID
-        let netID = req.params.netID
+        let netID = await verifyMockToken(req.headers['authorization']);
         const body = req.body;
         let updatedPlan = await Student.removeFutureCourse(netID, body.courseID);
         return [JSON.stringify(updatedPlan), 200];
@@ -61,7 +62,7 @@ async function viewSample(req) {
 async function validatePlan(req) {
 
     // let netID = await verifyTokenOfStudent(req.headers['authorization']);//= req.params.netID;; //req.params.netID
-    let netID = req.params.netID
+    let netID = await verifyMockToken(req.headers['authorization']);
     let concentrationID = req.params.concentrationID;
     let futureCourses = await Student.getFutureCourses(netID);
 
@@ -100,7 +101,7 @@ async function validatePlan(req) {
 async function optimizePlan(req) {
     try {
         // let netID = await verifyTokenOfStudent(req.headers['authorization']);//= req.params.netID;; //req.params.netID
-        let netID = req.params.netID;
+        let netID = await verifyMockToken(req.headers['authorization']);;
         let method = req.params.method;
         let futureCourses = req.body.futureCourses;
         let result;

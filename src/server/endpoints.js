@@ -10,10 +10,10 @@ const courses = require("./catalog.js");
 
 const getEndpoints = {
    // "/4yrplan": plan.viewPlan,
-   "/4yrplan/~netID": plan.viewPlan,
-   "/4yrplan/~netID/status": plan.viewStatus,
+   "/4yrplan": plan.viewPlan,
+   "/4yrplan/status": plan.viewStatus,
    "/4yrplan/~concentrationID/sample": plan.viewSample,
-   "/4yrplan/~netID/validate": plan.validatePlan,
+   "/4yrplan/validate": plan.validatePlan,
    "/academicProgress/~netID": academicProgess.academicProgressHandler,
    "/academic-progress/~adminNetID/~studentNetID": adminAcademicProgress.adminAcademicProgressHandler,
       //"/UpcomingSchedule/~netID/viewschedule":schedule.viewSchedule,
@@ -29,8 +29,8 @@ const getEndpoints = {
 
 
 const postEndpoints = {
-   "/4yrplan/~netID/course": plan.addCourse,
-   "/4yrplan/~netID/optimize": plan.optimizePlan,
+   "/4yrplan/course": plan.addCourse,
+   "/4yrplan/optimize": plan.optimizePlan,
    // "/UpcomingSchedule/~netID/addcoursetoschedule":schedule.addCourseToSchedule,
 
 
@@ -38,12 +38,12 @@ const postEndpoints = {
 
 
 const deleteEndpoints = {
-   "/4yrplan/~netID/course": plan.removeCourse,
+   "/4yrplan/course": plan.removeCourse,
 }
 
 
 const putEndpoints = {
-   "/4yrplan/~netID/save": plan.savePlan,
+   "/4yrplan/save": plan.savePlan,
    "/UpcomingSchedule/~netID/saveschedule": schedule.saveSchedule,
 }
 
