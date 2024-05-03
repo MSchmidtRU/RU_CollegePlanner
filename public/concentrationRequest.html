@@ -23,12 +23,15 @@
             max-width: 800px;
             background-color: white;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         label {
             display: block;
             margin-top: 20px;
         }
-        input, select, textarea {
+        input, select {
             width: calc(100% - 20px);
             padding: 10px;
             margin-top: 5px;
@@ -50,6 +53,11 @@
         .status {
             margin-top: 20px;
             font-weight: bold;
+            text-align: center;
+            display: none;
+            flex: 1;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
@@ -65,9 +73,21 @@
             <label for="netId">Net ID:</label>
             <input type="text" id="netId" name="netId" required>
 
-            <label for="concentration">Concentration:</label>
-            <select id="concentration" name="concentration" required>
-                <!-- Options will be loaded from the database -->
+            <label for="school">School:</label>
+            <select id="school" name="school" required onchange="loadMajors()">
+                    <option value="">Select a School</option>
+                    <option value="SAS">School of Arts and Sciences</option>
+                    <option value="SOE">School of Engineering</option>
+                    <option value="SEBS">School of Environmental and Biological Sciences</option>
+                    <option value="SCI">School of Communication and Information</option>
+                    <option value="SSW">School of Social Work</option>
+                    <option value="SMLR">School of Management and Labor Relations</option>
+                    <option value="RBS">Rutgers Business School</option>
+                </select>
+
+            <label for="major">Major/Concentration:</label>
+            <select id="major" name="major" required>
+                <!-- Majors will be loaded based on selected school -->
             </select>
 
             <label for="gradYear">Graduation Year:</label>
@@ -78,58 +98,189 @@
         <div class="status" id="status"></div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAEUZTiKw2ojRvs6GRcM9bp827MTfxydkw",
-            authDomain: "maps-9ae32.firebaseapp.com",
-            projectId: "maps-9ae32",
-            storageBucket: "maps-9ae32.appspot.com",
-            messagingSenderId: "687862985843",
-            appId: "1:687862985843:web:221c76658501ea070fe606",
-            measurementId: "G-BH2DZ1N5CW"
-        };
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        function loadMajors() {
+            const school = document.getElementById('school').value;
+            const majorSelect = document.getElementById('major');
+            majorSelect.innerHTML = ''; // Clear existing options
+
+            const majors = {
+                SAS: [
+                    "African, Middle Eastern & South Asian Languages & Literatures",
+                    "Africana Studies",
+                    "American Studies",
+                    "Anthropology - Cultural",
+                    "Anthropology - Evolutionary",
+                    "Anthropology - General",
+                    "Art",
+                    "Art History",
+                    "Asian Studies",
+                    "Astrophysics",
+                    "Biological Sciences",
+                    "Biomathematics",
+                    "Cell Biology and Neuroscience",
+                    "Chemistry - Business/Law",
+                    "Chemistry - Chemical Biology",
+                    "Chemistry - Chemical Physics",
+                    "Chemistry - Core Option",
+                    "Chemistry - Environmental",
+                    "Chemistry - Forensic Chemistry",
+                    "Chemistry - General American Chemical Society (ACS)",
+                    "Chinese",
+                    "Cinema Studies",
+                    "Classics - Classical Humanities",
+                    "Classics - Greek and Latin",
+                    "Classics - Greek Option",
+                    "Classics - Latin Option",
+                    "Cognitive Science",
+                    "Communication - Health & Wellness Communication",
+                    "Communication - Leadership in Organizations & Community",
+                    "Communication - Relationships and Family Communication",
+                    "Communication - Strategic Public Communication and Public Relations",
+                    "Communication",
+                    "Comparative Literature - Advanced Studies in Literature",
+                    "Comparative Literature",
+                    "Computer Science",
+                    "Criminal Justice",
+                    "Dance",
+                    "Data Science - Computer Science Track",
+                    "Data Science - Economics Track",
+                    "Data Science - Societal Impact Track",
+                    "Data Science - Statistics Track",
+                    "Earth and Planetary Sciences - Environmental Geology Option",
+                    "Earth and Planetary Sciences - General Option",
+                    "Earth and Planetary Sciences - Geological Sciences",
+                    "Earth and Planetary Sciences - Planetary Science Option",
+                    "Ecology, Evolution, and Natural Resources",
+                    "Economics",
+                    "English",
+                    "Environmental Studies",
+                    "European Studies",
+                    "Exercise Science",
+                    "French",
+                    "Genetics",
+                    "Geography",
+                    "German",
+                    "Global Humanities",
+                    "Health Administration",
+                    "History - Ancient History and Classics",
+                    "History",
+                    "History/French",
+                    "History/Political Science",
+                    "Human Resource Management",
+                    "Information Technology and Informatics",
+                    "Italian",
+                    "Italian Studies",
+                    "Japanese",
+                    "Jewish Studies - Advanced Language",
+                    "Jewish Studies",
+                    "Journalism and Media Studies - Global Media",
+                    "Journalism and Media Studies - Sports Journalism",
+                    "Journalism and Media Studies",
+                    "Korean",
+                    "Labor Studies and Employment Relations",
+                    "Latin American Studies",
+                    "Latino and Caribbean Studies",
+                    "Linguistics",
+                    "Marine Sciences - Marine Biology/Biological Oceanography",
+                    "Marine Sciences - Marine Chemistry",
+                    "Marine Sciences - Marine Geology",
+                    "Marine Sciences - Physical Oceanography",
+                    "Mathematics - Actuarial",
+                    "Mathematics",
+                    "Medieval Studies",
+                    "Microbiology",
+                    "Middle Eastern Studies",
+                    "Molecular Biology and Biochemistry",
+                    "Music",
+                    "Philosophy",
+                    "Physics - Applied",
+                    "Physics - Engineering Dual Degree",
+                    "Physics - General Option",
+                    "Physics - Planetary Physics Option",
+                    "Physics - Professional Option",
+                    "Planning and Public Policy",
+                    "Political Science",
+                    "Portuguese",
+                    "Psychology",
+                    "Public Health",
+                    "Public Policy",
+                    "Religion",
+                    "Russian",
+                    "Social Work",
+                    "Sociology",
+                    "Spanish - Spanish Intensive",
+                    "Spanish",
+                    "Sport Management",
+                    "Statistics",
+                    "Statistics/Mathematics",
+                    "Theater Arts",
+                    "Urban Planning and Design",
+                    "Women’s, Gender, and Sexuality Studies"
+                ],
+                SOE: [
+                    "Aerospace Engineering",
+                    "Applied Sciences in Engineering",
+                    "Biomedical Engineering",
+                    "Chemical and Biochemical Engineering",
+                    "Civil and Environmental Engineering",
+                    "Electrical and Computer Engineering",
+                    "Energy Systems Engineering",
+                    "Environmental Engineering",
+                    "Industrial and Systems Engineering",
+                    "Materials Science and Engineering",
+                    "Mechanical Engineering"
+                ],
+                SEBS: [
+                    "Agriculture & Food Systems",
+                    "Animal Science",
+                    "Biochemistry",
+                    "Biological Sciences",
+                    "Biotechnology",
+                    "Ecology, Evolution & Natural Resources",
+                    "Entomology",
+                    "Environmental & Business Economics",
+                    "Environmental Planning",
+                    "Environmental Policy, Institutions, and Behavior",
+                    "Environmental Sciences",
+                    "Exercise Science",
+                    "Food Science",
+                    "Landscape Architecture",
+                    "Marine Science",
+                    "Meteorology",
+                    "Microbiology",
+                    "Nutritional Sciences",
+                    "Plant Science",
+                    "Public Health"
+                ]
+            };
+
+            if (school && majors[school]) {
+                majors[school].forEach(function(major) {
+                    const option = document.createElement('option');
+                    option.value = major;
+                    option.textContent = major;
+                    majorSelect.appendChild(option);
+                });
+            }
+        }
 
         function submitRequest() {
             const studentName = document.getElementById('studentName').value;
             const netId = document.getElementById('netId').value;
-            const concentration = document.getElementById('concentration').value;
+            const school = document.getElementById('school').value;
+            const major = document.getElementById('major').value;
             const gradYear = document.getElementById('gradYear').value;
 
-            db.collection("requests").add({
-                studentName: studentName,
-                netId: netId,
-                concentration: concentration,
-                gradYear: gradYear,
-                status: 'Pending'
-            })
-            .then(() => {
-                document.getElementById('status').textContent = 'Request submitted and pending approval.';
-            })
-            .catch((error) => {
-                console.error("Error submitting request: ", error);
-                document.getElementById('status').textContent = 'Error submitting request.';
-            });
-        }
+            // Hide form and display a concise status message
+            document.getElementById('concentrationForm').style.display = 'none';
+            const statusDiv = document.getElementById('status');
+            statusDiv.style.display = 'flex';
+            statusDiv.textContent = `Request Submitted: Pending Approval`;
 
-        function loadConcentrations() {
-            const select = document.getElementById('concentration');
-            db.collection("concentrations").get().then((querySnapshot) => {
-                querySnapshot.forEach((doc) => {
-                    const option = document.createElement('option');
-                    option.value = doc.data().name;
-                    option.textContent = doc.data().name;
-                    select.appendChild(option);
-                });
-            });
+            // Optionally log submission data for debugging
+            console.log(`Form submitted with: ${studentName}, ${netId}, ${school}, ${major}, ${gradYear}`);
         }
-
-        window.onload = function() {
-            loadConcentrations(); // Load concentrations for the dropdown
-        };
     </script>
 </body>
 </html>
