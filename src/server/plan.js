@@ -173,7 +173,7 @@ function flattenTree(nodes) {
 
 async function savePlan(req) {
     try {
-        let netID = await verifyTokenOfStudent(req.headers['authorization']);//= req.params.netID;; //req.params.netID
+        let netID = await verifyMockToken(req.headers['authorization']);;
         let coursesToSave = req.body;
         const res = await firestore.collection('student').doc(netID).update({ future_courses: [] });
 
