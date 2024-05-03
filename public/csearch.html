@@ -3,13 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RU Concentration Search</title>
-<script src="../src/database/concentration_search/concentration_search.js"></script>
+<title>Concentration Search</title>
+
 <style>
   body {
     text-align: center;
     font-family: Arial, sans-serif;
+    background-color: #f8cbc5;
   }
+  .concentration-link {
+    background-color: #ff2400;
+    color: white;
+    font-weight: bold;
+    padding: 0.5em;
+    margin-top: 1em;
+    width: 50%;
+    border-radius: 1em;
+    padding: 1.25em 5em 1.25em 5em;
+    
+  }
+  .concentration-link:active {
+    background-color: #147cde;
+  }
+
   #search-section {
     margin-top: 20px;
   }
@@ -17,25 +33,356 @@
     width: 200px;
     height: 20px;
     padding: 10px;
+    text-align: center;
+    border-radius: 3em;
   }
   #searchButton {
-    height: 42px;
+    padding: 0.75em 1.5em;
+    border: none;
+    background-color: #ff2400; 
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    border-radius: 5px; 
+    transition: background-color 0.3s;
   }
+  #searchButton:active {
+    background-color: #f3b7b1;
+  }
+
   #searchLogo {
     height: 120px;
     width: 120px;
     padding: 1em;
   }
+  #searchResults {
+    display: flex;
+    flex-direction: column;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    
+    align-items: center;
+    justify-content: center;
+  }
+
+  #resultsBox {
+    display: flex;
+    flex-direction: row;
+  }
+  #searchBlock {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+  }
+#searchHeader {
+  font-weight: bold;
+  
+}
+#searchBlock, #filterBlock {
+  display: inline-block;  
+  vertical-align: top;   
+  width: 49%;            
+  padding: 10px;
+}
+
+#filterBlock {
+  border-left: 1px solid #ccc; 
+  background-color: #f3b7b1;
+  border-radius: 1em;
+  margin-top: 2em;
+  margin-left: 1em;
+}
+
+#courseList {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.concentration-fields {
+  background-color:#f0e1df;
+  margin-top: 1em;
+  padding: 1em;
+  text-align: justify;
+  border-radius: 1em;
+}
+
+.bullet-points-container ul {
+    padding: 0;
+}
+
+.bullet-points-container li {
+    display: inline-block; 
+    margin-right: 20px;
+    margin-top: 1em; 
+    background-color: #f17777; 
+    padding: 0.5em 1em; 
+    border-radius: 10px; 
+}
+
+.concentration-fields h3 {
+  text-align: center;
+}
 </style>
 </head>
 <body>
+<div id="searchBlock">
+  <img src="resources/rutgers_logo.png" id="searchLogo" alt="Rutgers University Logo" />
+  <h2 id="searchHeader">Concentration Search</h2>
+  <div id="search-section">
+    <input type="text" id="searchInput" placeholder="Search Concentration" />
+    <button id="searchButton">Search</button>
+  </div>
+  <div id="resultsBox">
+  <div id="searchResults">
 
-<img src="resources/rutgers_logo.png" id="searchLogo" alt="Rutgers University Logo" />
+  </div>
+  <div id="filterBlock" style="display: none; width: 30%; float: left; padding-left: 20px;">
 
-<div id="search-section">
-  <input type="text" id="searchInput" placeholder="Search Concentration" />
-  <button id="searchButton">Search</button>
+  </div>
+  </div>
+  <div id="concentrationDetails">
+
+  </div>
 </div>
+
+  <script>
+    var searchResults = null;
+    function sendRequest(method, url, data = undefined) {
+            showSpinner();
+            return new Promise(function (resolve, reject) {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4) {
+                        if (this.status == 200) {
+                            var response = this.responseText;
+                            console.log("RESPONSE " + response);
+                            resolve(response);
+                            hideSpinner();
+                        } else {
+                            console.log("Failed with status: ", this.status, " and response: ", this.responseText)
+                            reject(new Error('Request failed')); 
+                            hideSpinner();
+                        }
+                    }
+                };
+
+                xhttp.open(method, url, true);
+                // xhttp.setRequestHeader('Content-Type', 'application/json');
+                // xhttp.send(data);
+                if (data != undefined) {
+                    xhttp.setRequestHeader('Content-Type', 'application/json');
+                }
+                data == undefined ? xhttp.send() : xhttp.send(data);
+            });
+        }
+        document.addEventListener("DOMContentLoaded", function() {
+          var searchButton = document.getElementById('searchButton');
+          searchButton.addEventListener('click', function() {
+              var searchQuery = document.getElementById('searchInput').value;
+              var url = "http://127.0.0.1:3000/csearch/ms3092/concentrationSearch?data=" + encodeURIComponent(searchQuery);
+              console.log(url);
+              sendRequest('GET', url).then(response => {
+                  var concentrations = JSON.parse(response);
+                  searchResults = Object.keys(concentrations).map(key => ({
+                      id: key,
+                      ...concentrations[key]
+                  }));
+                  console.log(concentrations);
+                  if(searchResults.length > 0) {
+                    displaySearchResults(searchResults);
+                    populateFilters();
+                    document.getElementById('filterBlock').style.display = 'block';
+                  }
+                  else
+                  {
+                      document.getElementById('searchResults').innerText = 'No results found.';
+                      document.getElementById('filterBlock').style.display = 'none';
+                  }
+
+                  
+              }).catch(error => {
+                  console.error('Error during the request:', error);
+                  document.getElementById('searchResults').innerText = 'There are no concentrations that matched that search.';
+                  document.getElementById('filterBlock').style.display = 'none';
+              });
+          });
+      });
+
+      function displaySearchResults(concentrations) {
+        var searchResultsDiv = document.getElementById('searchResults');
+        searchResultsDiv.innerHTML = '';
+        for (const concentration in concentrations) {
+                      var concentrationLink = document.createElement('a');
+                      concentrationLink.href = "#"; 
+                      concentrationLink.textContent = concentrations[concentration].Title;
+                      console.log(concentration)
+                      concentrationLink.classList.add('concentration-link');
+                      concentrationLink.dataset.details = JSON.stringify(concentrations[concentration]);
+
+                      concentrationLink.addEventListener('click', function(event) {
+                          event.preventDefault(); 
+                          toggleConcentrationInfo(this);
+                      });
+
+                      searchResultsDiv.appendChild(concentrationLink);
+                      searchResultsDiv.appendChild(document.createElement('br'));
+          }
+      }
+
+      document.addEventListener("DOMContentLoaded", function() {
+    
+          var searchButton = document.getElementById('searchButton');
+          searchButton.addEventListener('click', function() {
+              // Your existing search handling code
+              populateFilters(); // Call this here if the filters should appear after search
+          });
+      });
+      
+      function toggleConcentrationInfo(link) {
+    
+        let existingDetails = link.nextElementSibling && link.nextElementSibling.classList.contains('concentration-fields') ? link.nextElementSibling : null;
+        if (existingDetails) {
+            existingDetails.style.display = existingDetails.style.display === 'none' ? '' : 'none';
+        } else {
+            
+            let fieldsDiv = document.createElement('div');
+            fieldsDiv.className = 'concentration-fields';
+            fieldsDiv.style.display = '';  
+            let fields = JSON.parse(link.dataset.details);
+            let courseBulletPoints = fields.Courses.map(course => `<li class="bullet-point">${course}</li>`).join(' ')
+            let formattedInformation = `
+                <div class="fields-header">
+                    <h3>${fields.Title}</h3> 
+                </div>
+                <div class="fields-body">
+                    <p><i>Below you can find information regarding the ${fields.Title} concentration.</i></p>
+                    <br />
+                    <br />
+                    <p>The Concentration consists of the following types: <strong>${fields['Degree Type'].join(', ')}</strong></p> 
+                    <p><strong>School:</strong> ${fields.School} <strong>School ID:</strong> ${fields['School ID']}</p> 
+                    <p>Credit Counts (Respective): ${fields.Credits.join(', ')}</p>
+                    <br />
+                    <h3 class="courseHeader">Concentration Courses</h3>
+                    <div class="bullet-points-container">
+                      <ul>${courseBulletPoints}</ul>
+                    </div>
+
+                </div>
+            `;
+            fieldsDiv.innerHTML = formattedInformation;
+            displayDescription(fieldsDiv, link);
+        }
+    }
+
+    function displayDescription(newNode, referenceNode) {
+      if (referenceNode.nextElementSibling && referenceNode.nextElementSibling.classList.contains('concentration-fields')) {
+        referenceNode.parentNode.replaceChild(newNode, referenceNode.nextElementSibling);
+      } else {
+          referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+      }
+    }
+    function populateFilters() {
+    var filterBlock = document.getElementById('filterBlock');
+    filterBlock.innerHTML = ''; // Clear previous content
+
+    // Heading for degree types
+    var headingDegreeType = document.createElement('h3');
+    headingDegreeType.textContent = 'Filter by Degree Type';
+    filterBlock.appendChild(headingDegreeType);
+
+    var filters = ['B.A.', 'B.S.', 'Minor'];
+    filters.forEach(type => {
+        var checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = 'degreeType-' + type.replace(/\./g, ''); 
+        checkbox.name = 'degreeType';
+        checkbox.value = type;
+
+        var label = document.createElement('label');
+        label.htmlFor = checkbox.id; 
+        label.textContent = type;
+
+        filterBlock.appendChild(checkbox);
+        filterBlock.appendChild(label);
+        filterBlock.appendChild(document.createElement('br'));
+    });
+
+    
+    var headingSchool = document.createElement('h3');
+    headingSchool.textContent = 'Filter by School';
+    filterBlock.appendChild(headingSchool);
+
+    var schools = ["Business School", "School of Arts & Sciences", "School of Engineering"];
+    schools.forEach(school => {
+        var checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = 'schoolType-' + school.replace(/\./g, '').replace(/ & /g, '').replace(/ /g, ''); 
+        checkbox.name = 'schoolType';
+        checkbox.value = school;
+
+        var label = document.createElement('label');
+        label.htmlFor = checkbox.id;
+        label.textContent = school;
+
+        filterBlock.appendChild(checkbox);
+        filterBlock.appendChild(label);
+        filterBlock.appendChild(document.createElement('br'));
+    });
+
+    
+    filterBlock.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', filterResults);
+    });
+}
+function filterResults() {
+    var degreeFilters = Array.from(document.querySelectorAll('input[name="degreeType"]:checked')).map(checkbox => checkbox.value);
+    var schoolFilters = Array.from(document.querySelectorAll('input[name="schoolType"]:checked')).map(checkbox => checkbox.value);
+    var searchResultsDiv = document.getElementById('searchResults');
+    searchResultsDiv.innerHTML = '';
+
+    var filteredResults = searchResults.filter(concentration => {
+        const matchesDegree = degreeFilters.length === 0 || (concentration['Degree Type'] && concentration['Degree Type'].some(degree => degreeFilters.includes(degree)));
+        const matchesSchool = schoolFilters.length === 0 || (concentration['School'] && schoolFilters.includes(concentration['School']));
+        return matchesDegree && matchesSchool;
+    });
+
+    if (filteredResults.length > 0) {
+        filteredResults.forEach(concentration => {
+            var concentrationLink = document.createElement('a');
+            concentrationLink.href = "#"; 
+            concentrationLink.textContent = concentration.Title;  
+            concentrationLink.classList.add('concentration-link');
+            concentrationLink.dataset.details = JSON.stringify(concentration);
+
+            concentrationLink.addEventListener('click', function(event) {
+                event.preventDefault(); 
+                toggleConcentrationInfo(this);
+            });
+
+            searchResultsDiv.appendChild(concentrationLink);
+            searchResultsDiv.appendChild(document.createElement('br'));
+        });
+    } else {
+        searchResultsDiv.innerHTML = 'No concentrations match this filter.';
+    }
+}
+
+function showSpinner() {
+  var spinner = document.createElement('div');
+  spinner.setAttribute('id', 'spinner');
+  spinner.innerText = 'Retrieving Concentraions...';
+  document.body.appendChild(spinner);
+}
+
+function hideSpinner() {
+  var spinner = document.getElementById('spinner');
+  if (spinner) {
+      document.body.removeChild(spinner);
+  }
+}
+
+  </script>
 
 </body>
 </html>
