@@ -423,8 +423,8 @@
 
         }
         function sendRequest(method, url, data = undefined) {
-           
-            var token = localStorage.getItem('token');
+
+            var token = localStorage.getItem('mockToken');
             console.log("token: ", token)
             showSpinner();
             return new Promise(function (resolve, reject) {
