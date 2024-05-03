@@ -461,6 +461,7 @@
                 };
 
                 xhttp.open(method, url, true);
+                xhttp.setRequestHeader('authorization', `Bearer ${mockToken}`);
                 if (data != undefined) {
                     xhttp.setRequestHeader('Content-Type', 'application/json');
                 }
