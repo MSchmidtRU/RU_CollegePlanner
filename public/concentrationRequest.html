@@ -28,7 +28,7 @@
             display: block;
             margin-top: 20px;
         }
-        input, select, textarea {
+        input, select {
             width: calc(100% - 20px);
             padding: 10px;
             margin-top: 5px;
@@ -66,10 +66,11 @@
             <input type="text" id="netId" name="netId" required>
 
             <label for="school">School:</label>
-            <select id="school" name="school" required onchange="loadCourses()">
+            <select id="school" name="school" required onchange="loadMajors()">
                 <option value="">Select a School</option>
                 <option value="SAS">School of Arts and Sciences</option>
                 <option value="SOE">School of Engineering</option>
+                <option value="SEBS">School of Environmental and Biological Sciences</option>
             </select>
 
             <label for="major">Major/Concentration:</label>
@@ -85,51 +86,160 @@
         <div class="status" id="status"></div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAEUZTiKw2ojRvs6GRcM9bp827MTfxydkw",
-            authDomain: "maps-9ae32.firebaseapp.com",
-            projectId: "maps-9ae32",
-            storageBucket: "maps-9ae32.appspot.com",
-            messagingSenderId: "687862985843",
-            appId: "1:687862985843:web:221c76658501ea070fe606",
-            measurementId: "G-BH2DZ1N5CW"
-        };
-        const app = firebase.initializeApp(firebaseConfig);
-
-        function submitRequest() {
-            const studentName = document.getElementById('studentName').value;
-            const netId = document.getElementById('netId').value;
-            const school = document.getElementById('school').value;
-            const major = document.getElementById('major').value;
-            const gradYear = document.getElementById('gradYear').value;
-
-            // Additional logic to handle the Firebase submission can be added here
-            document.getElementById('status').textContent = 'Request submitted and pending approval.';
-        }
-
-        function loadCourses() {
+        function loadMajors() {
             const school = document.getElementById('school').value;
             const majorSelect = document.getElementById('major');
             majorSelect.innerHTML = ''; // Clear existing options
 
             const majors = {
                 SAS: [
-                    "Computer and information sciences",
+                    "African, Middle Eastern & South Asian Languages & Literatures",
+                    "Africana Studies",
+                    "American Studies",
+                    "Anthropology - Cultural",
+                    "Anthropology - Evolutionary",
+                    "Anthropology - General",
+                    "Art",
+                    "Art History",
+                    "Asian Studies",
+                    "Astrophysics",
+                    "Biological Sciences",
+                    "Biomathematics",
+                    "Cell Biology and Neuroscience",
+                    "Chemistry - Business/Law",
+                    "Chemistry - Chemical Biology",
+                    "Chemistry - Chemical Physics",
+                    "Chemistry - Core Option",
+                    "Chemistry - Environmental",
+                    "Chemistry - Forensic Chemistry",
+                    "Chemistry - General American Chemical Society (ACS)",
+                    "Chinese",
+                    "Cinema Studies",
+                    "Classics - Classical Humanities",
+                    "Classics - Greek and Latin",
+                    "Classics - Greek Option",
+                    "Classics - Latin Option",
+                    "Cognitive Science",
+                    "Communication - Health & Wellness Communication",
+                    "Communication - Leadership in Organizations & Community",
+                    "Communication - Relationships and Family Communication",
+                    "Communication - Strategic Public Communication and Public Relations",
+                    "Communication",
+                    "Comparative Literature - Advanced Studies in Literature",
+                    "Comparative Literature",
+                    "Computer Science",
+                    "Criminal Justice",
+                    "Dance",
+                    "Data Science - Computer Science Track",
+                    "Data Science - Economics Track",
+                    "Data Science - Societal Impact Track",
+                    "Data Science - Statistics Track",
+                    "Earth and Planetary Sciences - Environmental Geology Option",
+                    "Earth and Planetary Sciences - General Option",
+                    "Earth and Planetary Sciences - Geological Sciences",
+                    "Earth and Planetary Sciences - Planetary Science Option",
+                    "Ecology, Evolution, and Natural Resources",
+                    "Economics",
+                    "English",
+                    "Environmental Studies",
+                    "European Studies",
+                    "Exercise Science",
+                    "French",
+                    "Genetics",
+                    "Geography",
+                    "German",
+                    "Global Humanities",
+                    "Health Administration",
+                    "History - Ancient History and Classics",
+                    "History",
+                    "History/French",
+                    "History/Political Science",
+                    "Human Resource Management",
+                    "Information Technology and Informatics",
+                    "Italian",
+                    "Italian Studies",
+                    "Japanese",
+                    "Jewish Studies - Advanced Language",
+                    "Jewish Studies",
+                    "Journalism and Media Studies - Global Media",
+                    "Journalism and Media Studies - Sports Journalism",
+                    "Journalism and Media Studies",
+                    "Korean",
+                    "Labor Studies and Employment Relations",
+                    "Latin American Studies",
+                    "Latino and Caribbean Studies",
+                    "Linguistics",
+                    "Marine Sciences - Marine Biology/Biological Oceanography",
+                    "Marine Sciences - Marine Chemistry",
+                    "Marine Sciences - Marine Geology",
+                    "Marine Sciences - Physical Oceanography",
+                    "Mathematics - Actuarial",
+                    "Mathematics",
+                    "Medieval Studies",
+                    "Microbiology",
+                    "Middle Eastern Studies",
+                    "Molecular Biology and Biochemistry",
+                    "Music",
+                    "Philosophy",
+                    "Physics - Applied",
+                    "Physics - Engineering Dual Degree",
+                    "Physics - General Option",
+                    "Physics - Planetary Physics Option",
+                    "Physics - Professional Option",
+                    "Planning and Public Policy",
+                    "Political Science",
+                    "Portuguese",
                     "Psychology",
-                    "Biology/biological sciences",
-                    "Information science/studies",
-                    "Registered nursing/registered nurse",
-                    // Add more SAS majors
+                    "Public Health",
+                    "Public Policy",
+                    "Religion",
+                    "Russian",
+                    "Social Work",
+                    "Sociology",
+                    "Spanish - Spanish Intensive",
+                    "Spanish",
+                    "Sport Management",
+                    "Statistics",
+                    "Statistics/Mathematics",
+                    "Theater Arts",
+                    "Urban Planning and Design",
+                    "Women’s, Gender, and Sexuality Studies"
                 ],
                 SOE: [
-                    "Electrical and electronics engineering",
-                    "Mechanical engineering",
-                    "Bioengineering and biomedical engineering",
-                    "Chemical engineering",
-                    "Civil engineering",
-                    // Add more SOE majors
+                    "Aerospace Engineering",
+                    "Applied Sciences in Engineering",
+                    "Biomedical Engineering",
+                    "Chemical and Biochemical Engineering",
+                    "Civil and Environmental Engineering",
+                    "Electrical and Computer Engineering",
+                    "Energy Systems Engineering",
+                    "Environmental Engineering",
+                    "Industrial and Systems Engineering",
+                    "Materials Science and Engineering",
+                    "Mechanical Engineering"
+                ],
+                SEBS: [
+                    "Agriculture & Food Systems",
+                    "Animal Science",
+                    "Biochemistry",
+                    "Biological Sciences",
+                    "Biotechnology",
+                    "Ecology, Evolution & Natural Resources",
+                    "Entomology",
+                    "Environmental & Business Economics",
+                    "Environmental Planning",
+                    "Environmental Policy, Institutions, and Behavior",
+                    "Environmental Sciences",
+                    "Exercise Science",
+                    "Food Science",
+                    "Landscape Architecture",
+                    "Marine Science",
+                    "Meteorology",
+                    "Microbiology",
+                    "Nutritional Sciences",
+                    "Plant Science",
+                    "Public Health"
                 ]
             };
 
@@ -141,6 +251,17 @@
                     majorSelect.appendChild(option);
                 });
             }
+        }
+
+        function submitRequest() {
+            const studentName = document.getElementById('studentName').value;
+            const netId = document.getElementById('netId').value;
+            const school = document.getElementById('school').value;
+            const major = document.getElementById('major').value;
+            const gradYear = document.getElementById('gradYear').value;
+
+            // Simulate form submission output for demonstration
+            document.getElementById('status').textContent = `Request submitted: ${studentName}, ${netId}, ${school}, ${major}, ${gradYear}, pending approval.`;
         }
     </script>
 </body>
