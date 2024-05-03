@@ -266,20 +266,20 @@
         }
 
         function submitRequest() {
-            const form = document.getElementById('concentrationForm');
-            const statusDiv = document.getElementById('status');
             const studentName = document.getElementById('studentName').value;
             const netId = document.getElementById('netId').value;
             const school = document.getElementById('school').value;
             const major = document.getElementById('major').value;
             const gradYear = document.getElementById('gradYear').value;
 
-            // Hide form
-            form.style.display = 'none';
-
-            // Display status message
+            // Hide form and display a concise status message
+            document.getElementById('concentrationForm').style.display = 'none';
+            const statusDiv = document.getElementById('status');
             statusDiv.style.display = 'flex';
-            statusDiv.textContent = `Request submitted: ${studentName}, ${netId}, ${school}, ${major}, ${gradYear}, pending approval.`;
+            statusDiv.textContent = `Request Submitted: Pending Approval`;
+
+            // Optionally log submission data for debugging
+            console.log(`Form submitted with: ${studentName}, ${netId}, ${school}, ${major}, ${gradYear}`);
         }
     </script>
 </body>
