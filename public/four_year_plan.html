@@ -423,9 +423,8 @@
 
         }
         function sendRequest(method, url, data = undefined) {
-
-            var token = localStorage.getItem('mockToken');
-            console.log("token: ", token)
+           
+            var mockToken = localStorage.getItem('mockToken');
             showSpinner();
             return new Promise(function (resolve, reject) {
                 var xhttp = new XMLHttpRequest();
