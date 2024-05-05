@@ -1,64 +1,66 @@
-//const { Concentration, ConcentrationCourse, getSample, getConcentration, getCourses, getEquivelentCourses, getConcentrationResidency } = require('../../database/concentration.js')
 const { firestore } = require('../../database/firebase.js');
 const { FieldValue } = require('firebase-admin/firestore');
 
-const filters = {
-    "School": ["Rutgers Business School", "Rutgers Schools of Arts & Sciences", "Rutgers Engineering School", "Rutgers School of Communication & Information"],
-    "Credits": 120,
-    "Degree Type": ["B.A", "B.S", "Minor"]
 
-}
 
 async function concentrationSearch(request) {
-    
-    console.log(request.params)
-    if(!(request.params.data.trim().length === 0)) {
+    //console.log(request.params);
+    if (!(request.params.data.trim().length === 0)) {
         try {
-            let inputdata = request.params.data
-            const concentrationList = await firestore.collection("concentration").get();
-            const concentrationMatches = []
+            let matchingDocIds = [];
+            //console.log("Processed input data:", inputdata);
+            let inputdata = decodeURIComponent(request.params.data).toLowerCase();
 
-            concentrationList.forEach(doc => {
-                const conData = doc.data();
-                const conName = doc.id;
-                console.log(conName)
-                if(conName.toLowerCase().includes(inputdata.toLowerCase())) {
-                    concentrationMatches.push(conName)
+            const concentrationNames = await firestore.collection("concentration").select('Title').get();
+
+            concentrationNames.forEach(doc => {
+                //console.log(doc.data().Title)
+                let docName = doc.data().Title; 
+                if (docName && docName.toLowerCase().includes(inputdata)) {
+                    //console.log("Matching document ID:", doc.id);
+                    matchingDocIds.push(doc.id);
                 }
+            });
 
-            })
+            console.log("Matching Document IDs:", matchingDocIds);
 
-            if(concentrationMatches.length > 0) {
-                const concentrationString = "The following concentrations fit your search criteria: \n" + concentrationMatches.join(', ');
-
-                return [concentrationString, 200];
+            const concentrationMatches = {}; 
+            for (const docId of matchingDocIds) {
+                const docRef = firestore.collection('concentration').doc(docId);
+                const doc = await docRef.get();
+                if (doc.exists) {
+                    concentrationMatches[doc.id] = doc.data();  
+                }
             }
-            else
-            {
-                throw new Error("No concentrations were found with that query.");
-                //return ["No concentrations were found with that query.", 204]
-            }
 
+            //console.log("Number of matches:", Object.keys(concentrationMatches).length);
+            console.log("Matched Data:", concentrationMatches);
+
+            if (Object.keys(concentrationMatches).length > 0) {
+                return [JSON.stringify(concentrationMatches), 200]; 
+            } else {
+                return ["No concentrations were found with that title.", 204];
+            }
         } catch (error) {
-            throw new Error(error);
+            console.error("Failed to retrieve data from Firestore:", error);
+            return [JSON.stringify({ error: error.toString() }), 500]; 
         }
+    } else {
+        return ["Concentration Search requires input.", 400];
     }
 }
 
 async function viewConcentration(request) {
     if(!(request.params.data.trim().length === 0)) {
         try {
-            let inputdata = request.params.data
-            inputdata = inputdata.replace(/_/g, " ");
-            inputdata = inputdata.replace(/%20/g, " ");
-            inputdata = inputdata.replace(/\+/g, " ");
-            console.log(inputdata)
+            let inputdata = decodeURIComponent(request.params.data).toLowerCase();
+            console.log("INPUT: " +inputdata)
             const concentrationList = await firestore.collection("concentration").get();
             let concentration = null
             concentrationList.forEach(doc => {
                 const conData = doc.data();
                 const conName = doc.id;
-                console.log(conName)
+                //console.log(conName)
                 if(conName.toLowerCase()===(inputdata.toLowerCase())) {
                     //console.log("HERE!")
                     concentration = doc;
@@ -87,42 +89,5 @@ async function viewConcentration(request) {
     }
 }
 
-
-
-
-
-async function filteredSearch(request) {
-    let filterOption = request.params.data;
-    filterOption = filterOption.toLowerCase().trim();
-    switch(filterOption) {
-        case 'credits':
-            const concentrationList = await firestore.collection("concentration").get();
-            const concentrationMatches = []
-
-            concentrationList.forEach(doc => {
-                const conData = doc.data();
-                const conName = doc.id;
-                console.log(conName)
-                if(conName.toLowerCase().includes(inputdata.toLowerCase())) {
-                    concentrationMatches.push(conName)
-                }
-
-            })
-
-            if(concentrationMatches.length > 0) {
-                const concentrationString = "The following concentrations fit your search criteria: \n" + concentrationMatches.join(', ');
-
-                return [concentrationString, 200];
-            }
-            else
-            {
-                throw new Error("No concentrations were found with that query.");
-                //return ["No concentrations were found with that query.", 204]
-            }
-        default: 
-            
-    }
-}
-
-module.exports = {concentrationSearch, viewConcentration, filteredSearch}
+module.exports = {concentrationSearch, viewConcentration}
 

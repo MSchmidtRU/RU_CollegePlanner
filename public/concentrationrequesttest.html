@@ -63,6 +63,11 @@
             border-radius: 5px;
             border: 1px solid #ccc;
         }
+        .message {
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -98,6 +103,8 @@
             </div>
         </div>
         <!-- More requests can be added here -->
+        <div class="message" id="requestApproved" style="display: none;">Request Approved</div>
+        <div class="message" id="requestDenied" style="display: none;">Request Denied</div>
     </div>
 
     <script>
@@ -107,9 +114,8 @@
                 // Hide the request and display "Request Approved" message
                 const request = button.closest('.request');
                 request.style.display = 'none';
-                const requestApproved = document.createElement('div');
-                requestApproved.textContent = 'Request Approved';
-                document.body.appendChild(requestApproved);
+                const requestApproved = document.getElementById('requestApproved');
+                requestApproved.style.display = 'block';
             });
         });
 
@@ -127,9 +133,8 @@
                 // Hide the request and display "Request Denied" message
                 const request = button.closest('.request');
                 request.style.display = 'none';
-                const requestDenied = document.createElement('div');
-                requestDenied.textContent = 'Request Denied';
-                document.body.appendChild(requestDenied);
+                const requestDenied = document.getElementById('requestDenied');
+                requestDenied.style.display = 'block';
             });
         });
     </script>
