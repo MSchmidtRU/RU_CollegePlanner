@@ -4,7 +4,6 @@ const schedule=require("../database/scheduling.js");
 const academicProgess = require('../database/academicProgess');
 const adminAcademicProgress = require('../database/adminAcademicProgress.js');
 const csearch = require("./concentration_search/concentration_search.js");
-const login = require("./login.js");
 const courses = require("./catalog.js");
 
 
@@ -17,7 +16,6 @@ const getEndpoints = {
    "/academicProgress/~netID": academicProgess.academicProgressHandler,
    "/academic-progress/~adminNetID/~studentNetID": adminAcademicProgress.adminAcademicProgressHandler,
       //"/UpcomingSchedule/~netID/viewschedule":schedule.viewSchedule,
-   "/login/~idToken/~netID": login.verify,
    "/csearch/~netID/concentrationSearch": csearch.concentrationSearch,
    "/csearch/~netID/concentrationSearch-Filtered": csearch.filteredSearch,
    "/csearch/~netID/viewConcentration": csearch.viewConcentration,

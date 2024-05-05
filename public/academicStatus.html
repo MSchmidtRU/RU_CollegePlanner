@@ -104,7 +104,7 @@
         }
     </style>
     <script>
-         function sendRequest(method, url, data = undefined) {
+        function sendRequest(method, url, data = undefined) {
             return new Promise(function (resolve, reject) {
                 var xhttp = new XMLHttpRequest();
                 xhttp.onreadystatechange = function () {
@@ -113,10 +113,10 @@
                             var response = this.responseText;
                             console.log(response);
                             resolve(response); // Resolve with the response
-                           
+
                         } else {
                             reject(new Error('Request failed')); // Reject with an error
-                       
+
                         }
                     }
                 };
@@ -190,11 +190,10 @@
 
     <nav>
         <a href="index.html">Home</a>
-        <a href="course_catalog.html">Course Catalog</a>
+        <a href="ccwebpage.html">Course Catalog</a>
         <a href="four_year_plan.html">4 Year Plan</a>
-        <a href="schedule_semester.html">Schedule Semester</a>
-        <a href="search_majors_minors.html">Search Majors and Minors</a>
-        <a href="request_major_switch.html">Request Major Switch or Declaration</a>
+        <a href="csearch.html">Concentration Search</a>
+        <a href="concentrationRequest.html">Request Concentration Switch or Declaration</a>
         <a href="academicStatus.html"> View Academic Status</a>
     </nav>
 

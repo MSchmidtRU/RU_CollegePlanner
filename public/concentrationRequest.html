@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,33 +12,39 @@
             padding: 0;
             background-color: #f0f0f0;
         }
+
         header {
-            background-color: #a41e34;
+            background-color: #cc0033;
             color: white;
             padding: 10px 0;
             text-align: center;
         }
+
         .container {
             padding: 20px;
             margin: auto;
             max-width: 800px;
             background-color: white;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
+
         label {
             display: block;
             margin-top: 20px;
         }
-        input, select {
+
+        input,
+        select {
             width: calc(100% - 20px);
             padding: 10px;
             margin-top: 5px;
             border-radius: 5px;
             border: 1px solid #ccc;
         }
+
         button {
             background-color: #4CAF50;
             color: white;
@@ -47,9 +54,11 @@
             cursor: pointer;
             margin-top: 20px;
         }
+
         button:hover {
             background-color: #45a049;
         }
+
         .status {
             margin-top: 20px;
             font-weight: bold;
@@ -61,7 +70,17 @@
         }
     </style>
 </head>
+
 <body>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="ccwebpage.html">Course Catalog</a>
+        <a href="four_year_plan.html">4 Year Plan</a>
+        <a href="csearch.html">Concentration Search</a>
+        <a href="concentrationRequest.html">Request Concentration Switch or Declaration</a>
+        <a href="academicStatus.html"> View Academic Status</a>
+      </nav>
+    
     <header>
         <h1>Concentration Request Form</h1>
     </header>
@@ -75,15 +94,15 @@
 
             <label for="school">School:</label>
             <select id="school" name="school" required onchange="loadMajors()">
-                    <option value="">Select a School</option>
-                    <option value="SAS">School of Arts and Sciences</option>
-                    <option value="SOE">School of Engineering</option>
-                    <option value="SEBS">School of Environmental and Biological Sciences</option>
-                    <option value="SCI">School of Communication and Information</option>
-                    <option value="SSW">School of Social Work</option>
-                    <option value="SMLR">School of Management and Labor Relations</option>
-                    <option value="RBS">Rutgers Business School</option>
-                </select>
+                <option value="">Select a School</option>
+                <option value="SAS">School of Arts and Sciences</option>
+                <option value="SOE">School of Engineering</option>
+                <option value="SEBS">School of Environmental and Biological Sciences</option>
+                <option value="SCI">School of Communication and Information</option>
+                <option value="SSW">School of Social Work</option>
+                <option value="SMLR">School of Management and Labor Relations</option>
+                <option value="RBS">Rutgers Business School</option>
+            </select>
 
             <label for="major">Major/Concentration:</label>
             <select id="major" name="major" required>
@@ -256,7 +275,7 @@
             };
 
             if (school && majors[school]) {
-                majors[school].forEach(function(major) {
+                majors[school].forEach(function (major) {
                     const option = document.createElement('option');
                     option.value = major;
                     option.textContent = major;
@@ -283,4 +302,5 @@
         }
     </script>
 </body>
+
 </html>
