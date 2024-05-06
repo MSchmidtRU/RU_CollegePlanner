@@ -14,7 +14,7 @@ const getEndpoints = {
    "/4yrplan/~concentrationID/sample": plan.viewSample,
    "/4yrplan/validate": plan.validatePlan,
    "/academicProgress/~netID": academicProgess.academicProgressHandler,
-   "/academic-progress/admin/~adminNetID/~studentNetID": adminAcademicProgress.adminAcademicProgressHandler,
+   "/academic-progress/admin/~adminNetID/~netID": adminAcademicProgress.adminAcademicProgressHandler,
       //"/UpcomingSchedule/~netID/viewschedule":schedule.viewSchedule,
    "/csearch/~netID/concentrationSearch": csearch.concentrationSearch,
    "/csearch/~netID/viewConcentration": csearch.viewConcentration,
